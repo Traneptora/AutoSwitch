@@ -1,0 +1,4 @@
+AutoSwitch
+==========
+
+AutoSwitch Minecraft Mod
