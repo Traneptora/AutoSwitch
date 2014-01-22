@@ -1,0 +1,13 @@
+[
+{
+  "modid": "ThebombzenAPI",
+  "name": "ThebombzenAPI",
+  "description": "Core package required by Thebombzen's Mods",
+  "version": "2.2.0",
+  "credits": "Thebombzen",
+  "mcversion": "1.6.4",
+  "url": "http://www.minecraftforum.net/topic/753030-164-thebombzens-mods/",
+  "updateUrl": "",
+  "authors": [ "Thebombzen" ]
+}
+]
