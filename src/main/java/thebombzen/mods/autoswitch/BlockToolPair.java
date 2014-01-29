@@ -1,11 +1,11 @@
 package thebombzen.mods.autoswitch;
 
 public class BlockToolPair {
-	private IDMetadataPair block;
+	private BlockItemIdentifier block;
 
 	private int tool;
 
-	public BlockToolPair(IDMetadataPair block, int tool) {
+	public BlockToolPair(BlockItemIdentifier block, int tool) {
 		this.block = block;
 		this.tool = tool;
 	}
@@ -29,7 +29,7 @@ public class BlockToolPair {
 		return true;
 	}
 
-	public IDMetadataPair getBlock() {
+	public BlockItemIdentifier getBlock() {
 		return block;
 	}
 
@@ -46,7 +46,7 @@ public class BlockToolPair {
 		return result;
 	}
 
-	public void setBlock(IDMetadataPair block) {
+	public void setBlock(BlockItemIdentifier block) {
 		this.block = block;
 	}
 

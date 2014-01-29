@@ -33,17 +33,17 @@ public class Configuration extends ThebombzenAPIConfiguration<ConfigOption> {
 	private File extraConfigFile;
 	private long extraConfigLastModified;
 
-	private Set<IDMetadataPair> fortuneNoWorks = new HashSet<IDMetadataPair>();
-	private Set<IDMetadataPair> fortuneWorks = new HashSet<IDMetadataPair>();
+	private Set<BlockItemIdentifier> fortuneNoWorks = new HashSet<BlockItemIdentifier>();
+	private Set<BlockItemIdentifier> fortuneWorks = new HashSet<BlockItemIdentifier>();
 	private Set<BlockToolPair> notStandardBlocksAndTools = new HashSet<BlockToolPair>();
-	private Set<IDMetadataPair> silkTouchNoWorks = new HashSet<IDMetadataPair>();
-	private Set<IDMetadataPair> silkTouchWorks = new HashSet<IDMetadataPair>();
+	private Set<BlockItemIdentifier> silkTouchNoWorks = new HashSet<BlockItemIdentifier>();
+	private Set<BlockItemIdentifier> silkTouchWorks = new HashSet<BlockItemIdentifier>();
 	private Set<BlockToolPair> standardBlocksAndTools = new HashSet<BlockToolPair>();
 
 	public Configuration(AutoSwitch autoSwitch) {
 		super(autoSwitch, ConfigOption.class);
 		extraConfigFile = new File(new File(
-				ThebombzenAPI.proxy.getMinecraftFolder(), "config"),
+				ThebombzenAPI.proxy.getMinecraftDirectory(), "config"),
 				"AutoSwitch_Overrides.cfg");
 		StringBuilder dcb = new StringBuilder();
 		dcb.append(
@@ -207,8 +207,8 @@ public class Configuration extends ThebombzenAPIConfiguration<ConfigOption> {
 		defaultConfig = dcb.toString();
 	}
 
-	private Set<IDMetadataPair> getAllBlocksInSet(String info) {
-		Set<IDMetadataPair> ret = new HashSet<IDMetadataPair>();
+	private Set<BlockItemIdentifier> getAllBlocksInSet(String info) {
+		Set<BlockItemIdentifier> ret = new HashSet<BlockItemIdentifier>();
 		if (info.length() < 2) {
 			System.err.println("Info is too short!");
 			return ret;
@@ -237,7 +237,7 @@ public class Configuration extends ThebombzenAPIConfiguration<ConfigOption> {
 			if (block == null) {
 				return ret;
 			}
-			ret.add(new IDMetadataPair(id, meta));
+			ret.add(new BlockItemIdentifier(id, meta));
 		} else if (type == 'M') {
 			if (id >= Block.blocksList.length || id < 0) {
 				System.err.println("Invalid ID:" + id);
@@ -253,7 +253,7 @@ public class Configuration extends ThebombzenAPIConfiguration<ConfigOption> {
 					continue;
 				}
 				if (testBlock.blockMaterial.equals(block.blockMaterial)) {
-					ret.add(new IDMetadataPair(i, -1));
+					ret.add(new BlockItemIdentifier(i, -1));
 				}
 			}
 		} else if (type == 'C') {
@@ -271,7 +271,7 @@ public class Configuration extends ThebombzenAPIConfiguration<ConfigOption> {
 					continue;
 				}
 				if (block.getClass().isAssignableFrom(testBlock.getClass())) {
-					ret.add(new IDMetadataPair(i, -1));
+					ret.add(new BlockItemIdentifier(i, -1));
 				}
 			}
 		} else if (type == 'V') {
@@ -289,7 +289,7 @@ public class Configuration extends ThebombzenAPIConfiguration<ConfigOption> {
 					continue;
 				}
 				if (item.getStrVsBlock(new ItemStack(item), testBlock) > 1.5F) {
-					ret.add(new IDMetadataPair(i, -1));
+					ret.add(new BlockItemIdentifier(i, -1));
 				}
 			}
 		} else {
@@ -407,8 +407,8 @@ public class Configuration extends ThebombzenAPIConfiguration<ConfigOption> {
 		return toolSelectionMode;
 	}
 
-	public boolean isFortuneOverriddenToNotWork(IDMetadataPair pair) {
-		for (IDMetadataPair test : fortuneNoWorks) {
+	public boolean isFortuneOverriddenToNotWork(BlockItemIdentifier pair) {
+		for (BlockItemIdentifier test : fortuneNoWorks) {
 			if (test.includes(pair)) {
 				return true;
 			}
@@ -416,8 +416,8 @@ public class Configuration extends ThebombzenAPIConfiguration<ConfigOption> {
 		return false;
 	}
 
-	public boolean isFortuneOverriddenToWork(IDMetadataPair pair) {
-		for (IDMetadataPair test : fortuneWorks) {
+	public boolean isFortuneOverriddenToWork(BlockItemIdentifier pair) {
+		for (BlockItemIdentifier test : fortuneWorks) {
 			if (test.includes(pair)) {
 				return true;
 			}
@@ -425,8 +425,8 @@ public class Configuration extends ThebombzenAPIConfiguration<ConfigOption> {
 		return false;
 	}
 
-	public boolean isSilkTouchOverriddenToNotWork(IDMetadataPair pair) {
-		for (IDMetadataPair test : silkTouchNoWorks) {
+	public boolean isSilkTouchOverriddenToNotWork(BlockItemIdentifier pair) {
+		for (BlockItemIdentifier test : silkTouchNoWorks) {
 			if (test.includes(pair)) {
 				return true;
 			}
@@ -434,8 +434,8 @@ public class Configuration extends ThebombzenAPIConfiguration<ConfigOption> {
 		return false;
 	}
 
-	public boolean isSilkTouchOverriddenToWork(IDMetadataPair pair) {
-		for (IDMetadataPair test : silkTouchWorks) {
+	public boolean isSilkTouchOverriddenToWork(BlockItemIdentifier pair) {
+		for (BlockItemIdentifier test : silkTouchWorks) {
 			if (test.includes(pair)) {
 				return true;
 			}
@@ -443,7 +443,7 @@ public class Configuration extends ThebombzenAPIConfiguration<ConfigOption> {
 		return false;
 	}
 
-	public boolean isToolOverriddenAsNotStandardOnBlock(IDMetadataPair block,
+	public boolean isToolOverriddenAsNotStandardOnBlock(BlockItemIdentifier block,
 			int tool) {
 		for (BlockToolPair pair : notStandardBlocksAndTools) {
 			if (pair.getTool() == tool && pair.getBlock().includes(block)) {
@@ -453,7 +453,7 @@ public class Configuration extends ThebombzenAPIConfiguration<ConfigOption> {
 		return false;
 	}
 
-	public boolean isToolOverriddenAsStandardOnBlock(IDMetadataPair block,
+	public boolean isToolOverriddenAsStandardOnBlock(BlockItemIdentifier block,
 			int tool) {
 		for (BlockToolPair pair : standardBlocksAndTools) {
 			if (pair.getTool() == tool && pair.getBlock().includes(block)) {
@@ -574,18 +574,18 @@ public class Configuration extends ThebombzenAPIConfiguration<ConfigOption> {
 					}
 				}
 				if (plus) {
-					Set<IDMetadataPair> blockSet = getAllBlocksInSet(blockSub);
+					Set<BlockItemIdentifier> blockSet = getAllBlocksInSet(blockSub);
 					Set<Integer> toolSet = getAllToolsInSet(toolSub);
-					for (IDMetadataPair block : getAllBlocksInSet(blockSub)) {
+					for (BlockItemIdentifier block : getAllBlocksInSet(blockSub)) {
 						for (Integer tool : toolSet) {
 							standardBlocksAndTools.add(new BlockToolPair(block,
 									tool));
 						}
 					}
 				} else {
-					Set<IDMetadataPair> blockSet = getAllBlocksInSet(blockSub);
+					Set<BlockItemIdentifier> blockSet = getAllBlocksInSet(blockSub);
 					Set<Integer> toolSet = getAllToolsInSet(toolSub);
-					for (IDMetadataPair block : getAllBlocksInSet(blockSub)) {
+					for (BlockItemIdentifier block : getAllBlocksInSet(blockSub)) {
 						for (Integer tool : toolSet) {
 							notStandardBlocksAndTools.add(new BlockToolPair(
 									block, tool));

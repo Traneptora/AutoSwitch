@@ -164,10 +164,10 @@ public class AutoSwitch extends ThebombzenAPIBaseMod implements ITickHandler {
 			return false;
 		}
 
-		if (configuration.isFortuneOverriddenToNotWork(new IDMetadataPair(
+		if (configuration.isFortuneOverriddenToNotWork(new BlockItemIdentifier(
 				block.blockID, metadata))) {
 			return false;
-		} else if (configuration.isFortuneOverriddenToWork(new IDMetadataPair(
+		} else if (configuration.isFortuneOverriddenToWork(new BlockItemIdentifier(
 				block.blockID, metadata))) {
 			return true;
 		}
@@ -190,9 +190,9 @@ public class AutoSwitch extends ThebombzenAPIBaseMod implements ITickHandler {
 		fortuneZeroRandom = block.getBlockDropped(world, x, y, z, metadata, 3);
 		unFakeRandomForWorld(world);
 
-		if (!ThebombzenAPI.areItemStackListsEqual(defaultMaxRandom,
+		if (!ThebombzenAPI.areItemStackCollectionsEqual(defaultMaxRandom,
 				fortuneMaxRandom)
-				|| !ThebombzenAPI.areItemStackListsEqual(defaultZeroRandom,
+				|| !ThebombzenAPI.areItemStackCollectionsEqual(defaultZeroRandom,
 						fortuneZeroRandom)) {
 			return true;
 		} else {
@@ -209,11 +209,11 @@ public class AutoSwitch extends ThebombzenAPIBaseMod implements ITickHandler {
 			return false;
 		}
 
-		if (configuration.isSilkTouchOverriddenToNotWork(new IDMetadataPair(
+		if (configuration.isSilkTouchOverriddenToNotWork(new BlockItemIdentifier(
 				block.blockID, metadata))) {
 			return false;
 		} else if (configuration
-				.isSilkTouchOverriddenToWork(new IDMetadataPair(block.blockID,
+				.isSilkTouchOverriddenToWork(new BlockItemIdentifier(block.blockID,
 						metadata))) {
 			return true;
 		}
@@ -232,7 +232,7 @@ public class AutoSwitch extends ThebombzenAPIBaseMod implements ITickHandler {
 		defaultZeroRandom = block.getBlockDropped(world, x, y, z, metadata, 0);
 		unFakeRandomForWorld(world);
 
-		ItemStack stackedBlock = (ItemStack) ThebombzenAPI.callPrivateMethod(
+		ItemStack stackedBlock = (ItemStack) ThebombzenAPI.invokePrivateMethod(
 				block, Block.class, new String[] { "createStackedBlock",
 						"func_71880_c_", "c_" }, new Class<?>[] { int.class },
 				metadata);
@@ -241,9 +241,9 @@ public class AutoSwitch extends ThebombzenAPIBaseMod implements ITickHandler {
 				.singletonList(stackedBlock);
 
 		if (block.canSilkHarvest(world, mc.thePlayer, x, y, z, metadata)
-				&& (!ThebombzenAPI.areItemStackListsEqual(stackedBlockList,
+				&& (!ThebombzenAPI.areItemStackCollectionsEqual(stackedBlockList,
 						defaultMaxRandom) || !ThebombzenAPI
-						.areItemStackListsEqual(stackedBlockList,
+						.areItemStackCollectionsEqual(stackedBlockList,
 								defaultZeroRandom))) {
 			return true;
 		} else {
@@ -412,10 +412,10 @@ public class AutoSwitch extends ThebombzenAPIBaseMod implements ITickHandler {
 		Block block = Block.blocksList[world.getBlockId(x, y, z)];
 		int metadata = world.getBlockMetadata(x, y, z);
 		if (configuration.isToolOverriddenAsNotStandardOnBlock(
-				new IDMetadataPair(block.blockID, metadata), itemstack.itemID)) {
+				new BlockItemIdentifier(block.blockID, metadata), itemstack.itemID)) {
 			return -2;
 		} else if (configuration.isToolOverriddenAsStandardOnBlock(
-				new IDMetadataPair(block.blockID, metadata), itemstack.itemID)) {
+				new BlockItemIdentifier(block.blockID, metadata), itemstack.itemID)) {
 			return 2;
 		}
 		if (getStrVsBlock(itemstack, block, metadata) > 1.5F) {
@@ -722,9 +722,9 @@ public class AutoSwitch extends ThebombzenAPIBaseMod implements ITickHandler {
 				return false;
 			}
 		} else {
-			int oldHits = ThebombzenAPI.ceilDouble((double) entityover
+			int oldHits = ThebombzenAPI.ceil((double) entityover
 					.getHealth() / (double) oldDamage);
-			int newHits = ThebombzenAPI.ceilDouble((double) entityover
+			int newHits = ThebombzenAPI.ceil((double) entityover
 					.getHealth() / (double) newDamage);
 
 			if (oldHits < 0) {
