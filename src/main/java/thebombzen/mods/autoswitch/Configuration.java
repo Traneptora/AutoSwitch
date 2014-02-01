@@ -51,19 +51,18 @@ public class Configuration extends ThebombzenAPIConfiguration<ConfigOption> {
 		return false;
 	}
 	
-	private Map<BlockItemIdentifier, Integer> customWeapons = new HashMap<>();
+	private Map<BlockItemIdentifier, Integer> customWeapons = new HashMap<BlockItemIdentifier, Integer>();
 
 	private final String defaultConfig;
 	private File extraConfigFile;
 
 	private long extraConfigLastModified;
-	private Set<BlockItemIdentifier> fortuneNoWorks = new HashSet<>();
-	private Set<BlockItemIdentifier> fortuneWorks = new HashSet<>();
-	private Set<BlockToolPair> notStandardBlocksAndTools = new HashSet<>();
-	private Set<BlockItemIdentifier> silkTouchNoWorks = new HashSet<>();
-	private Set<BlockItemIdentifier> silkTouchWorks = new HashSet<>();
-
-	private Set<BlockToolPair> standardBlocksAndTools = new HashSet<>();
+	private Set<BlockItemIdentifier> fortuneNoWorks = new HashSet<BlockItemIdentifier>();
+	private Set<BlockItemIdentifier> fortuneWorks = new HashSet<BlockItemIdentifier>();
+	private Set<BlockToolPair> notStandardBlocksAndTools = new HashSet<BlockToolPair>();
+	private Set<BlockItemIdentifier> silkTouchNoWorks = new HashSet<BlockItemIdentifier>();
+	private Set<BlockItemIdentifier> silkTouchWorks = new HashSet<BlockItemIdentifier>();
+	private Set<BlockToolPair> standardBlocksAndTools = new HashSet<BlockToolPair>();
 
 	public Configuration(AutoSwitch autoSwitch) {
 		super(autoSwitch, ConfigOption.class);

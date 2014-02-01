@@ -57,7 +57,7 @@ public class BlockItemIdentifier {
 			}
 		}
 
-		List<ValueSet> valueSets = new ArrayList<>();
+		List<ValueSet> valueSets = new ArrayList<ValueSet>();
 		
 		while (scanner.hasNext()){
 			String s = scanner.next();

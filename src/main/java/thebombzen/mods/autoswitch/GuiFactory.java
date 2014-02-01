@@ -27,7 +27,7 @@ public class GuiFactory implements IModGuiFactory {
 
 	@Override
 	public Set<RuntimeOptionCategoryElement> runtimeGuiCategories() {
-		return new HashSet<>();
+		return new HashSet<RuntimeOptionCategoryElement>();
 	}
 
 }
