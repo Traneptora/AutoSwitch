@@ -1,7 +1,6 @@
 package thebombzen.mods.autoswitch;
 
-import java.util.Collections;
-import java.util.EnumSet;
+import java.io.IOException;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -18,10 +17,11 @@ import net.minecraft.entity.SharedMonsterAttributes;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.ItemSword;
-import net.minecraft.util.EnumMovingObjectType;
+import net.minecraft.util.MathHelper;
+import net.minecraft.util.MovingObjectPosition.MovingObjectType;
 import net.minecraft.world.World;
+import net.minecraftforge.common.ForgeHooks;
 import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.event.ForgeSubscribe;
 import net.minecraftforge.event.entity.player.AttackEntityEvent;
 
 import org.lwjgl.input.Keyboard;
@@ -31,21 +31,29 @@ import thebombzen.mods.thebombzenapi.ThebombzenAPI;
 import thebombzen.mods.thebombzenapi.ThebombzenAPIBaseMod;
 import thebombzen.mods.thebombzenapi.ThebombzenAPIConfiguration;
 import thebombzen.mods.thebombzenapi.client.ThebombzenAPIConfigScreen;
-import cpw.mods.fml.common.ITickHandler;
+import cpw.mods.fml.common.FMLCommonHandler;
 import cpw.mods.fml.common.Mod;
 import cpw.mods.fml.common.Mod.EventHandler;
 import cpw.mods.fml.common.Mod.Instance;
-import cpw.mods.fml.common.TickType;
 import cpw.mods.fml.common.event.FMLInitializationEvent;
 import cpw.mods.fml.common.event.FMLPostInitializationEvent;
 import cpw.mods.fml.common.event.FMLPreInitializationEvent;
-import cpw.mods.fml.common.registry.TickRegistry;
+import cpw.mods.fml.common.eventhandler.SubscribeEvent;
+import cpw.mods.fml.common.gameevent.TickEvent.ClientTickEvent;
+import cpw.mods.fml.common.gameevent.TickEvent.Phase;
+import cpw.mods.fml.common.registry.GameRegistry;
+import cpw.mods.fml.common.registry.GameRegistry.UniqueIdentifier;
 import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
 
+/**
+ * The main AutoSwitch mod
+ * 
+ * @author thebombzen
+ */
 @SideOnly(Side.CLIENT)
-@Mod(modid = "AutoSwitch", name = "AutoSwitch", version = "4.2.0", dependencies = "required-after:ThebombzenAPI")
-public class AutoSwitch extends ThebombzenAPIBaseMod implements ITickHandler {
+@Mod(modid = "autoswitch", name = "AutoSwitch", version = "4.3.0", dependencies = "required-after:thebombzenapi", guiFactory = "thebombzen.mods.autoswitch.GuiFactory")
+public class AutoSwitch extends ThebombzenAPIBaseMod {
 
 	public static final int STAGE_H0 = 0;
 	public static final int STAGE_SWITCHED = 1;
@@ -63,20 +71,11 @@ public class AutoSwitch extends ThebombzenAPIBaseMod implements ITickHandler {
 	private boolean prevMouseDown = false;
 	private boolean prevPulse = false;
 	private int prevtool = 0;
-	private int prevWorld = 0;
+	// private int prevWorld = 0;
 	private boolean pulseOn = false;
 
-	@Instance(value = "AutoSwitch")
+	@Instance(value = "autoswitch")
 	public static AutoSwitch instance;
-
-	public AutoSwitch() {
-		configuration = new Configuration(this);
-	}
-
-	@Override
-	public void activeKeyPressed(int keyCode) {
-
-	}
 
 	public boolean canHarvestBlock(ItemStack itemstack, Block block,
 			int metadata) {
@@ -90,7 +89,12 @@ public class AutoSwitch extends ThebombzenAPIBaseMod implements ITickHandler {
 		}
 	}
 
-	private void clientTick() {
+	@SubscribeEvent
+	public void clientTick(ClientTickEvent event) {
+
+		if (event.phase.equals(Phase.END)) {
+			return;
+		}
 
 		if (mc.theWorld == null) {
 			return;
@@ -105,8 +109,8 @@ public class AutoSwitch extends ThebombzenAPIBaseMod implements ITickHandler {
 		}
 
 		pulseOn = Keyboard.isKeyDown(configuration.getPulseKeyCode());
-
-		int keyCode = mc.gameSettings.keyBindAttack.keyCode;
+		// func_151463_i() == getKeyCode()
+		int keyCode = mc.gameSettings.keyBindAttack.func_151463_i();
 		boolean mouseDown = keyCode < 0 ? Mouse.isButtonDown(keyCode + 100)
 				: Keyboard.isKeyDown(keyCode);
 		if (!mouseDown && prevMouseDown || mouseDown && pulseOn ^ prevPulse) {
@@ -117,18 +121,18 @@ public class AutoSwitch extends ThebombzenAPIBaseMod implements ITickHandler {
 		}
 		if (mouseDown) {
 			if (mc.objectMouseOver != null
-					&& mc.objectMouseOver.typeOfHit == EnumMovingObjectType.TILE) {
+					&& mc.objectMouseOver.typeOfHit == MovingObjectType.BLOCK) {
 				potentiallySwitchTools(mc.theWorld, mc.objectMouseOver.blockX,
 						mc.objectMouseOver.blockY, mc.objectMouseOver.blockZ);
 			} else if (mc.objectMouseOver != null
-					&& mc.objectMouseOver.typeOfHit == EnumMovingObjectType.ENTITY
+					&& mc.objectMouseOver.typeOfHit == MovingObjectType.ENTITY
 					&& mc.objectMouseOver.entityHit instanceof EntityLivingBase) {
 				potentiallySwitchWeapons((EntityLivingBase) mc.objectMouseOver.entityHit);
 			}
 		}
 		prevMouseDown = mouseDown;
 		prevPulse = pulseOn;
-		prevWorld = System.identityHashCode(mc.theWorld);
+		// prevWorld = System.identityHashCode(mc.theWorld);
 	}
 
 	public int compareBlockStr(float newBlockStr, float oldBlockStr) {
@@ -142,7 +146,13 @@ public class AutoSwitch extends ThebombzenAPIBaseMod implements ITickHandler {
 
 	@Override
 	public ThebombzenAPIConfigScreen createConfigScreen(GuiScreen base) {
-		return new ConfigScreen(this, base, configuration);
+		return new ConfigScreen(base);
+	}
+
+	public ItemStack createStackedBlock(Block block, int metadata) {
+		return ThebombzenAPI.invokePrivateMethod(block, Block.class,
+				new String[] { "createStackedBlock", "func_149644_j", "j" },
+				new Class<?>[] { int.class }, metadata);
 	}
 
 	private void debug(String string) {
@@ -157,18 +167,16 @@ public class AutoSwitch extends ThebombzenAPIBaseMod implements ITickHandler {
 
 	public boolean doesFortuneWorkOnBlock(World world, int x, int y, int z) {
 
-		Block block = Block.blocksList[world.getBlockId(x, y, z)];
+		Block block = world.func_147439_a(x, y, z);
 		int metadata = world.getBlockMetadata(x, y, z);
 
 		if (block == null) {
 			return false;
 		}
 
-		if (configuration.isFortuneOverriddenToNotWork(new BlockItemIdentifier(
-				block.blockID, metadata))) {
+		if (configuration.isFortuneOverriddenToNotWork(block, metadata)) {
 			return false;
-		} else if (configuration.isFortuneOverriddenToWork(new BlockItemIdentifier(
-				block.blockID, metadata))) {
+		} else if (configuration.isFortuneOverriddenToWork(block, metadata)) {
 			return true;
 		}
 
@@ -181,19 +189,19 @@ public class AutoSwitch extends ThebombzenAPIBaseMod implements ITickHandler {
 		List<ItemStack> fortuneZeroRandom;
 
 		fakeRandomForWorld(world, maxRandom);
-		defaultMaxRandom = block.getBlockDropped(world, x, y, z, metadata, 0);
-		fortuneMaxRandom = block.getBlockDropped(world, x, y, z, metadata, 3);
+		defaultMaxRandom = block.getDrops(world, x, y, z, metadata, 0);
+		fortuneMaxRandom = block.getDrops(world, x, y, z, metadata, 3);
 		unFakeRandomForWorld(world);
 
 		fakeRandomForWorld(world, zeroRandom);
-		defaultZeroRandom = block.getBlockDropped(world, x, y, z, metadata, 0);
-		fortuneZeroRandom = block.getBlockDropped(world, x, y, z, metadata, 3);
+		defaultZeroRandom = block.getDrops(world, x, y, z, metadata, 0);
+		fortuneZeroRandom = block.getDrops(world, x, y, z, metadata, 3);
 		unFakeRandomForWorld(world);
 
 		if (!ThebombzenAPI.areItemStackCollectionsEqual(defaultMaxRandom,
 				fortuneMaxRandom)
-				|| !ThebombzenAPI.areItemStackCollectionsEqual(defaultZeroRandom,
-						fortuneZeroRandom)) {
+				|| !ThebombzenAPI.areItemStackCollectionsEqual(
+						defaultZeroRandom, fortuneZeroRandom)) {
 			return true;
 		} else {
 			return false;
@@ -202,53 +210,48 @@ public class AutoSwitch extends ThebombzenAPIBaseMod implements ITickHandler {
 
 	public boolean doesSilkTouchWorkOnBlock(World world, int x, int y, int z) {
 
-		Block block = Block.blocksList[world.getBlockId(x, y, z)];
+		Block block = world.func_147439_a(x, y, z);
 		int metadata = world.getBlockMetadata(x, y, z);
 
 		if (block == null) {
 			return false;
 		}
 
-		if (configuration.isSilkTouchOverriddenToNotWork(new BlockItemIdentifier(
-				block.blockID, metadata))) {
+		if (configuration.isSilkTouchOverriddenToNotWork(block, metadata)) {
 			return false;
-		} else if (configuration
-				.isSilkTouchOverriddenToWork(new BlockItemIdentifier(block.blockID,
-						metadata))) {
+		} else if (configuration.isSilkTouchOverriddenToWork(block, metadata)) {
 			return true;
 		}
 
-		Random maxRandom = new NotSoRandom(false);
-		Random zeroRandom = new NotSoRandom(true);
+		return block.canSilkHarvest(world, mc.thePlayer, x, y, z, metadata);
 
-		List<ItemStack> defaultMaxRandom;
-		List<ItemStack> defaultZeroRandom;
-
-		fakeRandomForWorld(world, maxRandom);
-		defaultMaxRandom = block.getBlockDropped(world, x, y, z, metadata, 0);
-		unFakeRandomForWorld(world);
-
-		fakeRandomForWorld(world, zeroRandom);
-		defaultZeroRandom = block.getBlockDropped(world, x, y, z, metadata, 0);
-		unFakeRandomForWorld(world);
-
-		ItemStack stackedBlock = (ItemStack) ThebombzenAPI.invokePrivateMethod(
-				block, Block.class, new String[] { "createStackedBlock",
-						"func_71880_c_", "c_" }, new Class<?>[] { int.class },
-				metadata);
-
-		List<ItemStack> stackedBlockList = Collections
-				.singletonList(stackedBlock);
-
-		if (block.canSilkHarvest(world, mc.thePlayer, x, y, z, metadata)
-				&& (!ThebombzenAPI.areItemStackCollectionsEqual(stackedBlockList,
-						defaultMaxRandom) || !ThebombzenAPI
-						.areItemStackCollectionsEqual(stackedBlockList,
-								defaultZeroRandom))) {
-			return true;
-		} else {
-			return false;
-		}
+		/*
+		 * Random maxRandom = new NotSoRandom(false); Random zeroRandom = new
+		 * NotSoRandom(true);
+		 * 
+		 * List<ItemStack> defaultMaxRandom; List<ItemStack> defaultZeroRandom;
+		 * 
+		 * fakeRandomForWorld(world, maxRandom); defaultMaxRandom =
+		 * block.getDrops(world, x, y, z, metadata, 0);
+		 * unFakeRandomForWorld(world);
+		 * 
+		 * fakeRandomForWorld(world, zeroRandom); defaultZeroRandom =
+		 * block.getDrops(world, x, y, z, metadata, 0);
+		 * unFakeRandomForWorld(world);
+		 * 
+		 * 
+		 * 
+		 * ItemStack stackedBlock = createStackedBlock(block, metadata);
+		 * 
+		 * List<ItemStack> stackedBlockList = Collections
+		 * .singletonList(stackedBlock);
+		 * 
+		 * if (block.canSilkHarvest(world, mc.thePlayer, x, y, z, metadata) &&
+		 * (!ThebombzenAPI.areItemStackCollectionsEqual(stackedBlockList,
+		 * defaultMaxRandom) || !ThebombzenAPI
+		 * .areItemStackCollectionsEqual(stackedBlockList, defaultZeroRandom)))
+		 * { return true; } else { return false; }
+		 */
 	}
 
 	private void fakeItemForPlayer(ItemStack itemstack) {
@@ -270,20 +273,21 @@ public class AutoSwitch extends ThebombzenAPIBaseMod implements ITickHandler {
 	}
 
 	public float getBlockHardness(World world, int x, int y, int z) {
-		Block block = Block.blocksList[world.getBlockId(x, y, z)];
+		Block block = world.func_147439_a(x, y, z);
 		if (block == null) {
 			return 0;
 		} else {
-			return block.getBlockHardness(world, x, y, z);
+			// func_149712_f == getBlockHardness
+			return block.func_149712_f(world, x, y, z);
 		}
 	}
 
 	public float getBlockStrength(ItemStack itemstack, World world, int x,
 			int y, int z) {
-		Block block = Block.blocksList[world.getBlockId(x, y, z)];
+		Block block = world.func_147439_a(x, y, z);
 		fakeItemForPlayer(itemstack);
-		float str = block.getPlayerRelativeBlockHardness(mc.thePlayer, world,
-				x, y, z);
+		float str = ForgeHooks.blockStrength(block, mc.thePlayer, world, x, y,
+				z);
 		unFakeItemForPlayer();
 		return str;
 	}
@@ -293,8 +297,13 @@ public class AutoSwitch extends ThebombzenAPIBaseMod implements ITickHandler {
 		return configuration;
 	}
 
+	public float getDigSpeed(ItemStack itemstack, Block block, int metadata) {
+		return itemstack == null ? 1.0F : itemstack.getItem().getDigSpeed(
+				itemstack, block, metadata);
+	}
+
 	public float getEff(float str, ItemStack itemstack) {
-		if (str <= 1.0F) {
+		if (str <= 1.5F) {
 			return str;
 		}
 		fakeItemForPlayer(itemstack);
@@ -304,10 +313,6 @@ public class AutoSwitch extends ThebombzenAPIBaseMod implements ITickHandler {
 			return str;
 		}
 		return str + effLevel * effLevel + 1;
-	}
-
-	public int getEnchantmentLevel(int i, ItemStack itemstack) {
-		return EnchantmentHelper.getEnchantmentLevel(i, itemstack);
 	}
 
 	public float getEnchantmentModifierLiving(ItemStack itemstack,
@@ -320,20 +325,16 @@ public class AutoSwitch extends ThebombzenAPIBaseMod implements ITickHandler {
 	}
 
 	@Override
-	public String getLabel() {
-		return "thebombzen.mods.autoswitch.AutoSwitch";
-	}
-
-	@Override
 	public String getLongName() {
 		return "AutoSwitch";
 	}
 
 	@Override
 	public String getLongVersionString() {
-		return "AutoSwitch v4.2.0 for Minecraft 1.6.4";
+		return "AutoSwitch, version 4.3.0, Minecraft 1.7.2";
 	}
 
+	@SuppressWarnings("unchecked")
 	public Set<Enchantment> getNonstandardNondamageEnchantmentsOnBothStacks(
 			ItemStack stack1, ItemStack stack2) {
 		Set<Integer> bothItemsEnchantments = new HashSet<Integer>();
@@ -376,11 +377,6 @@ public class AutoSwitch extends ThebombzenAPIBaseMod implements ITickHandler {
 	}
 
 	@Override
-	public int getNumActiveKeys() {
-		return 0;
-	}
-
-	@Override
 	public int getNumToggleKeys() {
 		return 1;
 	}
@@ -388,11 +384,6 @@ public class AutoSwitch extends ThebombzenAPIBaseMod implements ITickHandler {
 	@Override
 	public String getShortName() {
 		return "AS";
-	}
-
-	public float getStrVsBlock(ItemStack itemstack, Block block, int metadata) {
-		return itemstack == null ? 1.0F : itemstack.getItem().getStrVsBlock(
-				itemstack, block, metadata);
 	}
 
 	@Override
@@ -409,16 +400,17 @@ public class AutoSwitch extends ThebombzenAPIBaseMod implements ITickHandler {
 		if (itemstack == null) {
 			return 0;
 		}
-		Block block = Block.blocksList[world.getBlockId(x, y, z)];
+		Block block = world.func_147439_a(x, y, z);
 		int metadata = world.getBlockMetadata(x, y, z);
-		if (configuration.isToolOverriddenAsNotStandardOnBlock(
-				new BlockItemIdentifier(block.blockID, metadata), itemstack.itemID)) {
+		if (configuration.isToolOverriddenAsNotStandardOnBlock(itemstack,
+				block, metadata)) {
 			return -2;
-		} else if (configuration.isToolOverriddenAsStandardOnBlock(
-				new BlockItemIdentifier(block.blockID, metadata), itemstack.itemID)) {
+		} else if (configuration.isToolOverriddenAsStandardOnBlock(itemstack,
+				block, metadata)) {
 			return 2;
 		}
-		if (getStrVsBlock(itemstack, block, metadata) > 1.5F) {
+		if (getBlockHardness(world, x, y, z) != 0
+				&& getDigSpeed(itemstack, block, metadata) > 1.5F) {
 			return 1;
 		} else {
 			if (isItemStackDamageableOnBlock(itemstack, world, x, y, z)) {
@@ -431,7 +423,7 @@ public class AutoSwitch extends ThebombzenAPIBaseMod implements ITickHandler {
 
 	@Override
 	protected String getVersionFileURLString() {
-		return "https://dl.dropboxusercontent.com/u/51080973/AutoSwitch/ASVersion.txt";
+		return "https://dl.dropboxusercontent.com/u/51080973/Mods/AutoSwitch/ASVersion.txt";
 	}
 
 	@Override
@@ -461,19 +453,21 @@ public class AutoSwitch extends ThebombzenAPIBaseMod implements ITickHandler {
 	public boolean isToolBetter(ItemStack newItemStack, ItemStack oldItemStack,
 			World world, int x, int y, int z) {
 
-		Block block = Block.blocksList[world.getBlockId(x, y, z)];
+		Block block = world.func_147439_a(x, y, z);
 
-		if (block == null) {
+		if (block == null || block.isAir(world, x, y, z)) {
 			return false;
 		}
 
 		int metadata = world.getBlockMetadata(x, y, z);
 
-		int newitemID = newItemStack == null ? 0 : newItemStack.itemID;
-		int olditemID = oldItemStack == null ? 0 : oldItemStack.itemID;
+		// int newItemID = newItemStack == null ? 0 : newItemStack.itemID;
+		// int olditemID = oldItemStack == null ? 0 : oldItemStack.itemID;
 
-		float newStr = getStrVsBlock(newItemStack, block, metadata);
-		float oldStr = getStrVsBlock(oldItemStack, block, metadata);
+		// long time1 = System.nanoTime();
+
+		float newStr = getDigSpeed(newItemStack, block, metadata);
+		float oldStr = getDigSpeed(oldItemStack, block, metadata);
 		float newBlockStr = getBlockStrength(newItemStack, world, x, y, z);
 		float oldBlockStr = getBlockStrength(oldItemStack, world, x, y, z);
 
@@ -482,10 +476,10 @@ public class AutoSwitch extends ThebombzenAPIBaseMod implements ITickHandler {
 			return false;
 		}
 
+		boolean newHarvest = canHarvestBlock(newItemStack, block, metadata);
+		boolean oldHarvest = canHarvestBlock(oldItemStack, block, metadata);
 		debug("newBlockStr: %f, oldBlockStr %f", newBlockStr, oldBlockStr);
-		debug("New harvest: %b, old harvest: %b",
-				canHarvestBlock(newItemStack, block, metadata),
-				canHarvestBlock(oldItemStack, block, metadata));
+		debug("newHarvest: %b, oldHarvest: %b", newHarvest, oldHarvest);
 		debug("newStrength: %f, oldStrength: %f", newStr, oldStr);
 
 		float newEff = getEff(newStr, newItemStack);
@@ -513,9 +507,6 @@ public class AutoSwitch extends ThebombzenAPIBaseMod implements ITickHandler {
 		debug("newDamageable: %b, oldDamageable: %b", newDamageable,
 				oldDamageable);
 
-		debug("Comparison mode is %s",
-				configuration.getProperty(ConfigOption.TOOL_SELECTION_MODE));
-
 		if (configuration.getToolSelectionMode() == Configuration.FAST_STANDARD
 				|| configuration.getToolSelectionMode() == Configuration.SLOW_STANDARD) {
 			if (newStandard > oldStandard) {
@@ -538,9 +529,9 @@ public class AutoSwitch extends ThebombzenAPIBaseMod implements ITickHandler {
 		}
 
 		boolean silkWorks = doesSilkTouchWorkOnBlock(world, x, y, z);
-		boolean newHasSilk = getEnchantmentLevel(
+		boolean newHasSilk = EnchantmentHelper.getEnchantmentLevel(
 				Enchantment.silkTouch.effectId, newItemStack) > 0;
-		boolean oldHasSilk = getEnchantmentLevel(
+		boolean oldHasSilk = EnchantmentHelper.getEnchantmentLevel(
 				Enchantment.silkTouch.effectId, oldItemStack) > 0;
 		debug("silkWorks: %b, newHasSilk: %b, oldHasSilk: %b", silkWorks,
 				newHasSilk, oldHasSilk);
@@ -574,10 +565,10 @@ public class AutoSwitch extends ThebombzenAPIBaseMod implements ITickHandler {
 		}
 
 		boolean fortuneWorks = doesFortuneWorkOnBlock(world, x, y, z);
-		int newFortuneLevel = getEnchantmentLevel(Enchantment.fortune.effectId,
-				newItemStack);
-		int oldFortuneLevel = getEnchantmentLevel(Enchantment.fortune.effectId,
-				oldItemStack);
+		int newFortuneLevel = EnchantmentHelper.getEnchantmentLevel(
+				Enchantment.fortune.effectId, newItemStack);
+		int oldFortuneLevel = EnchantmentHelper.getEnchantmentLevel(
+				Enchantment.fortune.effectId, oldItemStack);
 
 		debug("fortuneWorks: %b, newFortuneLevel: %d, oldFortuneLevel: %d",
 				fortuneWorks, newFortuneLevel, oldFortuneLevel);
@@ -595,6 +586,9 @@ public class AutoSwitch extends ThebombzenAPIBaseMod implements ITickHandler {
 		}
 
 		int comparison = compareBlockStr(newBlockStr, oldBlockStr);
+
+		debug("Tool Selection Mode: %s",
+				configuration.getProperty(ConfigOption.TOOL_SELECTION_MODE));
 
 		if (configuration.getToolSelectionMode() == Configuration.FAST_STANDARD) {
 			if (comparison > 0) {
@@ -626,10 +620,10 @@ public class AutoSwitch extends ThebombzenAPIBaseMod implements ITickHandler {
 				newItemStack, oldItemStack);
 
 		for (Enchantment enchantment : bothItemsEnchantments) {
-			int oldLevel = getEnchantmentLevel(enchantment.effectId,
-					oldItemStack);
-			int newLevel = getEnchantmentLevel(enchantment.effectId,
-					newItemStack);
+			int oldLevel = EnchantmentHelper.getEnchantmentLevel(
+					enchantment.effectId, oldItemStack);
+			int newLevel = EnchantmentHelper.getEnchantmentLevel(
+					enchantment.effectId, newItemStack);
 			if (newLevel > oldLevel) {
 				debug("Switching because new %s level, %d, is more than old, %d.",
 						enchantment.getName(), newLevel, oldLevel);
@@ -691,12 +685,12 @@ public class AutoSwitch extends ThebombzenAPIBaseMod implements ITickHandler {
 
 		boolean isPlayer = entityover instanceof EntityPlayer;
 
-		float oldDamage = configuration.getCustomWeaponDamage(oldItemStack);
-		float newDamage = configuration.getCustomWeaponDamage(newItemStack);
+		double oldDamage = configuration.getCustomWeaponDamage(oldItemStack);
+		double newDamage = configuration.getCustomWeaponDamage(newItemStack);
 
 		if (oldDamage == -1) {
 			fakeItemForPlayer(oldItemStack);
-			oldDamage = (float) mc.thePlayer.getEntityAttribute(
+			oldDamage = mc.thePlayer.getEntityAttribute(
 					SharedMonsterAttributes.attackDamage).getAttributeValue();
 			unFakeItemForPlayer();
 		}
@@ -722,16 +716,22 @@ public class AutoSwitch extends ThebombzenAPIBaseMod implements ITickHandler {
 				return false;
 			}
 		} else {
-			int oldHits = ThebombzenAPI.ceil((double) entityover
-					.getHealth() / (double) oldDamage);
-			int newHits = ThebombzenAPI.ceil((double) entityover
-					.getHealth() / (double) newDamage);
 
-			if (oldHits < 0) {
+			int oldHits;
+			int newHits;
+
+			if (oldDamage == 0) {
 				oldHits = Integer.MAX_VALUE;
+			} else {
+				oldHits = MathHelper.ceiling_double_int(entityover.getHealth()
+						/ oldDamage);
 			}
-			if (newHits < 0) {
+
+			if (newDamage == 0) {
 				newHits = Integer.MAX_VALUE;
+			} else {
+				newHits = MathHelper.ceiling_double_int(entityover.getHealth()
+						/ newDamage);
 			}
 
 			debug("Old hits are %d, new hits are %d", oldHits, newHits);
@@ -746,22 +746,22 @@ public class AutoSwitch extends ThebombzenAPIBaseMod implements ITickHandler {
 
 		}
 
-		int newLootingLevel = getEnchantmentLevel(Enchantment.looting.effectId,
-				newItemStack);
-		int newFireAspectLevel = getEnchantmentLevel(
+		int newLootingLevel = EnchantmentHelper.getEnchantmentLevel(
+				Enchantment.looting.effectId, newItemStack);
+		int newFireAspectLevel = EnchantmentHelper.getEnchantmentLevel(
 				Enchantment.fireAspect.effectId, newItemStack);
-		int newKnockbackLevel = getEnchantmentLevel(
+		int newKnockbackLevel = EnchantmentHelper.getEnchantmentLevel(
 				Enchantment.knockback.effectId, newItemStack);
-		int newUnbreakingLevel = getEnchantmentLevel(
+		int newUnbreakingLevel = EnchantmentHelper.getEnchantmentLevel(
 				Enchantment.unbreaking.effectId, newItemStack);
 
-		int oldLootingLevel = getEnchantmentLevel(Enchantment.looting.effectId,
-				oldItemStack);
-		int oldFireAspectLevel = getEnchantmentLevel(
+		int oldLootingLevel = EnchantmentHelper.getEnchantmentLevel(
+				Enchantment.looting.effectId, oldItemStack);
+		int oldFireAspectLevel = EnchantmentHelper.getEnchantmentLevel(
 				Enchantment.fireAspect.effectId, oldItemStack);
-		int oldKnockbackLevel = getEnchantmentLevel(
+		int oldKnockbackLevel = EnchantmentHelper.getEnchantmentLevel(
 				Enchantment.knockback.effectId, oldItemStack);
-		int oldUnbreakingLevel = getEnchantmentLevel(
+		int oldUnbreakingLevel = EnchantmentHelper.getEnchantmentLevel(
 				Enchantment.unbreaking.effectId, oldItemStack);
 
 		if (!isPlayer) {
@@ -800,10 +800,10 @@ public class AutoSwitch extends ThebombzenAPIBaseMod implements ITickHandler {
 				newItemStack, oldItemStack);
 
 		for (Enchantment enchantment : bothItemsEnchantments) {
-			int oldLevel = getEnchantmentLevel(enchantment.effectId,
-					oldItemStack);
-			int newLevel = getEnchantmentLevel(enchantment.effectId,
-					newItemStack);
+			int oldLevel = EnchantmentHelper.getEnchantmentLevel(
+					enchantment.effectId, oldItemStack);
+			int newLevel = EnchantmentHelper.getEnchantmentLevel(
+					enchantment.effectId, newItemStack);
 			if (newLevel > oldLevel) {
 				debug("Switching because new %s level, %d, is more than old, %d.",
 						enchantment.getName(), newLevel, oldLevel);
@@ -835,6 +835,7 @@ public class AutoSwitch extends ThebombzenAPIBaseMod implements ITickHandler {
 			debug("Not switching because new weapon is damageable and old isn't.");
 			return false;
 		}
+
 		if (oldDamageable && !newDamageable) {
 			debug("Switching because new weapon is not damageable and old is.");
 			return true;
@@ -874,13 +875,13 @@ public class AutoSwitch extends ThebombzenAPIBaseMod implements ITickHandler {
 
 	@EventHandler
 	public void load(FMLInitializationEvent fmlie) {
-		TickRegistry.registerTickHandler(this, Side.CLIENT);
+		FMLCommonHandler.instance().bus().register(this);
 		MinecraftForge.EVENT_BUS.register(this);
 	}
 
-	@ForgeSubscribe
+	@SubscribeEvent
 	public void onEntityAttack(AttackEntityEvent event) {
-		if (!event.target.worldObj.isRemote) {
+		if (!event.entity.worldObj.isRemote) {
 			return;
 		}
 		if (entityAttackStage == STAGE_SWITCHED
@@ -895,7 +896,11 @@ public class AutoSwitch extends ThebombzenAPIBaseMod implements ITickHandler {
 
 	@EventHandler
 	public void postInit(FMLPostInitializationEvent event) {
-
+		try {
+			getConfiguration().load();
+		} catch (IOException ioe) {
+			throwException("Unable to open configuration!", ioe, true);
+		}
 	}
 
 	public boolean potentiallySwitchTools(World world, int x, int y, int z) {
@@ -922,6 +927,7 @@ public class AutoSwitch extends ThebombzenAPIBaseMod implements ITickHandler {
 	}
 
 	public boolean potentiallySwitchWeapons(EntityLivingBase entity) {
+		// System.out.println("Here!");
 		if (pulseOn == isToggleEnabled(0)
 				|| mc.thePlayer.capabilities.isCreativeMode
 				&& !configuration
@@ -947,9 +953,8 @@ public class AutoSwitch extends ThebombzenAPIBaseMod implements ITickHandler {
 	}
 
 	@EventHandler
-	@Override
 	public void preInit(FMLPreInitializationEvent event) {
-		super.preInit(event);
+		configuration = new Configuration(this);
 	}
 
 	private void switchBack() {
@@ -960,23 +965,36 @@ public class AutoSwitch extends ThebombzenAPIBaseMod implements ITickHandler {
 	}
 
 	private void switchToBestTool(World world, int x, int y, int z) {
-		Block block = Block.blocksList[world.getBlockId(x, y, z)];
-		debug("Testing vs block %s", block.getUnlocalizedName());
+
+		Block block = world.func_147439_a(x, y, z);
+		UniqueIdentifier id = GameRegistry.findUniqueIdentifierFor(block);
+
+		String name = String.format("%s:%s", id.modId, id.name);
+
+		debug("Testing vs block %s", name);
 		String[] names = new String[9];
 		for (int i = 0; i < 9; i++) {
-			names[i] = mc.thePlayer.inventory.mainInventory[i] == null ? "Nothing"
-					: mc.thePlayer.inventory.mainInventory[i]
-							.getUnlocalizedName();
+			if (mc.thePlayer.inventory.mainInventory[i] == null) {
+				names[i] = "null";
+			} else {
+				UniqueIdentifier itemID = GameRegistry
+						.findUniqueIdentifierFor(mc.thePlayer.inventory.mainInventory[i]
+								.getItem());
+				names[i] = String.format("%s:%s", itemID.modId, itemID.name);
+			}
 			debug("Hotbar slot %d contains item %s", i, names[i]);
 		}
 
 		int currentBest = prevtool;
+
 		debug("Block hardness is %f", getBlockHardness(world, x, y, z));
 
 		for (int i = 0; i < 9; i++) {
+
 			if (i == currentBest) {
 				continue;
 			}
+
 			debug("Checking if tool %d, which is %s, is better than %d, which is %s",
 					i, names[i], currentBest, names[currentBest]);
 			if (isToolBetter(mc.thePlayer.inventory.mainInventory[i],
@@ -987,31 +1005,36 @@ public class AutoSwitch extends ThebombzenAPIBaseMod implements ITickHandler {
 			}
 		}
 		debug("Current best is %d, which is %s", currentBest,
-				currentBest == -1 ? "Nothing" : names[currentBest]);
+				names[currentBest]);
 		switchToolsToN(currentBest == -1 ? mc.thePlayer.inventory.currentItem
 				: currentBest);
 	}
 
 	private void switchToBestWeapon(EntityPlayer entityplayer,
 			EntityLivingBase entityover) {
+
 		ItemStack[] inventory = entityplayer.inventory.mainInventory;
-		int currentBest = 0;
-		while (currentBest < 9 && inventory[currentBest] == null) {
-			currentBest++;
-		}
-		if (currentBest == 9)
-			return;
+
 		String[] names = new String[9];
 		for (int i = 0; i < 9; i++) {
-			String name = (inventory[i] == null) ? "Nothing" : inventory[i]
-					.getUnlocalizedName();
-			names[i] = name;
-			debug("Hotbar slot %d contains item %s", i, name);
+			if (mc.thePlayer.inventory.mainInventory[i] == null) {
+				names[i] = "null";
+			} else {
+				UniqueIdentifier itemID = GameRegistry
+						.findUniqueIdentifierFor(mc.thePlayer.inventory.mainInventory[i]
+								.getItem());
+				names[i] = String.format("%s:%s", itemID.modId, itemID.name);
+			}
+			debug("Hotbar slot %d contains item %s", i, names[i]);
 		}
+
+		int currentBest = prevtool;
+
 		debug("Current item is %d", entityplayer.inventory.currentItem);
 		debug("Setting possible best weapon to %d, which is %s", currentBest,
 				names[currentBest]);
-		for (int i = currentBest + 1; i < 9; i++) {
+
+		for (int i = 0; i < 9; i++) {
 			debug("Checking if weapon %d, which is %s, is better than %d, which is %s",
 					i, names[i], currentBest, names[currentBest]);
 			if (isWeaponBetter(inventory[i], inventory[currentBest], entityover)) {
@@ -1028,21 +1051,6 @@ public class AutoSwitch extends ThebombzenAPIBaseMod implements ITickHandler {
 		String name = entityplayer.inventory.mainInventory[n] == null ? "Nothing"
 				: entityplayer.inventory.mainInventory[n].getUnlocalizedName();
 		debug("Switching tools to %d, which is %s", n, name);
-	}
-
-	@Override
-	public void tickEnd(EnumSet<TickType> type, Object... tickData) {
-
-	}
-
-	@Override
-	public EnumSet<TickType> ticks() {
-		return EnumSet.of(TickType.CLIENT);
-	}
-
-	@Override
-	public void tickStart(EnumSet<TickType> type, Object... tickData) {
-		clientTick();
 	}
 
 	private void unFakeItemForPlayer() {

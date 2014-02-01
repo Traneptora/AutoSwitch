@@ -1,11 +1,16 @@
 package thebombzen.mods.autoswitch;
 
+/**
+ * This is a convenience class for creating pairings between blocks and tools.
+ * The method names are self-explanatory.
+ * @author thebombzen
+ */
 public class BlockToolPair {
+	
 	private BlockItemIdentifier block;
+	private BlockItemIdentifier tool;
 
-	private int tool;
-
-	public BlockToolPair(BlockItemIdentifier block, int tool) {
+	public BlockToolPair(BlockItemIdentifier block, BlockItemIdentifier tool) {
 		this.block = block;
 		this.tool = tool;
 	}
@@ -24,7 +29,10 @@ public class BlockToolPair {
 				return false;
 		} else if (!block.equals(other.block))
 			return false;
-		if (tool != other.tool)
+		if (tool == null) {
+			if (other.tool != null)
+				return false;
+		} else if (!tool.equals(other.tool))
 			return false;
 		return true;
 	}
@@ -33,7 +41,7 @@ public class BlockToolPair {
 		return block;
 	}
 
-	public int getTool() {
+	public BlockItemIdentifier getTool() {
 		return tool;
 	}
 
@@ -42,7 +50,7 @@ public class BlockToolPair {
 		final int prime = 31;
 		int result = 1;
 		result = prime * result + ((block == null) ? 0 : block.hashCode());
-		result = prime * result + tool;
+		result = prime * result + ((tool == null) ? 0 : tool.hashCode());
 		return result;
 	}
 
@@ -50,8 +58,13 @@ public class BlockToolPair {
 		this.block = block;
 	}
 
-	public void setTool(int tool) {
+	public void setTool(BlockItemIdentifier tool) {
 		this.tool = tool;
+	}
+
+	@Override
+	public String toString() {
+		return "BlockToolPair [block=" + block + ", tool=" + tool + "]";
 	}
 
 }

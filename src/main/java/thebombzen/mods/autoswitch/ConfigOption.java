@@ -2,6 +2,13 @@ package thebombzen.mods.autoswitch;
 
 import thebombzen.mods.thebombzenapi.ThebombzenAPIConfigOption;
 
+/**
+ * This is the implemenation of ThebombzenAPIConfigOption for AutoSwitch
+ * Most of the functionality for ThebombzenAPIConfigOption was implemented FOR AutoSwitch.
+ * You SHOULD model yours after this! :D
+ * @author thebombzen
+ *
+ */
 public enum ConfigOption implements ThebombzenAPIConfigOption {
 
 	DEFAULT_ENABLED(0, BOOLEAN, "true", "Enabled by default",

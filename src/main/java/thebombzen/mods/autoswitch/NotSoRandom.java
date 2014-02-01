@@ -28,17 +28,17 @@ public class NotSoRandom extends Random {
 	}
 
 	@Override
-	public double nextGaussian(){
-		return nextDouble();
-	}
-	
-	@Override
 	public float nextFloat() {
 		if (useZero) {
 			return 0.0F;
 		} else {
 			return 1.0F;
 		}
+	}
+	
+	@Override
+	public double nextGaussian(){
+		return nextDouble();
 	}
 
 	@Override

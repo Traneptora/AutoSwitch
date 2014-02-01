@@ -1,5 +1,9 @@
 package thebombzen.mods.autoswitch;
 
+import java.util.Scanner;
+
+import thebombzen.mods.thebombzenapi.ThebombzenAPI;
+
 
 /**
  * This class represents a set of values. It could be a universal set,
@@ -8,6 +12,42 @@ package thebombzen.mods.autoswitch;
  */
 public class ValueSet {
 	
+	public static ValueSet parseValueSet(String s){
+		boolean subtract;
+		int data;
+		int mask;
+		switch (s.charAt(0)){
+		case '+':
+			subtract = false;
+			break;
+		case '-':
+			subtract = true;
+			break;
+		default:
+			throw new NumberFormatException();
+		}
+		
+		Scanner scanner = new Scanner(s.substring(1));
+		scanner.useDelimiter(":");
+		
+		if (scanner.hasNext()){
+			String num = scanner.next();
+			data = ThebombzenAPI.parseInteger(num);
+		} else {
+			scanner.close();
+			return new ValueSet(0, 0, subtract);
+		}
+		
+		if (scanner.hasNext()){
+			String num = scanner.next();
+			mask = ThebombzenAPI.parseInteger(num);
+		} else {
+			mask = Integer.MAX_VALUE;
+		}
+		
+		scanner.close();
+		return new ValueSet(data, mask, subtract);
+	}
 	
 	private int data;
 	private int mask;
@@ -30,7 +70,7 @@ public class ValueSet {
 	 * @param subtract whether to subtract (true) or add (false) the value.
 	 */
 	public ValueSet(int value, boolean subtract){
-		this(value, ~0, subtract);
+		this(value, Integer.MAX_VALUE, subtract);
 	}
 	
 	/**
@@ -50,17 +90,15 @@ public class ValueSet {
 	 * @param value the value to check
 	 */
 	public boolean contains(int value){
+		//System.out.format("value: %s%nmask: %s%ndata: %s%n", Integer.toBinaryString(value), Integer.toBinaryString(mask), Integer.toBinaryString(data));
 		return (value & mask) == data;
 	}
 
-	@Override
-	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + data;
-		result = prime * result + (subtract ? 1231 : 1237);
-		result = prime * result + mask;
-		return result;
+	/**
+	 * Returns whether this set subtracts rather than adds values to the total.
+	 */
+	public boolean doesSubtract(){
+		return subtract;
 	}
 
 	@Override
@@ -81,19 +119,30 @@ public class ValueSet {
 		return true;
 	}
 
+	public int getData() {
+		return data;
+	}
+	
+	public int getMask() {
+		return mask;
+	}
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + data;
+		result = prime * result + (subtract ? 1231 : 1237);
+		result = prime * result + mask;
+		return result;
+	}
+
 	/**
 	 * Returns a String representation, as seen in the config.
 	 */
 	@Override
 	public String toString() {
-		return (subtract ? '-' : '+') + "0x" + Integer.toHexString(data) + (mask != ~0 ? ":0x" + Integer.toHexString(mask) : "");
-	}
-	
-	/**
-	 * Returns whether this set subtracts rather than adds values to the total.
-	 */
-	public boolean doesSubtract(){
-		return subtract;
+		return (subtract ? '-' : '+') + "0x" + Integer.toHexString(data) + (mask != Integer.MAX_VALUE ? ":0x" + Integer.toHexString(mask) : "");
 	}
 	
 }
