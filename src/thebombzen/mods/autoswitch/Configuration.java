@@ -350,4 +350,9 @@ public class Configuration extends ThebombzenAPIConfiguration<ConfigOption> {
 		writer.flush();
 		writer.close();
 	}
+	
+	public static Configuration getConfiguration() {
+		return (Configuration) AutoSwitch.instance.getConfiguration();
+	}
+	
 }

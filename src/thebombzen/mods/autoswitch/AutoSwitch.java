@@ -1,10 +1,6 @@
 package thebombzen.mods.autoswitch;
 
 import java.io.IOException;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Random;
 import java.util.Set;
 
 import net.minecraft.block.Block;
@@ -13,21 +9,17 @@ import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.enchantment.Enchantment;
 import net.minecraft.enchantment.EnchantmentHelper;
 import net.minecraft.entity.EntityLivingBase;
-import net.minecraft.entity.SharedMonsterAttributes;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
-import net.minecraft.item.ItemSword;
 import net.minecraft.util.MathHelper;
 import net.minecraft.util.MovingObjectPosition.MovingObjectType;
 import net.minecraft.world.World;
-import net.minecraftforge.common.ForgeHooks;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.entity.player.AttackEntityEvent;
 
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
 
-import thebombzen.mods.thebombzenapi.ThebombzenAPI;
 import thebombzen.mods.thebombzenapi.ThebombzenAPIBaseMod;
 import thebombzen.mods.thebombzenapi.ThebombzenAPIConfiguration;
 import thebombzen.mods.thebombzenapi.client.ThebombzenAPIConfigScreen;
@@ -52,7 +44,7 @@ import cpw.mods.fml.relauncher.SideOnly;
  * @author thebombzen
  */
 @SideOnly(Side.CLIENT)
-@Mod(modid = "autoswitch", name = "AutoSwitch", version = "4.3.0", dependencies = "required-after:thebombzenapi", guiFactory = "thebombzen.mods.autoswitch.GuiFactory")
+@Mod(modid = "autoswitch", name = "AutoSwitch", version = "4.3.0", dependencies = "required-after:thebombzenapi", guiFactory = "thebombzen.mods.autoswitch.ConfigGuiFactory")
 public class AutoSwitch extends ThebombzenAPIBaseMod {
 
 	public static final int STAGE_H0 = 0;
@@ -66,8 +58,6 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 
 	private Configuration configuration;
 
-	private ItemStack prevHeldItemStack;
-	private Random prevRandom;
 	private boolean prevMouseDown = false;
 	private boolean prevPulse = false;
 	private int prevtool = 0;
@@ -76,18 +66,6 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 
 	@Instance(value = "autoswitch")
 	public static AutoSwitch instance;
-
-	public boolean canHarvestBlock(ItemStack itemstack, Block block,
-			int metadata) {
-		if (block == null) {
-			return false;
-		} else {
-			fakeItemForPlayer(itemstack);
-			boolean can = block.canHarvestBlock(mc.thePlayer, metadata);
-			unFakeItemForPlayer();
-			return can;
-		}
-	}
 
 	@SubscribeEvent
 	public void clientTick(ClientTickEvent event) {
@@ -135,24 +113,9 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 		// prevWorld = System.identityHashCode(mc.theWorld);
 	}
 
-	public int compareBlockStr(float newBlockStr, float oldBlockStr) {
-		if (newBlockStr > oldBlockStr) {
-			return 1;
-		} else if (oldBlockStr > newBlockStr) {
-			return -1;
-		}
-		return 0;
-	}
-
 	@Override
 	public ThebombzenAPIConfigScreen createConfigScreen(GuiScreen base) {
 		return new ConfigScreen(base);
-	}
-
-	public ItemStack createStackedBlock(Block block, int metadata) {
-		return ThebombzenAPI.invokePrivateMethod(block, Block.class,
-				new String[] { "createStackedBlock", "func_149644_j", "j" },
-				new Class<?>[] { int.class }, metadata);
 	}
 
 	private void debug(String string) {
@@ -165,163 +128,9 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 		}
 	}
 
-	public boolean doesFortuneWorkOnBlock(World world, int x, int y, int z) {
-
-		Block block = world.func_147439_a(x, y, z);
-		int metadata = world.getBlockMetadata(x, y, z);
-
-		if (block == null) {
-			return false;
-		}
-
-		if (configuration.isFortuneOverriddenToNotWork(block, metadata)) {
-			return false;
-		} else if (configuration.isFortuneOverriddenToWork(block, metadata)) {
-			return true;
-		}
-
-		Random maxRandom = new NotSoRandom(false);
-		Random zeroRandom = new NotSoRandom(true);
-
-		List<ItemStack> defaultMaxRandom;
-		List<ItemStack> defaultZeroRandom;
-		List<ItemStack> fortuneMaxRandom;
-		List<ItemStack> fortuneZeroRandom;
-
-		fakeRandomForWorld(world, maxRandom);
-		defaultMaxRandom = block.getDrops(world, x, y, z, metadata, 0);
-		fortuneMaxRandom = block.getDrops(world, x, y, z, metadata, 3);
-		unFakeRandomForWorld(world);
-
-		fakeRandomForWorld(world, zeroRandom);
-		defaultZeroRandom = block.getDrops(world, x, y, z, metadata, 0);
-		fortuneZeroRandom = block.getDrops(world, x, y, z, metadata, 3);
-		unFakeRandomForWorld(world);
-
-		if (!ThebombzenAPI.areItemStackCollectionsEqual(defaultMaxRandom,
-				fortuneMaxRandom)
-				|| !ThebombzenAPI.areItemStackCollectionsEqual(
-						defaultZeroRandom, fortuneZeroRandom)) {
-			return true;
-		} else {
-			return false;
-		}
-	}
-
-	public boolean doesSilkTouchWorkOnBlock(World world, int x, int y, int z) {
-
-		Block block = world.func_147439_a(x, y, z);
-		int metadata = world.getBlockMetadata(x, y, z);
-
-		if (block == null) {
-			return false;
-		}
-
-		if (configuration.isSilkTouchOverriddenToNotWork(block, metadata)) {
-			return false;
-		} else if (configuration.isSilkTouchOverriddenToWork(block, metadata)) {
-			return true;
-		}
-
-		return block.canSilkHarvest(world, mc.thePlayer, x, y, z, metadata);
-
-		/*
-		 * Random maxRandom = new NotSoRandom(false); Random zeroRandom = new
-		 * NotSoRandom(true);
-		 * 
-		 * List<ItemStack> defaultMaxRandom; List<ItemStack> defaultZeroRandom;
-		 * 
-		 * fakeRandomForWorld(world, maxRandom); defaultMaxRandom =
-		 * block.getDrops(world, x, y, z, metadata, 0);
-		 * unFakeRandomForWorld(world);
-		 * 
-		 * fakeRandomForWorld(world, zeroRandom); defaultZeroRandom =
-		 * block.getDrops(world, x, y, z, metadata, 0);
-		 * unFakeRandomForWorld(world);
-		 * 
-		 * 
-		 * 
-		 * ItemStack stackedBlock = createStackedBlock(block, metadata);
-		 * 
-		 * List<ItemStack> stackedBlockList = Collections
-		 * .singletonList(stackedBlock);
-		 * 
-		 * if (block.canSilkHarvest(world, mc.thePlayer, x, y, z, metadata) &&
-		 * (!ThebombzenAPI.areItemStackCollectionsEqual(stackedBlockList,
-		 * defaultMaxRandom) || !ThebombzenAPI
-		 * .areItemStackCollectionsEqual(stackedBlockList, defaultZeroRandom)))
-		 * { return true; } else { return false; }
-		 */
-	}
-
-	private void fakeItemForPlayer(ItemStack itemstack) {
-		prevHeldItemStack = mc.thePlayer.inventory.mainInventory[mc.thePlayer.inventory.currentItem];
-		mc.thePlayer.inventory.mainInventory[mc.thePlayer.inventory.currentItem] = itemstack;
-		if (prevHeldItemStack != null) {
-			mc.thePlayer.getAttributeMap().removeAttributeModifiers(
-					prevHeldItemStack.getAttributeModifiers());
-		}
-		if (itemstack != null) {
-			mc.thePlayer.getAttributeMap().applyAttributeModifiers(
-					itemstack.getAttributeModifiers());
-		}
-	}
-
-	private void fakeRandomForWorld(World world, Random random) {
-		prevRandom = world.rand;
-		world.rand = random;
-	}
-
-	public float getBlockHardness(World world, int x, int y, int z) {
-		Block block = world.func_147439_a(x, y, z);
-		if (block == null) {
-			return 0;
-		} else {
-			// func_149712_f == getBlockHardness
-			return block.func_149712_f(world, x, y, z);
-		}
-	}
-
-	public float getBlockStrength(ItemStack itemstack, World world, int x,
-			int y, int z) {
-		Block block = world.func_147439_a(x, y, z);
-		fakeItemForPlayer(itemstack);
-		float str = ForgeHooks.blockStrength(block, mc.thePlayer, world, x, y,
-				z);
-		unFakeItemForPlayer();
-		return str;
-	}
-
 	@Override
 	public ThebombzenAPIConfiguration<?> getConfiguration() {
 		return configuration;
-	}
-
-	public float getDigSpeed(ItemStack itemstack, Block block, int metadata) {
-		return itemstack == null ? 1.0F : itemstack.getItem().getDigSpeed(
-				itemstack, block, metadata);
-	}
-
-	public float getEff(float str, ItemStack itemstack) {
-		if (str <= 1.5F) {
-			return str;
-		}
-		fakeItemForPlayer(itemstack);
-		float effLevel = EnchantmentHelper.getEfficiencyModifier(mc.thePlayer);
-		unFakeItemForPlayer();
-		if (effLevel == 0) {
-			return str;
-		}
-		return str + effLevel * effLevel + 1;
-	}
-
-	public float getEnchantmentModifierLiving(ItemStack itemstack,
-			EntityLivingBase entityover) {
-		fakeItemForPlayer(itemstack);
-		float modifier = EnchantmentHelper.getEnchantmentModifierLiving(
-				mc.thePlayer, entityover);
-		unFakeItemForPlayer();
-		return modifier;
 	}
 
 	@Override
@@ -332,48 +141,6 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 	@Override
 	public String getLongVersionString() {
 		return "AutoSwitch, version 4.3.0, Minecraft 1.7.2";
-	}
-
-	@SuppressWarnings("unchecked")
-	public Set<Enchantment> getNonstandardNondamageEnchantmentsOnBothStacks(
-			ItemStack stack1, ItemStack stack2) {
-		Set<Integer> bothItemsEnchantments = new HashSet<Integer>();
-		Set<Enchantment> ret = new HashSet<Enchantment>();
-
-		if (stack1 != null) {
-			bothItemsEnchantments.addAll(EnchantmentHelper.getEnchantments(
-					stack1).keySet());
-		}
-		if (stack2 != null) {
-			bothItemsEnchantments.addAll(EnchantmentHelper.getEnchantments(
-					stack2).keySet());
-		}
-
-		Iterator<Integer> bothItemsEnchantmentsIterator = bothItemsEnchantments
-				.iterator();
-		while (bothItemsEnchantmentsIterator.hasNext()) {
-			Integer effectId = bothItemsEnchantmentsIterator.next();
-
-			if (effectId == Enchantment.efficiency.effectId
-					|| effectId == Enchantment.silkTouch.effectId
-					|| effectId == Enchantment.fortune.effectId
-					|| effectId == Enchantment.unbreaking.effectId
-					|| effectId == Enchantment.looting.effectId
-					|| effectId == Enchantment.knockback.effectId
-					|| effectId == Enchantment.fireAspect.effectId) {
-				continue;
-			}
-
-			if (Enchantment.enchantmentsList[effectId].getName().startsWith(
-					"enchantment.damage.")) {
-				continue;
-			}
-
-			ret.add(Enchantment.enchantmentsList[effectId]);
-
-		}
-
-		return ret;
 	}
 
 	@Override
@@ -395,32 +162,6 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 		}
 	}
 
-	public int getToolStandardness(ItemStack itemstack, World world, int x,
-			int y, int z) {
-		if (itemstack == null) {
-			return 0;
-		}
-		Block block = world.func_147439_a(x, y, z);
-		int metadata = world.getBlockMetadata(x, y, z);
-		if (configuration.isToolOverriddenAsNotStandardOnBlock(itemstack,
-				block, metadata)) {
-			return -2;
-		} else if (configuration.isToolOverriddenAsStandardOnBlock(itemstack,
-				block, metadata)) {
-			return 2;
-		}
-		if (getBlockHardness(world, x, y, z) != 0
-				&& getDigSpeed(itemstack, block, metadata) > 1.5F) {
-			return 1;
-		} else {
-			if (isItemStackDamageableOnBlock(itemstack, world, x, y, z)) {
-				return -1;
-			} else {
-				return 0;
-			}
-		}
-	}
-
 	@Override
 	protected String getVersionFileURLString() {
 		return "https://dl.dropboxusercontent.com/u/51080973/Mods/AutoSwitch/ASVersion.txt";
@@ -429,25 +170,6 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 	@Override
 	public boolean hasConfigScreen() {
 		return true;
-	}
-
-	public boolean instanceOfItemSword(ItemStack itemstack) {
-		return itemstack != null && itemstack.getItem() instanceof ItemSword;
-	}
-
-	public boolean isItemStackDamageable(ItemStack itemstack) {
-		if (itemstack == null) {
-			return false;
-		}
-		return itemstack.getItem().isDamageable();
-	}
-
-	public boolean isItemStackDamageableOnBlock(ItemStack itemstack,
-			World world, int x, int y, int z) {
-		if (!isItemStackDamageable(itemstack)) {
-			return false;
-		}
-		return getBlockHardness(world, x, y, z) > 0.0F;
 	}
 
 	public boolean isToolBetter(ItemStack newItemStack, ItemStack oldItemStack,
@@ -466,43 +188,43 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 
 		// long time1 = System.nanoTime();
 
-		float newStr = getDigSpeed(newItemStack, block, metadata);
-		float oldStr = getDigSpeed(oldItemStack, block, metadata);
-		float newBlockStr = getBlockStrength(newItemStack, world, x, y, z);
-		float oldBlockStr = getBlockStrength(oldItemStack, world, x, y, z);
+		float newStr = Tests.getDigSpeed(newItemStack, block, metadata);
+		float oldStr = Tests.getDigSpeed(oldItemStack, block, metadata);
+		float newBlockStr = Tests.getBlockStrength(newItemStack, world, x, y, z);
+		float oldBlockStr = Tests.getBlockStrength(oldItemStack, world, x, y, z);
 
 		if (newBlockStr == 0.0F && oldBlockStr == 0.0F) {
 			debug("Not switching because block is unbreakable by either item.");
 			return false;
 		}
 
-		boolean newHarvest = canHarvestBlock(newItemStack, block, metadata);
-		boolean oldHarvest = canHarvestBlock(oldItemStack, block, metadata);
+		boolean newHarvest = Tests.canHarvestBlock(newItemStack, block, metadata);
+		boolean oldHarvest = Tests.canHarvestBlock(oldItemStack, block, metadata);
 		debug("newBlockStr: %f, oldBlockStr %f", newBlockStr, oldBlockStr);
 		debug("newHarvest: %b, oldHarvest: %b", newHarvest, oldHarvest);
 		debug("newStrength: %f, oldStrength: %f", newStr, oldStr);
 
-		float newEff = getEff(newStr, newItemStack);
-		float oldEff = getEff(oldStr, oldItemStack);
+		float newEff = Tests.getEff(newStr, newItemStack);
+		float oldEff = Tests.getEff(oldStr, oldItemStack);
 		debug("newEff: %f, oldEff: %f", newEff, oldEff);
 
-		if (canHarvestBlock(newItemStack, block, metadata)
-				&& !canHarvestBlock(oldItemStack, block, metadata)) {
+		if (Tests.canHarvestBlock(newItemStack, block, metadata)
+				&& !Tests.canHarvestBlock(oldItemStack, block, metadata)) {
 			debug("Switching because new can harvest and old can't.");
 			return true;
-		} else if (canHarvestBlock(oldItemStack, block, metadata)
-				&& !canHarvestBlock(newItemStack, block, metadata)) {
+		} else if (Tests.canHarvestBlock(oldItemStack, block, metadata)
+				&& !Tests.canHarvestBlock(newItemStack, block, metadata)) {
 			debug("Not switching because old can harvest and new can't.");
 			return false;
 		}
 
-		int newStandard = getToolStandardness(newItemStack, world, x, y, z);
-		int oldStandard = getToolStandardness(oldItemStack, world, x, y, z);
+		int newStandard = Tests.getToolStandardness(newItemStack, world, x, y, z);
+		int oldStandard = Tests.getToolStandardness(oldItemStack, world, x, y, z);
 		debug("newStandard: %d, oldStandard: %d", newStandard, oldStandard);
 
-		boolean newDamageable = isItemStackDamageableOnBlock(newItemStack,
+		boolean newDamageable = Tests.isItemStackDamageableOnBlock(newItemStack,
 				world, x, y, z);
-		boolean oldDamageable = isItemStackDamageableOnBlock(oldItemStack,
+		boolean oldDamageable = Tests.isItemStackDamageableOnBlock(oldItemStack,
 				world, x, y, z);
 		debug("newDamageable: %b, oldDamageable: %b", newDamageable,
 				oldDamageable);
@@ -528,7 +250,7 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 			}
 		}
 
-		boolean silkWorks = doesSilkTouchWorkOnBlock(world, x, y, z);
+		boolean silkWorks = Tests.doesSilkTouchWorkOnBlock(world, x, y, z);
 		boolean newHasSilk = EnchantmentHelper.getEnchantmentLevel(
 				Enchantment.silkTouch.effectId, newItemStack) > 0;
 		boolean oldHasSilk = EnchantmentHelper.getEnchantmentLevel(
@@ -564,7 +286,7 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 			}
 		}
 
-		boolean fortuneWorks = doesFortuneWorkOnBlock(world, x, y, z);
+		boolean fortuneWorks = Tests.doesFortuneWorkOnBlock(world, x, y, z);
 		int newFortuneLevel = EnchantmentHelper.getEnchantmentLevel(
 				Enchantment.fortune.effectId, newItemStack);
 		int oldFortuneLevel = EnchantmentHelper.getEnchantmentLevel(
@@ -585,7 +307,7 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 			}
 		}
 
-		int comparison = compareBlockStr(newBlockStr, oldBlockStr);
+		int comparison = Float.compare(newBlockStr, oldBlockStr);
 
 		debug("Tool Selection Mode: %s",
 				configuration.getProperty(ConfigOption.TOOL_SELECTION_MODE));
@@ -616,7 +338,7 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 			}
 		}
 
-		Set<Enchantment> bothItemsEnchantments = getNonstandardNondamageEnchantmentsOnBothStacks(
+		Set<Enchantment> bothItemsEnchantments = Tests.getNonstandardNondamageEnchantmentsOnBothStacks(
 				newItemStack, oldItemStack);
 
 		for (Enchantment enchantment : bothItemsEnchantments) {
@@ -689,21 +411,15 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 		double newDamage = configuration.getCustomWeaponDamage(newItemStack);
 
 		if (oldDamage == -1) {
-			fakeItemForPlayer(oldItemStack);
-			oldDamage = mc.thePlayer.getEntityAttribute(
-					SharedMonsterAttributes.attackDamage).getAttributeValue();
-			unFakeItemForPlayer();
+			oldDamage = Tests.getItemStackDamage(oldItemStack);
 		}
 
 		if (newDamage == -1) {
-			fakeItemForPlayer(newItemStack);
-			newDamage = (float) mc.thePlayer.getEntityAttribute(
-					SharedMonsterAttributes.attackDamage).getAttributeValue();
-			unFakeItemForPlayer();
+			newDamage = Tests.getItemStackDamage(newItemStack);
 		}
 
-		oldDamage += getEnchantmentModifierLiving(oldItemStack, entityover);
-		newDamage += getEnchantmentModifierLiving(newItemStack, entityover);
+		oldDamage += Tests.getEnchantmentModifierLiving(oldItemStack, entityover);
+		newDamage += Tests.getEnchantmentModifierLiving(newItemStack, entityover);
 
 		debug("Old damage is %f, new damage is %f.", oldDamage, newDamage);
 
@@ -796,7 +512,7 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 			return false;
 		}
 
-		Set<Enchantment> bothItemsEnchantments = getNonstandardNondamageEnchantmentsOnBothStacks(
+		Set<Enchantment> bothItemsEnchantments = Tests.getNonstandardNondamageEnchantmentsOnBothStacks(
 				newItemStack, oldItemStack);
 
 		for (Enchantment enchantment : bothItemsEnchantments) {
@@ -815,19 +531,19 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 			}
 		}
 
-		if (instanceOfItemSword(newItemStack)
-				&& !instanceOfItemSword(oldItemStack)) {
+		if (Tests.isSword(newItemStack)
+				&& !Tests.isSword(oldItemStack)) {
 			debug("Switching because new weapon is sword and old isn't.");
 			return true;
 		}
-		if (instanceOfItemSword(oldItemStack)
-				&& !instanceOfItemSword(newItemStack)) {
+		if (Tests.isSword(oldItemStack)
+				&& !Tests.isSword(newItemStack)) {
 			debug("Not switching because old weapon is sword and new isn't.");
 			return false;
 		}
 
-		boolean newDamageable = isItemStackDamageable(newItemStack);
-		boolean oldDamageable = isItemStackDamageable(oldItemStack);
+		boolean newDamageable = Tests.isItemStackDamageable(newItemStack);
+		boolean oldDamageable = Tests.isItemStackDamageable(oldItemStack);
 		debug("newDamageable: %b, oldDamageable: %b", newDamageable,
 				oldDamageable);
 
@@ -987,7 +703,7 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 
 		int currentBest = prevtool;
 
-		debug("Block hardness is %f", getBlockHardness(world, x, y, z));
+		debug("Block hardness is %f", Tests.getBlockHardness(world, x, y, z));
 
 		for (int i = 0; i < 9; i++) {
 
@@ -1051,24 +767,6 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 		String name = entityplayer.inventory.mainInventory[n] == null ? "Nothing"
 				: entityplayer.inventory.mainInventory[n].getUnlocalizedName();
 		debug("Switching tools to %d, which is %s", n, name);
-	}
-
-	private void unFakeItemForPlayer() {
-		ItemStack fakedStack = mc.thePlayer.inventory.mainInventory[mc.thePlayer.inventory.currentItem];
-		mc.thePlayer.inventory.mainInventory[mc.thePlayer.inventory.currentItem] = prevHeldItemStack;
-		if (fakedStack != null) {
-			mc.thePlayer.getAttributeMap().removeAttributeModifiers(
-					fakedStack.getAttributeModifiers());
-		}
-		if (prevHeldItemStack != null) {
-			mc.thePlayer.getAttributeMap().applyAttributeModifiers(
-					prevHeldItemStack.getAttributeModifiers());
-		}
-	}
-
-	private void unFakeRandomForWorld(World world) {
-		world.rand = prevRandom;
-		prevRandom = null;
 	}
 
 }
