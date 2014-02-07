@@ -175,7 +175,7 @@ public class BlockItemIdentifier {
 			if (block == null || getBlock() == null){
 				return false;
 			}
-			if (!getBlock().func_149688_o().equals(block.func_149688_o())){
+			if (!getBlock().getMaterial().equals(block.getMaterial())){
 				return false;
 			}
 			break;

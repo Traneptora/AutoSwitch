@@ -52,7 +52,7 @@ public final class Tests {
 	
 	public static boolean doesFortuneWorkOnBlock(World world, int x, int y, int z) {
 
-		Block block = world.func_147439_a(x, y, z);
+		Block block = world.getBlock(x, y, z);
 		int metadata = world.getBlockMetadata(x, y, z);
 
 		if (block == null) {
@@ -94,7 +94,7 @@ public final class Tests {
 
 	public static boolean doesSilkTouchWorkOnBlock(World world, int x, int y, int z) {
 
-		Block block = world.func_147439_a(x, y, z);
+		Block block = world.getBlock(x, y, z);
 		int metadata = world.getBlockMetadata(x, y, z);
 
 		if (block == null) {
@@ -215,7 +215,7 @@ public final class Tests {
 		if (itemstack == null) {
 			return 0;
 		}
-		Block block = world.func_147439_a(x, y, z);
+		Block block = world.getBlock(x, y, z);
 		int metadata = world.getBlockMetadata(x, y, z);
 		if (Configuration.getConfiguration().isToolOverriddenAsNotStandardOnBlock(itemstack,
 				block, metadata)) {
@@ -272,18 +272,18 @@ public final class Tests {
 	
 
 	public static float getBlockHardness(World world, int x, int y, int z) {
-		Block block = world.func_147439_a(x, y, z);
+		Block block = world.getBlock(x, y, z);
 		if (block == null) {
 			return 0;
 		} else {
 			// func_149712_f == getBlockHardness
-			return block.func_149712_f(world, x, y, z);
+			return block.getBlockHardness(world, x, y, z);
 		}
 	}
 
 	public static float getBlockStrength(ItemStack itemstack, World world, int x,
 			int y, int z) {
-		Block block = world.func_147439_a(x, y, z);
+		Block block = world.getBlock(x, y, z);
 		fakeItemForPlayer(itemstack);
 		float str = ForgeHooks.blockStrength(block, mc.thePlayer, world, x, y,
 				z);

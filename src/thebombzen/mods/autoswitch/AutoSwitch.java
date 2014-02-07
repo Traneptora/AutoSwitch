@@ -44,7 +44,7 @@ import cpw.mods.fml.relauncher.SideOnly;
  * @author thebombzen
  */
 @SideOnly(Side.CLIENT)
-@Mod(modid = "autoswitch", name = "AutoSwitch", version = "4.3.0", dependencies = "required-after:thebombzenapi", guiFactory = "thebombzen.mods.autoswitch.ConfigGuiFactory")
+@Mod(modid = "autoswitch", name = "AutoSwitch", version = "4.3.1", dependencies = "required-after:thebombzenapi", guiFactory = "thebombzen.mods.autoswitch.ConfigGuiFactory")
 public class AutoSwitch extends ThebombzenAPIBaseMod {
 
 	public static final int STAGE_H0 = 0;
@@ -63,6 +63,7 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 	private int prevtool = 0;
 	// private int prevWorld = 0;
 	private boolean pulseOn = false;
+	private boolean switched = false;
 
 	@Instance(value = "autoswitch")
 	public static AutoSwitch instance;
@@ -88,7 +89,7 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 
 		pulseOn = Keyboard.isKeyDown(configuration.getPulseKeyCode());
 		// func_151463_i() == getKeyCode()
-		int keyCode = mc.gameSettings.keyBindAttack.func_151463_i();
+		int keyCode = mc.gameSettings.keyBindAttack.getKeyCode();
 		boolean mouseDown = keyCode < 0 ? Mouse.isButtonDown(keyCode + 100)
 				: Keyboard.isKeyDown(keyCode);
 		if (!mouseDown && prevMouseDown || mouseDown && pulseOn ^ prevPulse) {
@@ -140,7 +141,7 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 
 	@Override
 	public String getLongVersionString() {
-		return "AutoSwitch, version 4.3.0, Minecraft 1.7.2";
+		return "AutoSwitch, version 4.3.1, Minecraft 1.7.2";
 	}
 
 	@Override
@@ -175,7 +176,7 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 	public boolean isToolBetter(ItemStack newItemStack, ItemStack oldItemStack,
 			World world, int x, int y, int z) {
 
-		Block block = world.func_147439_a(x, y, z);
+		Block block = world.getBlock(x, y, z);
 
 		if (block == null || block.isAir(world, x, y, z)) {
 			return false;
@@ -674,15 +675,16 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 	}
 
 	private void switchBack() {
-		if (mc.thePlayer.inventory.currentItem != prevtool) {
+		if (switched) {
 			mc.thePlayer.inventory.currentItem = prevtool;
+			switched = false;
 			debug("Switching tools back to %d", prevtool);
 		}
 	}
 
 	private void switchToBestTool(World world, int x, int y, int z) {
 
-		Block block = world.func_147439_a(x, y, z);
+		Block block = world.getBlock(x, y, z);
 		UniqueIdentifier id = GameRegistry.findUniqueIdentifierFor(block);
 
 		String name = String.format("%s:%s", id.modId, id.name);
@@ -762,11 +764,22 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 	}
 
 	private void switchToolsToN(int n) {
+		switched = true;
 		EntityPlayer entityplayer = mc.thePlayer;
 		entityplayer.inventory.currentItem = n;
-		String name = entityplayer.inventory.mainInventory[n] == null ? "Nothing"
-				: entityplayer.inventory.mainInventory[n].getUnlocalizedName();
+		String name;
+		if (entityplayer.inventory.mainInventory[n] == null){
+			name = "Nothing";
+		} else {
+			UniqueIdentifier id = GameRegistry.findUniqueIdentifierFor(entityplayer.inventory.mainInventory[n].getItem());
+			name = id.modId + ":" + id.name;
+		}
 		debug("Switching tools to %d, which is %s", n, name);
+	}
+
+	@Override
+	public String getDownloadLocationURLString() {
+		return "http://is.gd/ThebombzensMods#AutoSwitch";
 	}
 
 }

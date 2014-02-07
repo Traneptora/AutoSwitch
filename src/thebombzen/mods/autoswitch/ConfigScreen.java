@@ -6,7 +6,10 @@ import java.io.IOException;
 import net.minecraft.client.gui.GuiButton;
 import net.minecraft.client.gui.GuiScreen;
 import thebombzen.mods.thebombzenapi.client.ThebombzenAPIConfigScreen;
+import cpw.mods.fml.relauncher.Side;
+import cpw.mods.fml.relauncher.SideOnly;
 
+@SideOnly(Side.CLIENT)
 public class ConfigScreen extends ThebombzenAPIConfigScreen {
 
 	public ConfigScreen(GuiScreen parentScreen) {
@@ -14,12 +17,12 @@ public class ConfigScreen extends ThebombzenAPIConfigScreen {
 	}
 
 	@Override
-	protected void func_146284_a(GuiButton button) {
-		super.func_146284_a(button);
+	protected void actionPerformed(GuiButton button) {
+		super.actionPerformed(button);
 		// field_146127_k == id
-		if (button.field_146127_k == 4911) {
+		if (button.id == 4911) {
 			try {
-				Desktop.getDesktop().open(((Configuration) config).getExtraConfigFile());
+				Desktop.getDesktop().edit(((Configuration)config).getExtraConfigFile());
 			} catch (IOException e) {
 				mod.throwException("Unable to open file!", e, false);
 			}
@@ -30,8 +33,8 @@ public class ConfigScreen extends ThebombzenAPIConfigScreen {
 	@Override
 	public void initGui() {
 		super.initGui();
-		this.field_146292_n.add(new GuiButton(4911, this.field_146294_l / 2 - 100,
-				this.field_146295_m / 6 + 140, 200, 20,
+		this.buttonList.add(new GuiButton(4911, this.width / 2 - 100,
+				this.height / 6 + 140, 200, 20,
 				"Open AutoSwitch Overrides File..."));
 	}
 

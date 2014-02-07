@@ -6,6 +6,7 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.PrintWriter;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -22,20 +23,24 @@ import thebombzen.mods.thebombzenapi.ThebombzenAPIConfigOption;
 import thebombzen.mods.thebombzenapi.ThebombzenAPIConfiguration;
 import cpw.mods.fml.common.registry.GameRegistry;
 import cpw.mods.fml.common.registry.GameRegistry.UniqueIdentifier;
+import cpw.mods.fml.relauncher.Side;
+import cpw.mods.fml.relauncher.SideOnly;
 
 /**
  * This class oversees the configuration of AutoSwitch
  * This uses the basic properties as well as its own advanced configuration
  * @author thebombzen
  */
+@SideOnly(Side.CLIENT)
 public class Configuration extends ThebombzenAPIConfiguration<ConfigOption> {
 
 	/**
 	 * The current version of the configuration.
 	 * 0: AS 4.0.0-4.2.0
-	 * 1: AS 4.3.0+
+	 * 1: AS 4.3.0
+	 * 2: AS 4.3.1+  // I placed a big bug in the config. Had to bump the revision.
 	 */
-	public static final int CONFIG_VERSION = 1;
+	public static final int CONFIG_VERSION = 2;
 	
 	public static final int FAST_STANDARD = 0;
 	public static final int SLOW_STANDARD = 1;
@@ -66,13 +71,11 @@ public class Configuration extends ThebombzenAPIConfiguration<ConfigOption> {
 
 	public Configuration(AutoSwitch autoSwitch) {
 		super(autoSwitch, ConfigOption.class);
-		extraConfigFile = new File(new File(
-				ThebombzenAPI.sideSpecificUtilities.getMinecraftDirectory(), "config"),
-				"AutoSwitch_Overrides.cfg");
-		
+		extraConfigFile = new File(ThebombzenAPI.sideSpecificUtilities.getMinecraftDirectory() + File.separator + "config" + File.separator + "AutoSwitch_Overrides.txt");
+		File oldExtraConfigFile = new File(extraConfigFile.getParentFile(), "AutoSwitch_Overrides.cfg");
 		StringBuilder builder = new StringBuilder();
 		try {
-			BufferedReader reader = new BufferedReader(new InputStreamReader(ThebombzenAPI.getResourceAsStream(autoSwitch, "AutoSwitch_Overrides.cfg")));
+			BufferedReader reader = new BufferedReader(new InputStreamReader(ThebombzenAPI.getResourceAsStream(autoSwitch, "AutoSwitch_Overrides.txt")));
 			String line;
 			while (null != (line = reader.readLine())){
 				builder.append(line).append(ThebombzenAPI.newLine);
@@ -82,6 +85,13 @@ public class Configuration extends ThebombzenAPIConfiguration<ConfigOption> {
 			autoSwitch.throwException("Could not read default config!", ioe, true);
 		} finally {
 			defaultConfig = builder.toString();
+		}
+		try {
+			PrintWriter w = new PrintWriter(new FileWriter(oldExtraConfigFile));
+			w.println("The AutoSwitch overrides file has moved to AutoSwitch_Overrides.txt");
+			w.close();
+		} catch (IOException ioe){
+			autoSwitch.throwException("Failed to fix redirect old config.", ioe, false);
 		}
 	}
 

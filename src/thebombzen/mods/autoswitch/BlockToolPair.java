@@ -1,5 +1,6 @@
 package thebombzen.mods.autoswitch;
 
+
 /**
  * This is a convenience class for creating pairings between blocks and tools.
  * The method names are self-explanatory.
