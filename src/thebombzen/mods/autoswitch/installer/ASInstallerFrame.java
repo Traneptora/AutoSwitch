@@ -48,27 +48,33 @@ public class ASInstallerFrame extends JFrame {
 		}
 	}
 	
-	@SuppressWarnings("resource")
-	public static void copyFile(File sourceFile, File destFile) throws IOException {
+public static void copyFile(File sourceFile, File destFile) throws IOException {
+		
 	    if(!destFile.exists()) {
 	        destFile.createNewFile();
 	    }
 
 	    FileChannel source = null;
 	    FileChannel destination = null;
+	    FileInputStream inStream = null;
+	    FileOutputStream outStream = null;
 	    
 	    try {
-	        source = new FileInputStream(sourceFile).getChannel();
-	        destination = new FileOutputStream(destFile).getChannel();
+	    	inStream = new FileInputStream(sourceFile);
+	    	outStream = new FileOutputStream(destFile);
+	        source = inStream.getChannel();
+	        destination = outStream.getChannel();
 
-	        // previous code: destination.transferFrom(source, 0, source.size());
-	        // to avoid infinite loops, should be:
 	        long count = 0;
 	        long size = source.size();              
-	        while((count += destination.transferFrom(source, count, size-count))<size);
-	    }
-	    
-	    finally {
+	        while((count += destination.transferFrom(source, count, size-count)) < size);
+	    } finally {
+	    	if (inStream != null){
+	    		inStream.close();
+	    	}
+	    	if (outStream != null){
+	    		outStream.close();
+	    	}
 	        if(source != null) {
 	            source.close();
 	        }
@@ -77,6 +83,7 @@ public class ASInstallerFrame extends JFrame {
 	        }
 	    }
 	}
+	
 	
 	private void install(String directory) throws Exception {
 		File dir = new File(directory);
