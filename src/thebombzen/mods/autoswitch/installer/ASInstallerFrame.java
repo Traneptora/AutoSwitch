@@ -18,6 +18,7 @@ import java.util.jar.JarFile;
 
 import javax.swing.Box;
 import javax.swing.JButton;
+import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
@@ -25,7 +26,7 @@ import javax.swing.JTextField;
 
 public class ASInstallerFrame extends JFrame {
 	
-	private static final long serialVersionUID = 316486537931642186L;
+	private static final long serialVersionUID = 1L;
 	private JTextField textField;
 	private JButton install;
 	
@@ -102,7 +103,7 @@ public static void copyFile(File sourceFile, File destFile) throws IOException {
 		jarFile.close();
 		File[] mods = modsFolder.listFiles();
 		for (File testMod : mods){
-			if (testMod.getName().matches("^AutoSwitch(Mod)?-v\\d\\.\\d(\\.\\d)?-mc\\d\\.\\d(\\.\\d)?\\.(jar|zip)$")){
+			if (testMod.getName().matches("^AutoSwitch(Mod)?-v\\d\\.\\d(\\.\\d)?-mc(beta)?\\d\\.\\d(\\.\\d)?\\.(jar|zip)$")){
 				testMod.delete();
 			}
 		}
@@ -116,7 +117,7 @@ public static void copyFile(File sourceFile, File destFile) throws IOException {
 	}
 
 	public ASInstallerFrame() throws IOException {
-		
+		final ASInstallerFrame frame = this;
 		Box superBox = Box.createHorizontalBox();
 		superBox.add(Box.createHorizontalStrut(10));
 		
@@ -130,9 +131,14 @@ public static void copyFile(File sourceFile, File destFile) throws IOException {
 		labelBox.add(Box.createHorizontalGlue());
 		content.add(labelBox);
 		
+		Box textBox = Box.createHorizontalBox();
 		textField = new JTextField();
 		textField.setText(getMinecraftClientDirectory());
-		content.add(textField);
+		textBox.add(textField);
+		textBox.add(Box.createHorizontalStrut(10));
+		JButton browseButton = new JButton("Browse");
+		textBox.add(browseButton);
+		content.add(textBox);
 		
 		content.add(Box.createVerticalStrut(10));
 		
@@ -206,6 +212,18 @@ public static void copyFile(File sourceFile, File destFile) throws IOException {
 					
 				} catch (URISyntaxException e) {
 					
+				}
+			}
+		});
+		
+		browseButton.addActionListener(new ActionListener(){
+			public void actionPerformed(ActionEvent ae) {
+				JFileChooser jfc = new JFileChooser();
+				jfc.setMultiSelectionEnabled(false);
+				jfc.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+				int result = jfc.showOpenDialog(frame);
+				if (result == JFileChooser.APPROVE_OPTION){
+					textField.setText(jfc.getSelectedFile().getAbsolutePath());
 				}
 			}
 		});
