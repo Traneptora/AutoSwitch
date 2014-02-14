@@ -1,11 +1,9 @@
 package thebombzen.mods.autoswitch;
 
-import java.io.IOException;
 import java.util.Set;
 
 import net.minecraft.block.Block;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.enchantment.Enchantment;
 import net.minecraft.enchantment.EnchantmentHelper;
 import net.minecraft.entity.EntityLivingBase;
@@ -22,13 +20,9 @@ import org.lwjgl.input.Mouse;
 
 import thebombzen.mods.thebombzenapi.ThebombzenAPIBaseMod;
 import thebombzen.mods.thebombzenapi.ThebombzenAPIConfiguration;
-import thebombzen.mods.thebombzenapi.client.ThebombzenAPIConfigScreen;
 import cpw.mods.fml.common.FMLCommonHandler;
 import cpw.mods.fml.common.Mod;
-import cpw.mods.fml.common.Mod.EventHandler;
 import cpw.mods.fml.common.Mod.Instance;
-import cpw.mods.fml.common.event.FMLInitializationEvent;
-import cpw.mods.fml.common.event.FMLPostInitializationEvent;
 import cpw.mods.fml.common.event.FMLPreInitializationEvent;
 import cpw.mods.fml.common.eventhandler.SubscribeEvent;
 import cpw.mods.fml.common.gameevent.TickEvent.ClientTickEvent;
@@ -114,11 +108,6 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 		// prevWorld = System.identityHashCode(mc.theWorld);
 	}
 
-	@Override
-	public ThebombzenAPIConfigScreen createConfigScreen(GuiScreen base) {
-		return new ConfigScreen(base);
-	}
-
 	private void debug(String string) {
 		debug("%s", string);
 	}
@@ -166,11 +155,6 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 	@Override
 	protected String getVersionFileURLString() {
 		return "https://dl.dropboxusercontent.com/u/51080973/Mods/AutoSwitch/ASVersion.txt";
-	}
-
-	@Override
-	public boolean hasConfigScreen() {
-		return true;
 	}
 
 	public boolean isToolBetter(ItemStack newItemStack, ItemStack oldItemStack,
@@ -590,12 +574,6 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 		return false;
 	}
 
-	@EventHandler
-	public void load(FMLInitializationEvent fmlie) {
-		FMLCommonHandler.instance().bus().register(this);
-		MinecraftForge.EVENT_BUS.register(this);
-	}
-
 	@SubscribeEvent
 	public void onEntityAttack(AttackEntityEvent event) {
 		if (!event.entity.worldObj.isRemote) {
@@ -608,15 +586,6 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 		} else if (entityAttackStage != STAGE_CANCELED) {
 			entitySwitchedOn = null;
 			entityAttackStage = STAGE_H0;
-		}
-	}
-
-	@EventHandler
-	public void postInit(FMLPostInitializationEvent event) {
-		try {
-			getConfiguration().load();
-		} catch (IOException ioe) {
-			throwException("Unable to open configuration!", ioe, true);
 		}
 	}
 
@@ -669,8 +638,9 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 		}
 	}
 
-	@EventHandler
-	public void preInit(FMLPreInitializationEvent event) {
+	public void init1(FMLPreInitializationEvent event) {
+		FMLCommonHandler.instance().bus().register(this);
+		MinecraftForge.EVENT_BUS.register(this);
 		configuration = new Configuration(this);
 	}
 
