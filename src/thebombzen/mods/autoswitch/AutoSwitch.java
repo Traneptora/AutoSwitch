@@ -175,16 +175,20 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 
 		float newStr = Tests.getDigSpeed(newItemStack, block, metadata);
 		float oldStr = Tests.getDigSpeed(oldItemStack, block, metadata);
-		float newBlockStr = Tests.getBlockStrength(newItemStack, world, x, y, z);
-		float oldBlockStr = Tests.getBlockStrength(oldItemStack, world, x, y, z);
+		float newBlockStr = Tests
+				.getBlockStrength(newItemStack, world, x, y, z);
+		float oldBlockStr = Tests
+				.getBlockStrength(oldItemStack, world, x, y, z);
 
 		if (newBlockStr == 0.0F && oldBlockStr == 0.0F) {
 			debug("Not switching because block is unbreakable by either item.");
 			return false;
 		}
 
-		boolean newHarvest = Tests.canHarvestBlock(newItemStack, block, metadata);
-		boolean oldHarvest = Tests.canHarvestBlock(oldItemStack, block, metadata);
+		boolean newHarvest = Tests.canHarvestBlock(newItemStack, block,
+				metadata);
+		boolean oldHarvest = Tests.canHarvestBlock(oldItemStack, block,
+				metadata);
 		debug("newBlockStr: %f, oldBlockStr %f", newBlockStr, oldBlockStr);
 		debug("newHarvest: %b, oldHarvest: %b", newHarvest, oldHarvest);
 		debug("newStrength: %f, oldStrength: %f", newStr, oldStr);
@@ -203,14 +207,16 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 			return false;
 		}
 
-		int newStandard = Tests.getToolStandardness(newItemStack, world, x, y, z);
-		int oldStandard = Tests.getToolStandardness(oldItemStack, world, x, y, z);
+		int newStandard = Tests.getToolStandardness(newItemStack, world, x, y,
+				z);
+		int oldStandard = Tests.getToolStandardness(oldItemStack, world, x, y,
+				z);
 		debug("newStandard: %d, oldStandard: %d", newStandard, oldStandard);
 
-		boolean newDamageable = Tests.isItemStackDamageableOnBlock(newItemStack,
-				world, x, y, z);
-		boolean oldDamageable = Tests.isItemStackDamageableOnBlock(oldItemStack,
-				world, x, y, z);
+		boolean newDamageable = Tests.isItemStackDamageableOnBlock(
+				newItemStack, world, x, y, z);
+		boolean oldDamageable = Tests.isItemStackDamageableOnBlock(
+				oldItemStack, world, x, y, z);
 		debug("newDamageable: %b, oldDamageable: %b", newDamageable,
 				oldDamageable);
 
@@ -279,16 +285,31 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 
 		debug("fortuneWorks: %b, newFortuneLevel: %d, oldFortuneLevel: %d",
 				fortuneWorks, newFortuneLevel, oldFortuneLevel);
-
-		if (fortuneWorks) {
-			if (newFortuneLevel > oldFortuneLevel) {
-				debug("Switching because new fortune, %d, is more than old, %d.",
-						newFortuneLevel, oldFortuneLevel);
+		if (newFortuneLevel > oldFortuneLevel) {
+			if (fortuneWorks) {
+				debug("Switching because new fortune is more than old, and new works.");
 				return true;
-			} else if (oldFortuneLevel > newFortuneLevel) {
-				debug("Not switching because old fortune, %d, is more than new, %d.",
-						oldFortuneLevel, newFortuneLevel);
+			} else {
+				if (oldStandard > 0) {
+					debug("Not switching because new fortune is more than old, and old replaces new.");
+					return false;
+				} else if (newStandard <= 0) {
+					debug("Not switching because new fortune is more than old, and new is weak.");
+					return false;
+				}
+			}
+		} else if (oldFortuneLevel > newFortuneLevel) {
+			if (fortuneWorks) {
+				debug("Not switching because old fortune is more than new, and old works.");
 				return false;
+			} else {
+				if (newStandard > 0) {
+					debug("Switching because old fortune is more than new, and new replaces old.");
+					return true;
+				} else if (oldStandard <= 0) {
+					debug("Switching because old fortune is more than new, and old is weak.");
+					return true;
+				}
 			}
 		}
 
@@ -323,8 +344,9 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 			}
 		}
 
-		Set<Enchantment> bothItemsEnchantments = Tests.getNonstandardNondamageEnchantmentsOnBothStacks(
-				newItemStack, oldItemStack);
+		Set<Enchantment> bothItemsEnchantments = Tests
+				.getNonstandardNondamageEnchantmentsOnBothStacks(newItemStack,
+						oldItemStack);
 
 		for (Enchantment enchantment : bothItemsEnchantments) {
 			int oldLevel = EnchantmentHelper.getEnchantmentLevel(
@@ -403,8 +425,10 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 			newDamage = Tests.getItemStackDamage(newItemStack);
 		}
 
-		oldDamage += Tests.getEnchantmentModifierLiving(oldItemStack, entityover);
-		newDamage += Tests.getEnchantmentModifierLiving(newItemStack, entityover);
+		oldDamage += Tests.getEnchantmentModifierLiving(oldItemStack,
+				entityover);
+		newDamage += Tests.getEnchantmentModifierLiving(newItemStack,
+				entityover);
 
 		debug("Old damage is %f, new damage is %f.", oldDamage, newDamage);
 
@@ -497,8 +521,9 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 			return false;
 		}
 
-		Set<Enchantment> bothItemsEnchantments = Tests.getNonstandardNondamageEnchantmentsOnBothStacks(
-				newItemStack, oldItemStack);
+		Set<Enchantment> bothItemsEnchantments = Tests
+				.getNonstandardNondamageEnchantmentsOnBothStacks(newItemStack,
+						oldItemStack);
 
 		for (Enchantment enchantment : bothItemsEnchantments) {
 			int oldLevel = EnchantmentHelper.getEnchantmentLevel(
@@ -516,13 +541,11 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 			}
 		}
 
-		if (Tests.isSword(newItemStack)
-				&& !Tests.isSword(oldItemStack)) {
+		if (Tests.isSword(newItemStack) && !Tests.isSword(oldItemStack)) {
 			debug("Switching because new weapon is sword and old isn't.");
 			return true;
 		}
-		if (Tests.isSword(oldItemStack)
-				&& !Tests.isSword(newItemStack)) {
+		if (Tests.isSword(oldItemStack) && !Tests.isSword(newItemStack)) {
 			debug("Not switching because old weapon is sword and new isn't.");
 			return false;
 		}
@@ -738,10 +761,12 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 		EntityPlayer entityplayer = mc.thePlayer;
 		entityplayer.inventory.currentItem = n;
 		String name;
-		if (entityplayer.inventory.mainInventory[n] == null){
+		if (entityplayer.inventory.mainInventory[n] == null) {
 			name = "Nothing";
 		} else {
-			UniqueIdentifier id = GameRegistry.findUniqueIdentifierFor(entityplayer.inventory.mainInventory[n].getItem());
+			UniqueIdentifier id = GameRegistry
+					.findUniqueIdentifierFor(entityplayer.inventory.mainInventory[n]
+							.getItem());
 			name = id.modId + ":" + id.name;
 		}
 		debug("Switching tools to %d, which is %s", n, name);
