@@ -22,7 +22,11 @@ public class ConfigScreen extends ThebombzenAPIConfigScreen {
 		// field_146127_k == id
 		if (button.id == 4911) {
 			try {
-				Desktop.getDesktop().edit(((Configuration)config).getExtraConfigFile());
+				try {
+					Desktop.getDesktop().edit(((Configuration)config).getExtraConfigFile());
+				} catch (UnsupportedOperationException e){
+					Desktop.getDesktop().open(((Configuration)config).getExtraConfigFile());
+				}
 			} catch (IOException e) {
 				mod.throwException("Unable to open file!", e, false);
 			}
