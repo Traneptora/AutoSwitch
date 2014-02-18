@@ -19,6 +19,7 @@ import net.minecraft.world.World;
 import net.minecraftforge.common.ForgeHooks;
 import thebombzen.mods.thebombzenapi.ThebombzenAPI;
 import cpw.mods.fml.common.ObfuscationReflectionHelper;
+import cpw.mods.fml.common.asm.transformers.deobf.FMLDeobfuscatingRemapper;
 import cpw.mods.fml.common.registry.GameRegistry;
 import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
@@ -117,7 +118,7 @@ public final class Tests {
 		Random zeroRandom = new NotSoRandom(true);
 		Random maxRandom = new NotSoRandom(false);
 		
-		ItemStack stackedBlock = ThebombzenAPI.invokePrivateMethod(block, Block.class, ObfuscationReflectionHelper.remapFieldNames(Block.class.getCanonicalName(), "createStackedBlock"), new Class<?>[]{ int.class }, metadata);
+		ItemStack stackedBlock = createStackedBlock(block, metadata);
 		List<ItemStack> stackedBlockList = Collections.singletonList(stackedBlock);
 		
 		List<ItemStack> defaultMaxRandom;
