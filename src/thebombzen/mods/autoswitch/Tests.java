@@ -1,5 +1,6 @@
 package thebombzen.mods.autoswitch;
 
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -17,6 +18,7 @@ import net.minecraft.item.ItemSword;
 import net.minecraft.world.World;
 import net.minecraftforge.common.ForgeHooks;
 import thebombzen.mods.thebombzenapi.ThebombzenAPI;
+import cpw.mods.fml.common.ObfuscationReflectionHelper;
 import cpw.mods.fml.common.registry.GameRegistry;
 import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
@@ -107,7 +109,32 @@ public final class Tests {
 			return true;
 		}
 
-		return block.canSilkHarvest(world, mc.thePlayer, x, y, z, metadata);
+		boolean silkHarvest = block.canSilkHarvest(world, mc.thePlayer, x, y, z, metadata);
+		if (!silkHarvest){
+			return false;
+		}
+		
+		Random zeroRandom = new NotSoRandom(true);
+		Random maxRandom = new NotSoRandom(false);
+		
+		ItemStack stackedBlock = ThebombzenAPI.invokePrivateMethod(block, Block.class, ObfuscationReflectionHelper.remapFieldNames(Block.class.getCanonicalName(), "createStackedBlock"), new Class<?>[]{ int.class }, metadata);
+		List<ItemStack> stackedBlockList = Collections.singletonList(stackedBlock);
+		
+		List<ItemStack> defaultMaxRandom;
+		List<ItemStack> defaultZeroRandom;
+		
+		fakeRandomForWorld(world, maxRandom);
+		defaultMaxRandom = block.getDrops(world, x, y, z, metadata, 0);
+
+		fakeRandomForWorld(world, zeroRandom);
+		defaultZeroRandom = block.getDrops(world, x, y, z, metadata, 0);
+		unFakeRandomForWorld();
+		
+		if (!ThebombzenAPI.areItemStackCollectionsEqual(stackedBlockList, defaultMaxRandom) || !ThebombzenAPI.areItemStackCollectionsEqual(stackedBlockList, defaultZeroRandom)){
+			return true;
+		} else {
+			return false;
+		}
 	}
 
 	private static void fakeItemForPlayer(ItemStack itemstack) {

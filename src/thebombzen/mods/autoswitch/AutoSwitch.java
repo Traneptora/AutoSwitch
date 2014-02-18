@@ -1,6 +1,7 @@
 package thebombzen.mods.autoswitch;
 
 import java.util.Set;
+import java.util.Arrays;
 
 import net.minecraft.block.Block;
 import net.minecraft.client.Minecraft;
@@ -665,6 +666,7 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 		FMLCommonHandler.instance().bus().register(this);
 		MinecraftForge.EVENT_BUS.register(this);
 		configuration = new Configuration(this);
+		FMLCommonHandler.instance().findContainerFor(this).getMetadata().authorList = Arrays.asList("Thebombzen");
 	}
 
 	private void switchBack() {
