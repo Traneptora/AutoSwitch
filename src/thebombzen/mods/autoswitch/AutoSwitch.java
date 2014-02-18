@@ -662,6 +662,7 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 		}
 	}
 
+	@Override
 	public void init1(FMLPreInitializationEvent event) {
 		FMLCommonHandler.instance().bus().register(this);
 		MinecraftForge.EVENT_BUS.register(this);
