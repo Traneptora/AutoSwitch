@@ -56,17 +56,21 @@ public class Configuration extends ThebombzenAPIConfiguration<ConfigOption> {
 		return false;
 	}
 	
+	public static Configuration getConfiguration() {
+		return (Configuration) AutoSwitch.instance.getConfiguration();
+	}
+
 	private Map<BlockItemIdentifier, Integer> customWeapons = new HashMap<BlockItemIdentifier, Integer>();
-
 	private final String defaultConfig;
-	private File extraConfigFile;
 
+	private File extraConfigFile;
 	private long extraConfigLastModified;
 	private Set<BlockItemIdentifier> fortuneNoWorks = new HashSet<BlockItemIdentifier>();
 	private Set<BlockItemIdentifier> fortuneWorks = new HashSet<BlockItemIdentifier>();
 	private Set<BlockToolPair> notStandardBlocksAndTools = new HashSet<BlockToolPair>();
 	private Set<BlockItemIdentifier> silkTouchNoWorks = new HashSet<BlockItemIdentifier>();
 	private Set<BlockItemIdentifier> silkTouchWorks = new HashSet<BlockItemIdentifier>();
+
 	private Set<BlockToolPair> standardBlocksAndTools = new HashSet<BlockToolPair>();
 
 	public Configuration(AutoSwitch autoSwitch) {
@@ -119,11 +123,11 @@ public class Configuration extends ThebombzenAPIConfiguration<ConfigOption> {
 	public int getPulseKeyCode() {
 		return Keyboard.getKeyIndex(getProperty(ConfigOption.PULSE_KEY));
 	}
-
+	
 	public int getToggleKeyCode() {
 		return Keyboard.getKeyIndex(getProperty(ConfigOption.TOGGLE_KEY));
 	}
-	
+
 	public int getToolSelectionMode() {
 		int toolSelectionMode = FAST_STANDARD;
 		if (getProperty(ConfigOption.TOOL_SELECTION_MODE).equalsIgnoreCase(
@@ -353,16 +357,12 @@ public class Configuration extends ThebombzenAPIConfiguration<ConfigOption> {
 			return false;
 		}
 	}
-
+	
 	private void writeExtraConfig() throws IOException {
 		FileWriter writer = new FileWriter(extraConfigFile);
 		writer.write(defaultConfig);
 		writer.flush();
 		writer.close();
-	}
-	
-	public static Configuration getConfiguration() {
-		return (Configuration) AutoSwitch.instance.getConfiguration();
 	}
 	
 }

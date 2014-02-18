@@ -27,9 +27,41 @@ import javax.swing.JTextField;
 public class ASInstallerFrame extends JFrame {
 	
 	private static final long serialVersionUID = 1L;
-	private JTextField textField;
-	private JButton install;
+	public static void copyFile(File sourceFile, File destFile) throws IOException {
+			
+		    if(!destFile.exists()) {
+		        destFile.createNewFile();
+		    }
 	
+		    FileChannel source = null;
+		    FileChannel destination = null;
+		    FileInputStream inStream = null;
+		    FileOutputStream outStream = null;
+		    
+		    try {
+		    	inStream = new FileInputStream(sourceFile);
+		    	outStream = new FileOutputStream(destFile);
+		        source = inStream.getChannel();
+		        destination = outStream.getChannel();
+	
+		        long count = 0;
+		        long size = source.size();              
+		        while((count += destination.transferFrom(source, count, size-count)) < size);
+		    } finally {
+		    	if (inStream != null){
+		    		inStream.close();
+		    	}
+		    	if (outStream != null){
+		    		outStream.close();
+		    	}
+		        if(source != null) {
+		            source.close();
+		        }
+		        if(destination != null) {
+		            destination.close();
+		        }
+		    }
+		}
 	public static String getMinecraftClientDirectory() throws IOException {
 		String name = System.getProperty("os.name");
 		if (name.toLowerCase().contains("windows")){
@@ -41,81 +73,15 @@ public class ASInstallerFrame extends JFrame {
 		}
 	}
 	
-	private void install(){
-		try {
-			install(textField.getText());
-		} catch (Exception e){
-			JOptionPane.showMessageDialog(this, "Error installing. Install manually.", "Error Installing", JOptionPane.ERROR_MESSAGE);
-		}
-	}
-	
-public static void copyFile(File sourceFile, File destFile) throws IOException {
-		
-	    if(!destFile.exists()) {
-	        destFile.createNewFile();
-	    }
-
-	    FileChannel source = null;
-	    FileChannel destination = null;
-	    FileInputStream inStream = null;
-	    FileOutputStream outStream = null;
-	    
-	    try {
-	    	inStream = new FileInputStream(sourceFile);
-	    	outStream = new FileOutputStream(destFile);
-	        source = inStream.getChannel();
-	        destination = outStream.getChannel();
-
-	        long count = 0;
-	        long size = source.size();              
-	        while((count += destination.transferFrom(source, count, size-count)) < size);
-	    } finally {
-	    	if (inStream != null){
-	    		inStream.close();
-	    	}
-	    	if (outStream != null){
-	    		outStream.close();
-	    	}
-	        if(source != null) {
-	            source.close();
-	        }
-	        if(destination != null) {
-	            destination.close();
-	        }
-	    }
-	}
-	
-	
-	private void install(String directory) throws Exception {
-		File dir = new File(directory);
-		if (!dir.isDirectory()){
-			JOptionPane.showMessageDialog(this, "Something's wrong with the given folder. Check spelling and try again.", "Hmmm...", JOptionPane.ERROR_MESSAGE);
-			return;
-		}
-		File modsFolder = new File(directory, "mods");
-		modsFolder.mkdir();
-		File file = new File(ASInstallerFrame.class.getProtectionDomain().getCodeSource().getLocation().toURI());
-		JarFile jarFile = new JarFile(file);
-		if (jarFile.getEntry("thebombzen/mods/autoswitch/installer/ASInstallerFrame.class") == null){
-			jarFile.close();
-			throw new Exception();
-		}
-		jarFile.close();
-		File[] mods = modsFolder.listFiles();
-		for (File testMod : mods){
-			if (testMod.getName().matches("^AutoSwitch(Mod)?-v\\d\\.\\d(\\.\\d)?-mc(beta)?\\d\\.\\d(\\.\\d)?\\.(jar|zip)$")){
-				testMod.delete();
-			}
-		}
-		copyFile(file, new File(modsFolder, file.getName()));
-		JOptionPane.showMessageDialog(this, "Successfully installed AutoSwitch!", "Success!", JOptionPane.INFORMATION_MESSAGE);
-		System.exit(0);
-	}
-	
 	public static void main(String[] args) throws IOException {
 		new ASInstallerFrame().setVisible(true);
 	}
-
+	
+	private JTextField textField;
+	
+private JButton install;
+	
+	
 	public ASInstallerFrame() throws IOException {
 		final ASInstallerFrame frame = this;
 		Box superBox = Box.createHorizontalBox();
@@ -238,6 +204,40 @@ public static void copyFile(File sourceFile, File destFile) throws IOException {
 		Dimension size = Toolkit.getDefaultToolkit().getScreenSize();
 		
 		this.setLocation((size.width - getWidth()) / 2, (size.height - getHeight()) / 2);
+	}
+	
+	private void install(){
+		try {
+			install(textField.getText());
+		} catch (Exception e){
+			JOptionPane.showMessageDialog(this, "Error installing. Install manually.", "Error Installing", JOptionPane.ERROR_MESSAGE);
+		}
+	}
+
+	private void install(String directory) throws Exception {
+		File dir = new File(directory);
+		if (!dir.isDirectory()){
+			JOptionPane.showMessageDialog(this, "Something's wrong with the given folder. Check spelling and try again.", "Hmmm...", JOptionPane.ERROR_MESSAGE);
+			return;
+		}
+		File modsFolder = new File(directory, "mods");
+		modsFolder.mkdir();
+		File file = new File(ASInstallerFrame.class.getProtectionDomain().getCodeSource().getLocation().toURI());
+		JarFile jarFile = new JarFile(file);
+		if (jarFile.getEntry("thebombzen/mods/autoswitch/installer/ASInstallerFrame.class") == null){
+			jarFile.close();
+			throw new Exception();
+		}
+		jarFile.close();
+		File[] mods = modsFolder.listFiles();
+		for (File testMod : mods){
+			if (testMod.getName().matches("^AutoSwitch(Mod)?-v\\d\\.\\d(\\.\\d)?-mc(beta)?\\d\\.\\d(\\.\\d)?\\.(jar|zip)$")){
+				testMod.delete();
+			}
+		}
+		copyFile(file, new File(modsFolder, file.getName()));
+		JOptionPane.showMessageDialog(this, "Successfully installed AutoSwitch!", "Success!", JOptionPane.INFORMATION_MESSAGE);
+		System.exit(0);
 	}
 	
 }

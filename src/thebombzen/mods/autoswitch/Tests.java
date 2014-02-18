@@ -164,25 +164,52 @@ public final class Tests {
 		randomCurrentlyFaked = true;
 	}
 	
-	private static void unFakeItemForPlayer() {
-		ItemStack fakedStack = mc.thePlayer.inventory.mainInventory[mc.thePlayer.inventory.currentItem];
-		mc.thePlayer.inventory.mainInventory[mc.thePlayer.inventory.currentItem] = prevHeldItem;
-		if (fakedStack != null) {
-			mc.thePlayer.getAttributeMap().removeAttributeModifiers(
-					fakedStack.getAttributeModifiers());
+	public static float getBlockHardness(World world, int x, int y, int z) {
+		Block block = world.getBlock(x, y, z);
+		if (block == null) {
+			return 0;
+		} else {
+			// func_149712_f == getBlockHardness
+			return block.getBlockHardness(world, x, y, z);
 		}
-		if (prevHeldItem != null) {
-			mc.thePlayer.getAttributeMap().applyAttributeModifiers(
-					prevHeldItem.getAttributeModifiers());
-		}
-		heldItemCurrentlyFaked = false;
 	}
 
-	private static void unFakeRandomForWorld() {
-		fakedWorld.rand = prevRandom;
-		prevRandom = null;
-		fakedWorld = null;
-		randomCurrentlyFaked = false;
+	public static float getBlockStrength(ItemStack itemstack, World world, int x,
+			int y, int z) {
+		Block block = world.getBlock(x, y, z);
+		fakeItemForPlayer(itemstack);
+		float str = ForgeHooks.blockStrength(block, mc.thePlayer, world, x, y,
+				z);
+		unFakeItemForPlayer();
+		return str;
+	}
+	
+	public static float getDigSpeed(ItemStack itemstack, Block block, int metadata) {
+		return itemstack == null ? 1.0F : itemstack.getItem().getDigSpeed(
+				itemstack, block, metadata);
+	}
+	
+	public static float getEff(float str, ItemStack itemstack) {
+		if (str <= 1.5F) {
+			return str;
+		}
+		fakeItemForPlayer(itemstack);
+		float effLevel = EnchantmentHelper.getEfficiencyModifier(mc.thePlayer);
+		unFakeItemForPlayer();
+		if (effLevel == 0) {
+			return str;
+		}
+		return str + effLevel * effLevel + 1;
+	}
+	
+
+	public static float getEnchantmentModifierLiving(ItemStack itemstack,
+			EntityLivingBase entityover) {
+		fakeItemForPlayer(itemstack);
+		float modifier = EnchantmentHelper.getEnchantmentModifierLiving(
+				mc.thePlayer, entityover);
+		unFakeItemForPlayer();
+		return modifier;
 	}
 	
 	public static double getItemStackDamage(ItemStack itemStack){
@@ -236,7 +263,6 @@ public final class Tests {
 
 		return ret;
 	}
-	
 
 	public static int getToolStandardness(ItemStack itemstack, World world, int x,
 			int y, int z) {
@@ -263,12 +289,24 @@ public final class Tests {
 			}
 		}
 	}
-	
-	public static float getDigSpeed(ItemStack itemstack, Block block, int metadata) {
-		return itemstack == null ? 1.0F : itemstack.getItem().getDigSpeed(
-				itemstack, block, metadata);
+
+	public static boolean isItemStackDamageable(ItemStack itemstack) {
+		if (itemstack == null) {
+			return false;
+		}
+		return itemstack.getItem().isDamageable();
 	}
 	
+	
+
+	public static boolean isItemStackDamageableOnBlock(ItemStack itemstack,
+			World world, int x, int y, int z) {
+		if (!isItemStackDamageable(itemstack)) {
+			return false;
+		}
+		return getBlockHardness(world, x, y, z) > 0.0F;
+	}
+
 	public static boolean isSword(ItemStack itemstack) {
 		if (itemstack == null){
 			return false;
@@ -281,65 +319,27 @@ public final class Tests {
 		}
 		return false;
 	}
-
-	public static boolean isItemStackDamageable(ItemStack itemstack) {
-		if (itemstack == null) {
-			return false;
-		}
-		return itemstack.getItem().isDamageable();
-	}
-
-	public static boolean isItemStackDamageableOnBlock(ItemStack itemstack,
-			World world, int x, int y, int z) {
-		if (!isItemStackDamageable(itemstack)) {
-			return false;
-		}
-		return getBlockHardness(world, x, y, z) > 0.0F;
-	}
-	
 	
 
-	public static float getBlockHardness(World world, int x, int y, int z) {
-		Block block = world.getBlock(x, y, z);
-		if (block == null) {
-			return 0;
-		} else {
-			// func_149712_f == getBlockHardness
-			return block.getBlockHardness(world, x, y, z);
+	private static void unFakeItemForPlayer() {
+		ItemStack fakedStack = mc.thePlayer.inventory.mainInventory[mc.thePlayer.inventory.currentItem];
+		mc.thePlayer.inventory.mainInventory[mc.thePlayer.inventory.currentItem] = prevHeldItem;
+		if (fakedStack != null) {
+			mc.thePlayer.getAttributeMap().removeAttributeModifiers(
+					fakedStack.getAttributeModifiers());
 		}
+		if (prevHeldItem != null) {
+			mc.thePlayer.getAttributeMap().applyAttributeModifiers(
+					prevHeldItem.getAttributeModifiers());
+		}
+		heldItemCurrentlyFaked = false;
 	}
 
-	public static float getBlockStrength(ItemStack itemstack, World world, int x,
-			int y, int z) {
-		Block block = world.getBlock(x, y, z);
-		fakeItemForPlayer(itemstack);
-		float str = ForgeHooks.blockStrength(block, mc.thePlayer, world, x, y,
-				z);
-		unFakeItemForPlayer();
-		return str;
-	}
-	
-
-	public static float getEff(float str, ItemStack itemstack) {
-		if (str <= 1.5F) {
-			return str;
-		}
-		fakeItemForPlayer(itemstack);
-		float effLevel = EnchantmentHelper.getEfficiencyModifier(mc.thePlayer);
-		unFakeItemForPlayer();
-		if (effLevel == 0) {
-			return str;
-		}
-		return str + effLevel * effLevel + 1;
-	}
-
-	public static float getEnchantmentModifierLiving(ItemStack itemstack,
-			EntityLivingBase entityover) {
-		fakeItemForPlayer(itemstack);
-		float modifier = EnchantmentHelper.getEnchantmentModifierLiving(
-				mc.thePlayer, entityover);
-		unFakeItemForPlayer();
-		return modifier;
+	private static void unFakeRandomForWorld() {
+		fakedWorld.rand = prevRandom;
+		prevRandom = null;
+		fakedWorld = null;
+		randomCurrentlyFaked = false;
 	}
 	
 	private Tests() {

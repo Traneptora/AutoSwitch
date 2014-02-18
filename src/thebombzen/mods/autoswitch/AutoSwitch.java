@@ -125,6 +125,11 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 	}
 
 	@Override
+	public String getDownloadLocationURLString() {
+		return "http://is.gd/ThebombzensMods#AutoSwitch";
+	}
+
+	@Override
 	public String getLongName() {
 		return "AutoSwitch";
 	}
@@ -156,6 +161,14 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 	@Override
 	protected String getVersionFileURLString() {
 		return "https://dl.dropboxusercontent.com/u/51080973/Mods/AutoSwitch/ASVersion.txt";
+	}
+
+	@Override
+	public void init1(FMLPreInitializationEvent event) {
+		FMLCommonHandler.instance().bus().register(this);
+		MinecraftForge.EVENT_BUS.register(this);
+		configuration = new Configuration(this);
+		FMLCommonHandler.instance().findContainerFor(this).getMetadata().authorList = Arrays.asList("Thebombzen");
 	}
 
 	public boolean isToolBetter(ItemStack newItemStack, ItemStack oldItemStack,
@@ -662,14 +675,6 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 		}
 	}
 
-	@Override
-	public void init1(FMLPreInitializationEvent event) {
-		FMLCommonHandler.instance().bus().register(this);
-		MinecraftForge.EVENT_BUS.register(this);
-		configuration = new Configuration(this);
-		FMLCommonHandler.instance().findContainerFor(this).getMetadata().authorList = Arrays.asList("Thebombzen");
-	}
-
 	private void switchBack() {
 		if (switched) {
 			mc.thePlayer.inventory.currentItem = prevtool;
@@ -773,11 +778,6 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 			name = id.modId + ":" + id.name;
 		}
 		debug("Switching tools to %d, which is %s", n, name);
-	}
-
-	@Override
-	public String getDownloadLocationURLString() {
-		return "http://is.gd/ThebombzensMods#AutoSwitch";
 	}
 
 }
