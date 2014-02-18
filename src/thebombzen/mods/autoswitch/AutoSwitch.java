@@ -1,7 +1,7 @@
 package thebombzen.mods.autoswitch;
 
-import java.util.Set;
 import java.util.Arrays;
+import java.util.Set;
 
 import net.minecraft.block.Block;
 import net.minecraft.client.Minecraft;
