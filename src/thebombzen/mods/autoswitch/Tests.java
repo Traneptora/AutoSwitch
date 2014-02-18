@@ -18,8 +18,6 @@ import net.minecraft.item.ItemSword;
 import net.minecraft.world.World;
 import net.minecraftforge.common.ForgeHooks;
 import thebombzen.mods.thebombzenapi.ThebombzenAPI;
-import cpw.mods.fml.common.ObfuscationReflectionHelper;
-import cpw.mods.fml.common.asm.transformers.deobf.FMLDeobfuscatingRemapper;
 import cpw.mods.fml.common.registry.GameRegistry;
 import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
@@ -48,9 +46,11 @@ public final class Tests {
 	
 
 	public static ItemStack createStackedBlock(Block block, int metadata) {
-		return ThebombzenAPI.invokePrivateMethod(block, Block.class,
+		/*return ThebombzenAPI.invokePrivateMethod(block, Block.class,
 				new String[] { "createStackedBlock", "func_149644_j", "j" },
 				new Class<?>[] { int.class }, metadata);
+			*/
+		return ThebombzenAPI.invokePrivateMethod(block, Block.class, "createStackedBlock", new Class<?>[]{int.class}, ItemStack.class, metadata);
 	}
 	
 	public static boolean doesFortuneWorkOnBlock(World world, int x, int y, int z) {
