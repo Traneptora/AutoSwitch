@@ -20,7 +20,6 @@ import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
 
 import thebombzen.mods.thebombzenapi.ThebombzenAPIBaseMod;
-import thebombzen.mods.thebombzenapi.ThebombzenAPIConfiguration;
 import cpw.mods.fml.common.FMLCommonHandler;
 import cpw.mods.fml.common.Mod;
 import cpw.mods.fml.common.Mod.Instance;
@@ -119,8 +118,9 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 		}
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
-	public ThebombzenAPIConfiguration<?> getConfiguration() {
+	public Configuration getConfiguration() {
 		return configuration;
 	}
 

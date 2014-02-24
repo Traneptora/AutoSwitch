@@ -62,9 +62,9 @@ public final class Tests {
 			return false;
 		}
 
-		if (Configuration.getConfiguration().isFortuneOverriddenToNotWork(block, metadata)) {
+		if (AutoSwitch.instance.getConfiguration().isFortuneOverriddenToNotWork(block, metadata)) {
 			return false;
-		} else if (Configuration.getConfiguration().isFortuneOverriddenToWork(block, metadata)) {
+		} else if (AutoSwitch.instance.getConfiguration().isFortuneOverriddenToWork(block, metadata)) {
 			return true;
 		}
 
@@ -104,9 +104,9 @@ public final class Tests {
 			return false;
 		}
 
-		if (Configuration.getConfiguration().isSilkTouchOverriddenToNotWork(block, metadata)) {
+		if (AutoSwitch.instance.getConfiguration().isSilkTouchOverriddenToNotWork(block, metadata)) {
 			return false;
-		} else if (Configuration.getConfiguration().isSilkTouchOverriddenToWork(block, metadata)) {
+		} else if (AutoSwitch.instance.getConfiguration().isSilkTouchOverriddenToWork(block, metadata)) {
 			return true;
 		}
 
@@ -271,10 +271,10 @@ public final class Tests {
 		}
 		Block block = world.getBlock(x, y, z);
 		int metadata = world.getBlockMetadata(x, y, z);
-		if (Configuration.getConfiguration().isToolOverriddenAsNotStandardOnBlock(itemstack,
+		if (AutoSwitch.instance.getConfiguration().isToolOverriddenAsNotStandardOnBlock(itemstack,
 				block, metadata)) {
 			return -2;
-		} else if (Configuration.getConfiguration().isToolOverriddenAsStandardOnBlock(itemstack,
+		} else if (AutoSwitch.instance.getConfiguration().isToolOverriddenAsStandardOnBlock(itemstack,
 				block, metadata)) {
 			return 2;
 		}

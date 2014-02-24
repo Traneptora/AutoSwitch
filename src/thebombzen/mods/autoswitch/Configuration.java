@@ -55,10 +55,6 @@ public class Configuration extends ThebombzenAPIConfiguration<ConfigOption> {
 		}
 		return false;
 	}
-	
-	public static Configuration getConfiguration() {
-		return (Configuration) AutoSwitch.instance.getConfiguration();
-	}
 
 	private Map<BlockItemIdentifier, Integer> customWeapons = new HashMap<BlockItemIdentifier, Integer>();
 	private final String defaultConfig;
