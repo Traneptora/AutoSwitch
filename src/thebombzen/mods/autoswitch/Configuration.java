@@ -86,12 +86,14 @@ public class Configuration extends ThebombzenAPIConfiguration<ConfigOption> {
 		} finally {
 			defaultConfig = builder.toString();
 		}
-		try {
-			PrintWriter w = new PrintWriter(new FileWriter(oldExtraConfigFile));
-			w.println("The AutoSwitch overrides file has moved to AutoSwitch_Overrides.txt");
-			w.close();
-		} catch (IOException ioe){
-			autoSwitch.throwException("Failed to fix redirect old config.", ioe, false);
+		if (oldExtraConfigFile.exists()){
+			try {
+				PrintWriter w = new PrintWriter(new FileWriter(oldExtraConfigFile));
+				w.println("The AutoSwitch overrides file has moved to AutoSwitch_Overrides.txt");
+				w.close();
+			} catch (IOException ioe){
+				autoSwitch.throwException("Failed to fix redirect old config.", ioe, false);
+			}
 		}
 	}
 
