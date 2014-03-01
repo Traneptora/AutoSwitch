@@ -270,6 +270,7 @@ public class Configuration extends ThebombzenAPIConfiguration<ConfigOption> {
 				}
 				break;
 			case 'S':
+			case 's':
 				int indexP = line.indexOf('>');
 				int indexM = line.indexOf('<');
 				String toolSub = "";
@@ -292,6 +293,7 @@ public class Configuration extends ThebombzenAPIConfiguration<ConfigOption> {
 				(plus ? standardBlocksAndTools : notStandardBlocksAndTools).add(new BlockToolPair(block, tool));
 				break;
 			case 'W':
+			case 'w':
 				indexP = line.lastIndexOf('>');
 				if (indexP < 0 || indexP >= line.length() - 1) {
 					AutoSwitch.instance.forceDebug("Error on line: %s", line);
