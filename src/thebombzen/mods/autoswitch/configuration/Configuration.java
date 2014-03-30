@@ -1,0 +1,551 @@
+package thebombzen.mods.autoswitch.configuration;
+
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Scanner;
+import java.util.Set;
+
+import net.minecraft.block.Block;
+import net.minecraft.item.ItemStack;
+
+import org.lwjgl.input.Keyboard;
+
+import thebombzen.mods.autoswitch.AutoSwitch;
+import thebombzen.mods.thebombzenapi.ThebombzenAPI;
+import thebombzen.mods.thebombzenapi.configuration.ConfigFormatException;
+import thebombzen.mods.thebombzenapi.configuration.ConfigOption;
+import thebombzen.mods.thebombzenapi.configuration.SingleMultiBoolean;
+import thebombzen.mods.thebombzenapi.configuration.ThebombzenAPIConfiguration;
+import cpw.mods.fml.common.registry.GameRegistry;
+import cpw.mods.fml.common.registry.GameRegistry.UniqueIdentifier;
+import cpw.mods.fml.relauncher.Side;
+import cpw.mods.fml.relauncher.SideOnly;
+
+/**
+ * This class oversees the configuration of AutoSwitch
+ * This uses the basic properties as well as its own advanced configuration
+ * @author thebombzen
+ */
+@SideOnly(Side.CLIENT)
+public class Configuration extends ThebombzenAPIConfiguration {
+
+	/**
+	 * The current version of the configuration.
+	 * 0: AS 4.0.0-4.2.0
+	 * 1: AS 4.3.0
+	 * 2: AS 4.3.1-4.3.4  // I placed a big bug in the config. Had to bump the revision.
+	 * 3: AS 4.4.0+ // More config configurability! :D
+	 */
+	public static final int CONFIG_VERSION = 3;
+	
+	public static final int FAST_STANDARD = 0;
+	public static final int SLOW_STANDARD = 1;
+	public static final int FAST_NONSTANDARD = 2;
+	
+	public static final int OVERRIDDEN_YES = 1;
+	public static final int OVERRIDDEN_NO = -1;
+	public static final int NOT_OVERRIDDEN = 0;
+	
+	public static final ConfigOption TOGGLE_KEY = new ConfigOption(Keyboard.getKeyIndex("F10"), "TOGGLE_KEY", "Toggle Key",
+			"This key toggles AutoSwitch.");
+	public static final ConfigOption PULSE_KEY = new ConfigOption(Keyboard.getKeyIndex("V"), "PULSE_KEY", "Pulse Key",
+			"This key temporarily toggles",
+			"AutoSwitch while it's held down.");
+	public static final ConfigOption DEFAULT_ENABLED = new ConfigOption(0, true, "DEFAULT_ENABED", "Enabled by default",
+			"This option determines whether to",
+			"enable AutoSwitch on new worlds",
+			"and on worlds AutoSwitch hasn't",
+			"been used on before.");
+	public static final ConfigOption TOOL_SELECTION_MODE = new ConfigOption("FAST STANDARD", new String[]{"Fast Standard", "Slow Standard", "Fast Nonstandard"},"TOOL_SELECTION_MODE", "Tool Selection Mode",
+			"FAST STANDARD picks the best standard tool,",
+			"    where faster is better.",
+			"SLOW STANDARD picks the best standard tool,",
+			"    where slower is better.",
+			"FAST NONSTANDARD picks the best tool,",
+			"    ignoring what's standard.");
+	public static final ConfigOption BLOCKS = new ConfigOption(SingleMultiBoolean.ALWAYS, "BLOCKS", "Use on blocks",
+			"Use AutoSwitch when digging blocks.");
+	public static final ConfigOption MOBS = new ConfigOption(SingleMultiBoolean.ALWAYS, "MOBS", "Use on mobs",
+			"Use AutoSwitch when attacking mobs.");
+	public static final ConfigOption DEBUG = new ConfigOption(false, "DEBUG", "Debug Logging",
+			"Log debug output to",
+			".minecraft/mods/AutoSwitch/DEBUG.txt");
+	public static final ConfigOption USE_IN_CREATIVE = new ConfigOption(true, "USE_IN_CREATIVE", "Use in creative",
+			"Use AutoSwitch when in creative mode");
+	public static final ConfigOption TREEFELLER_COMPAT = new ConfigOption(false, "TREEFELLER_COMPAT", "Detect Tree Feller",
+				"Automatically detect when",
+				"mcMMO Tree Feller is activated",
+				"and temporarily set the tool selection",
+				"mode to SLOW STANDARD.");
+	
+	private static int doesYesNoSetContainBlock(Set<? extends BlockItemIdentifier> no, Set<? extends BlockItemIdentifier> yes, Block block, int metadata){
+		if (doesSetContainBlock(no, block, metadata)){
+			return OVERRIDDEN_NO;
+		} else if (doesSetContainBlock(yes, block,  metadata)){
+			return OVERRIDDEN_YES;
+		} else {
+			return NOT_OVERRIDDEN;
+		}
+	}
+	
+	private static boolean doesSetContainBlock(Set<? extends BlockItemIdentifier> set, Block block, int metadata){
+		for (BlockItemIdentifier test : set) {
+			if (test.contains(block, metadata)){
+				return true;
+			}
+		}
+		return false;
+	}
+	
+	private static int doesYesNoSetContainToolAndBlock(Set<? extends BlockToolPair> no, Set<? extends BlockToolPair> yes, ItemStack tool, Block block, int metadata){
+		if (doesSetContainToolAndBlock(no, tool, block, metadata)){
+			return OVERRIDDEN_NO;
+		} else if (doesSetContainToolAndBlock(yes, tool, block,  metadata)){
+			return OVERRIDDEN_YES;
+		} else {
+			return NOT_OVERRIDDEN;
+		}
+	}
+
+	private static boolean doesSetContainToolAndBlock(Set<? extends BlockToolPair> set, ItemStack tool, Block block, int metadata){
+		for (BlockToolPair pair : set){
+			if (pair.getBlock().contains(block, metadata) && pair.getTool().contains(tool)){
+				return true;
+			}
+		}
+		return false;
+	}
+	
+	private Map<BlockItemIdentifier, Integer> customWeapons = new HashMap<BlockItemIdentifier, Integer>();
+	private final String defaultConfig;
+
+	private File extraConfigFile;
+	private long extraConfigLastModified;
+	private Set<BlockItemIdentifier> fortuneNoWorks = new HashSet<BlockItemIdentifier>();
+	private Set<BlockItemIdentifier> fortuneWorks = new HashSet<BlockItemIdentifier>();
+	private Set<BlockToolPair> standardBlocksAndTools = new HashSet<BlockToolPair>();
+	private Set<BlockToolPair> notStandardBlocksAndTools = new HashSet<BlockToolPair>();
+	private Set<BlockItemIdentifier> silkTouchNoWorks = new HashSet<BlockItemIdentifier>();
+	private Set<BlockItemIdentifier> silkTouchWorks = new HashSet<BlockItemIdentifier>();
+	private Set<BlockItemIdentifier> ignoreFortune = new HashSet<BlockItemIdentifier>();
+	private Set<BlockItemIdentifier> ignoreSilkTouch = new HashSet<BlockItemIdentifier>();
+	private Set<BlockItemIdentifier> fastStandardOverrides = new HashSet<BlockItemIdentifier>();
+	private Set<BlockItemIdentifier> slowStandardOverrides = new HashSet<BlockItemIdentifier>();
+	private Set<BlockItemIdentifier> fastNonStandardOverrides = new HashSet<BlockItemIdentifier>();
+	private Set<BlockToolPair> harvestWorks = new HashSet<BlockToolPair>();
+	private Set<BlockToolPair> harvestNoWorks = new HashSet<BlockToolPair>();
+	private Set<BlockToolPair> damageableYes = new HashSet<BlockToolPair>();
+	private Set<BlockToolPair> damageableNo = new HashSet<BlockToolPair>();
+
+	public Configuration(AutoSwitch autoSwitch) {
+		super(autoSwitch);
+		extraConfigFile = new File(ThebombzenAPI.sideSpecificUtilities.getMinecraftDirectory() + File.separator + "config" + File.separator + "AutoSwitch_Overrides.txt");
+		File oldExtraConfigFile = new File(extraConfigFile.getParentFile(), "AutoSwitch_Overrides.cfg");
+		StringBuilder builder = new StringBuilder();
+		try {
+			BufferedReader reader = new BufferedReader(new InputStreamReader(ThebombzenAPI.getResourceAsStream(autoSwitch, "AutoSwitch_Overrides.txt")));
+			String line;
+			while (null != (line = reader.readLine())){
+				builder.append(line).append(ThebombzenAPI.NEWLINE);
+			}
+			reader.close();
+		} catch (IOException ioe){
+			autoSwitch.throwException("Could not read default config!", ioe, true);
+		} finally {
+			defaultConfig = builder.toString();
+		}
+		if (oldExtraConfigFile.exists()){
+			try {
+				PrintWriter w = new PrintWriter(new FileWriter(oldExtraConfigFile));
+				w.println("The AutoSwitch overrides file has moved to AutoSwitch_Overrides.txt");
+				w.close();
+			} catch (IOException ioe){
+				autoSwitch.throwException("Failed to fix redirect old config.", ioe, false);
+			}
+		}
+	}
+
+	@Override
+	public ConfigOption[] getAllOptions() {
+		return new ConfigOption[]{TOGGLE_KEY, PULSE_KEY, DEFAULT_ENABLED, TOOL_SELECTION_MODE, BLOCKS, MOBS, DEBUG, USE_IN_CREATIVE, TREEFELLER_COMPAT};
+	}
+
+	public int getCustomWeaponDamage(ItemStack itemstack) {
+		
+		if (itemstack == null) {
+			return -1;
+		}
+		
+		UniqueIdentifier id = GameRegistry.findUniqueIdentifierFor(itemstack.getItem());
+		
+		for (BlockItemIdentifier itemID : customWeapons.keySet()){
+			if (itemID.contains(id.modId, id.name, itemstack.getItemDamage())){
+				return customWeapons.get(itemID);
+			}
+		}
+		
+		return -1;
+	}
+
+	public File getExtraConfigFile() {
+		return extraConfigFile;
+	}
+
+	public int getToolSelectionMode(Block block, int metadata) {
+		if (getBooleanProperty(TREEFELLER_COMPAT) && AutoSwitch.instance.isTreefellerOn()){
+			return SLOW_STANDARD;
+		}
+		if (this.isSlowStandardOverridden(block, metadata)){
+			return SLOW_STANDARD;
+		} else if (this.isFastNonStandardOverridden(block, metadata)){
+			return FAST_NONSTANDARD;
+		} else if (this.isFastStandardOverridden(block, metadata)){
+			return FAST_STANDARD;
+		}
+		int toolSelectionMode = FAST_STANDARD;
+		if (getStringProperty(TOOL_SELECTION_MODE).equalsIgnoreCase(
+				"Fast Standard")) {
+			toolSelectionMode = FAST_STANDARD;
+		} else if (getStringProperty(TOOL_SELECTION_MODE)
+				.equalsIgnoreCase("Slow Standard")) {
+			toolSelectionMode = SLOW_STANDARD;
+		} else if (getStringProperty(TOOL_SELECTION_MODE)
+				.equalsIgnoreCase("Fast Nonstandard")) {
+			toolSelectionMode = FAST_NONSTANDARD;
+		} else {
+			setToolSelectionMode(FAST_STANDARD);
+		}
+		return toolSelectionMode;
+	}
+
+	private boolean isFastNonStandardOverridden(Block block, int metadata){
+		return doesSetContainBlock(fastNonStandardOverrides, block, metadata);
+	}
+
+	private boolean isFastStandardOverridden(Block block, int metadata){
+		return doesSetContainBlock(fastStandardOverrides, block, metadata);
+	}
+	
+	public int getFortuneOverrideState(Block block, int metadata){
+		return doesYesNoSetContainBlock(fortuneNoWorks, fortuneWorks, block, metadata);
+	}
+	
+	public boolean isSilkTouchOverriddenToWork(Block block, int metadata) {
+		return doesSetContainBlock(silkTouchWorks, block, metadata);
+	}
+	
+	public int getSilkTouchOverrideState(Block block, int metadata){
+		return doesYesNoSetContainBlock(silkTouchNoWorks, silkTouchWorks, block, metadata);
+	}
+	
+	private boolean isSlowStandardOverridden(Block block, int metadata){
+		return doesSetContainBlock(slowStandardOverrides, block, metadata);
+	}
+	
+	public int getStandardToolOverrideState(ItemStack tool, Block block, int metadata){
+		return doesYesNoSetContainToolAndBlock(notStandardBlocksAndTools, standardBlocksAndTools, tool, block, metadata);
+	}
+	
+	public int getHarvestOverrideState(ItemStack tool, Block block, int metadata){
+		return doesYesNoSetContainToolAndBlock(harvestNoWorks, harvestWorks, tool, block, metadata);
+	}
+	
+	public int getDamageableOverrideState(ItemStack tool, Block block, int metadata){
+		return doesYesNoSetContainToolAndBlock(damageableNo, damageableYes, tool, block, metadata);
+	}
+
+	@Override
+	protected void loadProperties() throws IOException {
+		super.loadProperties();
+		AutoSwitch.instance.setToggleKeyCode(DEFAULT_ENABLED.getDefaultToggleIndex(), getKeyCodeProperty(TOGGLE_KEY));
+		if (!extraConfigFile.exists()) {
+			writeExtraConfig();
+			parseConfig(defaultConfig);
+			return;
+		}
+		StringBuilder sb = new StringBuilder();
+		BufferedReader reader = new BufferedReader(new FileReader(extraConfigFile));
+		String s;
+		while (null != (s = reader.readLine())) {
+			sb.append(s).append(ThebombzenAPI.NEWLINE);
+		}
+		reader.close();
+		parseConfig(sb.toString());
+		extraConfigLastModified = getExtraConfigFile().lastModified();
+	}
+	
+	private void parseBlockToolPairOverride(String line, Set<BlockToolPair> no, Set<BlockToolPair> yes){
+		int indexGreaterThan = line.indexOf('>');
+		int indexLessThan = line.indexOf('<');
+		String toolSub = "";
+		String blockSub = "";
+		boolean plus = false;
+		if (indexGreaterThan > 0 && indexLessThan < 0) {
+			toolSub = line.substring(1, indexGreaterThan);
+			blockSub = line.substring(indexGreaterThan + 1);
+			plus = true;
+		} else if (indexLessThan > 0 && indexGreaterThan < 0) {
+			toolSub = line.substring(1, indexLessThan);
+			blockSub = line.substring(indexLessThan + 1);
+			plus = false;
+		} else {
+			AutoSwitch.instance.forceDebug("Error on line: %s", line);
+			return;
+		}
+		try {
+			BlockItemIdentifier block = BlockItemIdentifier.parseBlockItemIdentifier(blockSub);
+			BlockItemIdentifier tool = BlockItemIdentifier.parseBlockItemIdentifier(toolSub);
+			(plus ? yes : no).add(new BlockToolPair(block, tool));
+		} catch (ConfigFormatException e){
+			e.printStackTrace();
+			AutoSwitch.instance.forceDebug("Error on line: %s", line);
+		}
+	}
+
+	protected void parseConfig(String config) {
+		fortuneNoWorks.clear();
+		fortuneWorks.clear();
+		notStandardBlocksAndTools.clear();
+		silkTouchNoWorks.clear();
+		silkTouchWorks.clear();
+		standardBlocksAndTools.clear();
+		customWeapons.clear();
+		Scanner s = new Scanner(config);
+		s.useDelimiter(ThebombzenAPI.NEWLINE);
+		int version = -1;
+		while (s.hasNext()) {
+			String line = s.next();
+			int index = line.indexOf('#');
+			if (index >= 0) {
+				line = line.substring(0, index);
+			}
+			line = line.replaceAll("\\s", "");
+			if (line.length() == 0) {
+				continue;
+			} else if (line.length() < 2) {
+				AutoSwitch.instance.forceDebug("Error on line: %s", line);
+				continue;
+			}
+			char first = line.charAt(0);
+			switch (first) {
+			case 'R':
+			case 'r':
+				String sub = line.substring(1);
+				try {
+					version = ThebombzenAPI.parseInteger(sub);
+				} catch (NumberFormatException nfe) {
+					version = -1;
+				}
+				if (version != CONFIG_VERSION) {
+					try {
+						writeExtraConfig();
+					} catch (IOException ioe) {
+						mod.throwException("Could not write config file!", ioe,
+								true);
+					} finally {
+						parseConfig(defaultConfig);
+					}
+					s.close();
+					return;
+				}
+				break;
+			case 'T':
+			case 't':
+				char second = line.charAt(1);
+				if (second == '>') {
+					try {
+						silkTouchWorks.add(BlockItemIdentifier.parseBlockItemIdentifier(line.substring(2)));
+					} catch (ConfigFormatException e){
+						AutoSwitch.instance.forceDebug("Error on line: %s", line);
+					}
+				} else if (second == '<') {
+					try {
+						if (line.length() < 3){
+							throw new ConfigFormatException();
+						}
+						if (line.charAt(2) == '<'){
+							ignoreSilkTouch.add(BlockItemIdentifier.parseBlockItemIdentifier(line.substring(3)));
+						} else {
+							silkTouchNoWorks.add(BlockItemIdentifier.parseBlockItemIdentifier(line.substring(2)));
+						}
+						
+					} catch (ConfigFormatException e){
+						AutoSwitch.instance.forceDebug("Error on line: %s", line);
+					}
+							
+				} else {
+					AutoSwitch.instance.forceDebug("Error on line: %s", line);
+					continue;
+				}
+				break;
+			case 'F':
+			case 'f':
+				second = line.charAt(1);
+				if (second == '>') {
+					try {
+						fortuneWorks.add(BlockItemIdentifier.parseBlockItemIdentifier(line.substring(2)));
+					} catch (ConfigFormatException e){
+						AutoSwitch.instance.forceDebug("Error on line: %s", line);
+					}
+				} else if (second == '<') {
+					try {
+						if (line.length() < 3){
+							throw new ConfigFormatException();
+						}
+						if (line.charAt(2) == '<'){
+							ignoreFortune.add(BlockItemIdentifier.parseBlockItemIdentifier(line.substring(3)));
+						} else {
+							fortuneNoWorks.add(BlockItemIdentifier.parseBlockItemIdentifier(line.substring(2)));
+						}
+					} catch (ConfigFormatException e){
+						AutoSwitch.instance.forceDebug("Error on line: %s", line);
+					}
+				} else {
+					AutoSwitch.instance.forceDebug("Error on line: %s", line);
+					continue;
+				}
+				break;
+			case 'S':
+			case 's':
+				this.parseBlockToolPairOverride(line, notStandardBlocksAndTools, standardBlocksAndTools);
+				break;
+			case 'H':
+			case 'h':
+				this.parseBlockToolPairOverride(line, harvestNoWorks, harvestWorks);
+				break;
+			case 'D':
+			case 'd':
+				this.parseBlockToolPairOverride(line, damageableNo, damageableYes);
+				break;
+			case 'M':
+			case 'm':
+				int indexE = line.indexOf('=');
+				if (indexE < 0 || indexE >= line.length() - 1) {
+					AutoSwitch.instance.forceDebug("Error on line: %s", line);
+					continue;
+				}
+				String blockSub = line.substring(1, indexE);
+				String typeSub = line.substring(indexE + 1).toLowerCase();
+				//System.out.println(blockSub + "=" + typeSub);
+				try {
+					BlockItemIdentifier block = BlockItemIdentifier.parseBlockItemIdentifier(blockSub);
+					Set<BlockItemIdentifier> setToAdd;
+					if (typeSub.contains("fast")){
+						if (typeSub.contains("non")){
+							setToAdd = fastNonStandardOverrides;
+						} else {
+							setToAdd = fastStandardOverrides;
+						}
+					} else if (typeSub.startsWith("s") || typeSub.contains("slow")){
+						setToAdd = slowStandardOverrides;
+					} else if (typeSub.contains("f")){
+						if (typeSub.contains("non")){
+							setToAdd = fastNonStandardOverrides;
+						} else {
+							setToAdd = fastStandardOverrides;
+						}
+					} else if (typeSub.contains("s")){
+						setToAdd = slowStandardOverrides;
+					} else {
+						throw new ConfigFormatException();
+					}
+					setToAdd.add(block);
+				} catch (ConfigFormatException e){
+					AutoSwitch.instance.forceDebug("Error on line: %s", line);
+					continue;
+				}
+				break;
+			case 'W':
+			case 'w':
+				indexE = line.lastIndexOf('=');
+				if (indexE < 0 || indexE >= line.length() - 1) {
+					AutoSwitch.instance.forceDebug("Error on line: %s", line);
+					continue;
+				}
+				sub = line.substring(1, indexE);
+				String damageString = line.substring(indexE + 1);
+				Integer damage = null;
+				try {
+					damage = ThebombzenAPI.parseInteger(damageString);
+				} catch (NumberFormatException nfe) {
+					AutoSwitch.instance.forceDebug("Error on line: %s", line);
+					continue;
+				}
+				try {
+					BlockItemIdentifier tool = BlockItemIdentifier.parseBlockItemIdentifier(sub);
+					customWeapons.put(tool, damage);
+				} catch (ConfigFormatException e){
+					AutoSwitch.instance.forceDebug("Error on line: %s", line);
+				}
+			}
+		}
+		if (version != CONFIG_VERSION) {
+			try {
+				writeExtraConfig();
+			} catch (IOException ioe) {
+				mod.throwException("Could not write config file!", ioe, true);
+			} finally {
+				parseConfig(defaultConfig);
+			}
+		}
+		s.close();
+		//System.out.println(notStandardBlocksAndTools.toString());
+	}
+
+	@Override
+	protected void setPropertyWithoutSave(ConfigOption option,
+			String value) {
+		super.setPropertyWithoutSave(option, value);
+		if (option.equals(TOGGLE_KEY)) {
+			mod.setToggleKeyCode(0, Keyboard.getKeyIndex(value));
+		}
+	}
+
+	public void setToolSelectionMode(int mode) {
+		if (mode == FAST_STANDARD) {
+			setProperty(TOOL_SELECTION_MODE, "Fast Standard");
+		} else if (mode == SLOW_STANDARD) {
+			setProperty(TOOL_SELECTION_MODE, "Slow Standard");
+		} else if (mode == FAST_NONSTANDARD) {
+			setProperty(TOOL_SELECTION_MODE, "Fast Nonstandard");
+		} else {
+			this.setToolSelectionMode(FAST_STANDARD);
+		}
+	}
+
+	public boolean shouldIgnoreFortune(Block block, int metadata){
+		return doesSetContainBlock(ignoreFortune, block, metadata);
+	}
+
+	public boolean shouldIgnoreSilkTouch(Block block, int metadata){
+		return doesSetContainBlock(ignoreSilkTouch, block, metadata);
+	}
+	
+	@Override
+	public boolean shouldRefreshConfig() {
+		if (super.shouldRefreshConfig()) {
+			return true;
+		}
+		if (extraConfigLastModified != getExtraConfigFile().lastModified()) {
+			return true;
+		} else {
+			return false;
+		}
+	}
+
+	private void writeExtraConfig() throws IOException {
+		FileWriter writer = new FileWriter(extraConfigFile);
+		writer.write(defaultConfig);
+		writer.flush();
+		writer.close();
+	}
+	
+}

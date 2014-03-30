@@ -13,12 +13,14 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.util.MathHelper;
 import net.minecraft.util.MovingObjectPosition.MovingObjectType;
 import net.minecraft.world.World;
+import net.minecraftforge.client.event.ClientChatReceivedEvent;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.entity.player.AttackEntityEvent;
 
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
 
+import thebombzen.mods.autoswitch.configuration.Configuration;
 import thebombzen.mods.thebombzenapi.ThebombzenAPIBaseMod;
 import cpw.mods.fml.common.FMLCommonHandler;
 import cpw.mods.fml.common.Mod;
@@ -38,7 +40,7 @@ import cpw.mods.fml.relauncher.SideOnly;
  * @author thebombzen
  */
 @SideOnly(Side.CLIENT)
-@Mod(modid = "autoswitch", name = "AutoSwitch", version = "4.3.4", dependencies = "required-after:thebombzenapi", guiFactory = "thebombzen.mods.autoswitch.ConfigGuiFactory")
+@Mod(modid = "autoswitch", name = "AutoSwitch", version = "4.4.0pre5", dependencies = "required-after:thebombzenapi", guiFactory = "thebombzen.mods.autoswitch.configuration.ConfigGuiFactory")
 public class AutoSwitch extends ThebombzenAPIBaseMod {
 
 	public static final int STAGE_H0 = 0;
@@ -55,22 +57,39 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 	private boolean prevMouseDown = false;
 	private boolean prevPulse = false;
 	private int prevtool = 0;
-	// private int prevWorld = 0;
+	private int prevWorld = 0;
 	private boolean pulseOn = false;
 	private boolean switched = false;
+	private boolean treefellerOn = false;
 
 	@Instance(value = "autoswitch")
 	public static AutoSwitch instance;
 
 	@SubscribeEvent
+	public void clientChat(ClientChatReceivedEvent event){
+		//debug(event.message.getUnformattedText());
+		if (event.message.getUnformattedText().equals("**YOU READY YOUR AXE**")){
+			treefellerOn = true;
+		}
+		if (event.message.getUnformattedText().equals("**YOU LOWER YOUR AXE**") || event.message.getUnformattedText().equals("**Tree Feller has worn off**")){
+			treefellerOn = false;
+		}
+		//debug("treefellerOn: %b", treefellerOn);
+	}
+	
+	@SubscribeEvent
 	public void clientTick(ClientTickEvent event) {
 
-		if (event.phase.equals(Phase.END)) {
+		if (!event.phase.equals(Phase.START)) {
 			return;
 		}
-
+		
 		if (mc.theWorld == null) {
 			return;
+		}
+		
+		if (prevWorld != System.identityHashCode(mc.theWorld)){
+			treefellerOn = false;
 		}
 
 		if (entityAttackStage == STAGE_CANCELED) {
@@ -81,7 +100,7 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 			return;
 		}
 
-		pulseOn = Keyboard.isKeyDown(configuration.getPulseKeyCode());
+		pulseOn = Keyboard.isKeyDown(configuration.getKeyCodeProperty(Configuration.PULSE_KEY));
 		// func_151463_i() == getKeyCode()
 		int keyCode = mc.gameSettings.keyBindAttack.getKeyCode();
 		boolean mouseDown = keyCode < 0 ? Mouse.isButtonDown(keyCode + 100)
@@ -105,15 +124,15 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 		}
 		prevMouseDown = mouseDown;
 		prevPulse = pulseOn;
-		// prevWorld = System.identityHashCode(mc.theWorld);
+		prevWorld = System.identityHashCode(mc.theWorld);
 	}
-
+	
 	private void debug(String string) {
 		debug("%s", string);
 	}
 
 	private void debug(String format, Object... args) {
-		if (configuration.getPropertyBoolean(ConfigOption.DEBUG)) {
+		if (configuration.getBooleanProperty(Configuration.DEBUG)) {
 			forceDebug(format, args);
 		}
 	}
@@ -136,7 +155,7 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 
 	@Override
 	public String getLongVersionString() {
-		return "AutoSwitch, version 4.3.4, Minecraft 1.7.2";
+		return "AutoSwitch, version 4.4.0pre5, Minecraft 1.7.2";
 	}
 
 	@Override
@@ -160,7 +179,8 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 
 	@Override
 	protected String getVersionFileURLString() {
-		return "https://dl.dropboxusercontent.com/u/51080973/Mods/AutoSwitch/ASVersion.txt";
+		//return "https://dl.dropboxusercontent.com/u/51080973/Mods/AutoSwitch/ASVersion.txt";
+		return "";
 	}
 
 	@Override
@@ -199,24 +219,22 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 			return false;
 		}
 
-		boolean newHarvest = Tests.canHarvestBlock(newItemStack, block,
+		int newHarvest = Tests.getHarvestLevel(newItemStack, block,
 				metadata);
-		boolean oldHarvest = Tests.canHarvestBlock(oldItemStack, block,
+		int oldHarvest = Tests.getHarvestLevel(oldItemStack, block,
 				metadata);
 		debug("newBlockStr: %f, oldBlockStr %f", newBlockStr, oldBlockStr);
-		debug("newHarvest: %b, oldHarvest: %b", newHarvest, oldHarvest);
+		debug("newHarvest: %d, oldHarvest: %d", newHarvest, oldHarvest);
 		debug("newStrength: %f, oldStrength: %f", newStr, oldStr);
 
 		float newEff = Tests.getEff(newStr, newItemStack);
 		float oldEff = Tests.getEff(oldStr, oldItemStack);
 		debug("newEff: %f, oldEff: %f", newEff, oldEff);
 
-		if (Tests.canHarvestBlock(newItemStack, block, metadata)
-				&& !Tests.canHarvestBlock(oldItemStack, block, metadata)) {
+		if (newHarvest > oldHarvest) {
 			debug("Switching because new can harvest and old can't.");
 			return true;
-		} else if (Tests.canHarvestBlock(oldItemStack, block, metadata)
-				&& !Tests.canHarvestBlock(newItemStack, block, metadata)) {
+		} else if (oldHarvest > newHarvest) {
 			debug("Not switching because old can harvest and new can't.");
 			return false;
 		}
@@ -234,8 +252,10 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 		debug("newDamageable: %b, oldDamageable: %b", newDamageable,
 				oldDamageable);
 
-		if (configuration.getToolSelectionMode() == Configuration.FAST_STANDARD
-				|| configuration.getToolSelectionMode() == Configuration.SLOW_STANDARD) {
+		int toolSelectionMode = configuration.getToolSelectionMode(block, metadata);
+		
+		if (toolSelectionMode == Configuration.FAST_STANDARD
+				|| toolSelectionMode == Configuration.SLOW_STANDARD) {
 			if (newStandard > oldStandard) {
 				debug("Switching because new item is more standard than old.");
 				return true;
@@ -262,34 +282,39 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 				Enchantment.silkTouch.effectId, oldItemStack) > 0;
 		debug("silkWorks: %b, newHasSilk: %b, oldHasSilk: %b", silkWorks,
 				newHasSilk, oldHasSilk);
-
-		if (newHasSilk && !oldHasSilk) {
-			if (silkWorks) {
-				debug("Switching because new has silk touch and old doesn't, and new works.");
-				return true;
-			} else {
-				if (oldStandard > 0) {
-					debug("Not switching because new has silk touch and old doesn't, and old replaces new.");
-					return false;
-				} else if (newStandard <= 0) {
-					debug("Not switching because new has silk touch and old doesn't, and new is weak.");
-					return false;
+		
+		if (configuration.shouldIgnoreSilkTouch(block, metadata)){
+			debug("Ignoring Silk Touch.");
+		} else {
+			if (newHasSilk && !oldHasSilk) {
+				if (silkWorks) {
+					debug("Switching because new has silk touch and old doesn't, and new works.");
+					return true;
+				} else {
+					if (oldStandard > 0) {
+						debug("Not switching because new has silk touch and old doesn't, and old replaces new.");
+						return false;
+					} else if (newStandard <= 0) {
+						debug("Not switching because new has silk touch and old doesn't, and new is weak.");
+						return false;
+					}
 				}
-			}
-		} else if (oldHasSilk && !newHasSilk) {
-			if (silkWorks) {
-				debug("Not switching because old has silk touch and new doesn't, and old works.");
-				return false;
-			} else {
-				if (newStandard > 0) {
-					debug("Switching because old has silk touch and new doesn't, and new replaces old.");
-					return true;
-				} else if (oldStandard <= 0) {
-					debug("Switching because old has silk touch and new doesn't, and old is weak.");
-					return true;
+			} else if (oldHasSilk && !newHasSilk) {
+				if (silkWorks) {
+					debug("Not switching because old has silk touch and new doesn't, and old works.");
+					return false;
+				} else {
+					if (newStandard > 0) {
+						debug("Switching because old has silk touch and new doesn't, and new replaces old.");
+						return true;
+					} else if (oldStandard <= 0) {
+						debug("Switching because old has silk touch and new doesn't, and old is weak.");
+						return true;
+					}
 				}
 			}
 		}
+	
 
 		boolean fortuneWorks = Tests.doesFortuneWorkOnBlock(world, x, y, z);
 		int newFortuneLevel = EnchantmentHelper.getEnchantmentLevel(
@@ -299,30 +324,35 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 
 		debug("fortuneWorks: %b, newFortuneLevel: %d, oldFortuneLevel: %d",
 				fortuneWorks, newFortuneLevel, oldFortuneLevel);
-		if (newFortuneLevel > oldFortuneLevel) {
-			if (fortuneWorks) {
-				debug("Switching because new fortune is more than old, and new works.");
-				return true;
-			} else {
-				if (oldStandard > 0) {
-					debug("Not switching because new fortune is more than old, and old replaces new.");
-					return false;
-				} else if (newStandard <= 0) {
-					debug("Not switching because new fortune is more than old, and new is weak.");
-					return false;
+		
+		if (configuration.shouldIgnoreFortune(block, metadata)){
+			debug("Ignoring Fortune.");
+		} else {
+			if (newFortuneLevel > oldFortuneLevel) {
+				if (fortuneWorks) {
+					debug("Switching because new fortune is more than old, and new works.");
+					return true;
+				} else {
+					if (oldStandard > 0) {
+						debug("Not switching because new fortune is more than old, and old replaces new.");
+						return false;
+					} else if (newStandard <= 0) {
+						debug("Not switching because new fortune is more than old, and new is weak.");
+						return false;
+					}
 				}
-			}
-		} else if (oldFortuneLevel > newFortuneLevel) {
-			if (fortuneWorks) {
-				debug("Not switching because old fortune is more than new, and old works.");
-				return false;
-			} else {
-				if (newStandard > 0) {
-					debug("Switching because old fortune is more than new, and new replaces old.");
-					return true;
-				} else if (oldStandard <= 0) {
-					debug("Switching because old fortune is more than new, and old is weak.");
-					return true;
+			} else if (oldFortuneLevel > newFortuneLevel) {
+				if (fortuneWorks) {
+					debug("Not switching because old fortune is more than new, and old works.");
+					return false;
+				} else {
+					if (newStandard > 0) {
+						debug("Switching because old fortune is more than new, and new replaces old.");
+						return true;
+					} else if (oldStandard <= 0) {
+						debug("Switching because old fortune is more than new, and old is weak.");
+						return true;
+					}
 				}
 			}
 		}
@@ -330,9 +360,9 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 		int comparison = Float.compare(newBlockStr, oldBlockStr);
 
 		debug("Tool Selection Mode: %s",
-				configuration.getProperty(ConfigOption.TOOL_SELECTION_MODE));
+				toolSelectionMode);
 
-		if (configuration.getToolSelectionMode() == Configuration.FAST_STANDARD) {
+		if (toolSelectionMode == Configuration.FAST_STANDARD || toolSelectionMode == Configuration.FAST_NONSTANDARD) {
 			if (comparison > 0) {
 				debug("Switching because new tool is stronger.");
 				return true;
@@ -340,20 +370,12 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 				debug("Not switching because old tool is stronger.");
 				return false;
 			}
-		} else if (configuration.getToolSelectionMode() == Configuration.SLOW_STANDARD) {
+		} else if (toolSelectionMode == Configuration.SLOW_STANDARD) {
 			if (comparison < 0) {
 				debug("Switching because new item is worse than old item and SLOW STANDARD is on.");
 				return true;
 			} else if (comparison > 0) {
 				debug("Not switching because new item is better than old item and SLOW STANDARD is on.");
-				return false;
-			}
-		} else if (configuration.getToolSelectionMode() == Configuration.FAST_NONSTANDARD) {
-			if (comparison > 0) {
-				debug("Switching because new tool is stronger.");
-				return true;
-			} else if (comparison < 0) {
-				debug("Not switching because old tool is stronger.");
 				return false;
 			}
 		}
@@ -423,6 +445,10 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 
 	}
 
+	public boolean isTreefellerOn(){
+		return treefellerOn;
+	}
+
 	public boolean isWeaponBetter(ItemStack newItemStack,
 			ItemStack oldItemStack, EntityLivingBase entityover) {
 
@@ -462,14 +488,14 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 			if (oldDamage == 0) {
 				oldHits = Integer.MAX_VALUE;
 			} else {
-				oldHits = MathHelper.ceiling_double_int(entityover.getHealth()
+				oldHits = MathHelper.ceiling_double_int(entityover.getMaxHealth()
 						/ oldDamage);
 			}
 
 			if (newDamage == 0) {
 				newHits = Integer.MAX_VALUE;
 			} else {
-				newHits = MathHelper.ceiling_double_int(entityover.getHealth()
+				newHits = MathHelper.ceiling_double_int(entityover.getMaxHealth()
 						/ newDamage);
 			}
 
@@ -630,11 +656,8 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 		if (pulseOn == isToggleEnabled(0)
 				|| mc.thePlayer.capabilities.isCreativeMode
 				&& !configuration
-						.getPropertyBoolean(ConfigOption.USE_IN_CREATIVE)
-				|| mc.currentScreen != null || mc.isSingleplayer()
-				&& !configuration.getPropertyBoolean(ConfigOption.BLOCKS_SP)
-				|| !mc.isSingleplayer()
-				&& !configuration.getPropertyBoolean(ConfigOption.BLOCKS_MP)) {
+						.getBooleanProperty(Configuration.USE_IN_CREATIVE)
+				|| mc.currentScreen != null || !configuration.getSingleMultiProperty(Configuration.BLOCKS)) {
 			return false;
 		}
 		debug("====================================================");
@@ -651,14 +674,11 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 
 	public boolean potentiallySwitchWeapons(EntityLivingBase entity) {
 		// System.out.println("Here!");
-		if (pulseOn == isToggleEnabled(0)
+		if (pulseOn == isToggleEnabled(Configuration.DEFAULT_ENABLED.getDefaultToggleIndex())
 				|| mc.thePlayer.capabilities.isCreativeMode
 				&& !configuration
-						.getPropertyBoolean(ConfigOption.USE_IN_CREATIVE)
-				|| mc.currentScreen != null || mc.isSingleplayer()
-				&& !configuration.getPropertyBoolean(ConfigOption.MOBS_SP)
-				|| !mc.isSingleplayer()
-				&& !configuration.getPropertyBoolean(ConfigOption.MOBS_MP)) {
+						.getBooleanProperty(Configuration.USE_IN_CREATIVE)
+				|| mc.currentScreen != null || !configuration.getSingleMultiProperty(Configuration.MOBS)) {
 			return false;
 		}
 		debug("====================================================");

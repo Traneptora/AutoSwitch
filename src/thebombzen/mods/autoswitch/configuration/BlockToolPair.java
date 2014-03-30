@@ -1,4 +1,4 @@
-package thebombzen.mods.autoswitch;
+package thebombzen.mods.autoswitch.configuration;
 
 
 /**
@@ -65,7 +65,7 @@ public class BlockToolPair {
 
 	@Override
 	public String toString() {
-		return "BlockToolPair [block=" + block + ", tool=" + tool + "]";
+		return block + ", " + tool;
 	}
 
 }

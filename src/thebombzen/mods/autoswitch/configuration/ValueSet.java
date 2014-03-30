@@ -1,8 +1,10 @@
-package thebombzen.mods.autoswitch;
+package thebombzen.mods.autoswitch.configuration;
 
 import java.util.Scanner;
 
 import thebombzen.mods.thebombzenapi.ThebombzenAPI;
+import thebombzen.mods.thebombzenapi.configuration.BooleanTester;
+import thebombzen.mods.thebombzenapi.configuration.ConfigFormatException;
 
 
 /**
@@ -10,12 +12,13 @@ import thebombzen.mods.thebombzenapi.ThebombzenAPI;
  * a one-item set, or a set based off a mask.
  * @author thebombzen
  */
-public class ValueSet {
+public class ValueSet implements BooleanTester<Integer> {
 	
-	public static ValueSet parseValueSet(String s){
-		boolean subtract;
+	public static ValueSet parseValueSet(String s) throws ConfigFormatException {
 		int data;
 		int mask;
+		boolean subtract;
+		
 		switch (s.charAt(0)){
 		case '+':
 			subtract = false;
@@ -24,7 +27,7 @@ public class ValueSet {
 			subtract = true;
 			break;
 		default:
-			throw new NumberFormatException();
+				throw new ConfigFormatException("Does not contain +/-!");
 		}
 		
 		Scanner scanner = new Scanner(s.substring(1));
@@ -89,7 +92,8 @@ public class ValueSet {
 	 * Returns true if this set contains the value
 	 * @param value the value to check
 	 */
-	public boolean contains(int value){
+	@Override
+	public boolean contains(Integer value){
 		//System.out.format("value: %s%nmask: %s%ndata: %s%n", Integer.toBinaryString(value), Integer.toBinaryString(mask), Integer.toBinaryString(data));
 		return (value & mask) == data;
 	}

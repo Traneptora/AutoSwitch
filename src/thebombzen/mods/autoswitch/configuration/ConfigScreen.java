@@ -1,10 +1,11 @@
-package thebombzen.mods.autoswitch;
+package thebombzen.mods.autoswitch.configuration;
 
 import java.awt.Desktop;
 import java.io.IOException;
 
 import net.minecraft.client.gui.GuiButton;
 import net.minecraft.client.gui.GuiScreen;
+import thebombzen.mods.autoswitch.AutoSwitch;
 import thebombzen.mods.thebombzenapi.client.ThebombzenAPIConfigScreen;
 import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;

@@ -12,18 +12,25 @@
 # Config version number:
 # If this is not found or does not match the current number, AutoSwitch will replace your config with the default one.
 
-R2
+R3
 
-# ====== HOW TO SPECIFY BLOCKS ======
+# ====== HOW TO SPECIFY BLOCKS/ITEMS ======
 
-# To specify a block, use one of several forms:
+# To specify a block/item, use one of several forms:
 
 # name
-# name[(+|-)DamageSpecifier]...
-# @name[(+|-)DamageSpecifier]...
-# &name[(+|-)DamageSpecifier]...
+# name((+|-)DamageSpecifier)...
+# @name((+|-)DamageSpecifier)...
+# &name((+|-)DamageSpecifier)...
 # @
 # @[(+|-)DamageSpecifier]...
+# [Number]name
+# [Number]name((+|-)DamageSpecifier)...
+
+#### PLUS ####
+# Any compound version of the above things using &,|,^,!, and parentheses.
+# Precedence is ! -> & -> | -> ^. Associativity is left->right (although it doesn't really matter for any of these binary operators)
+
 
 # Minecraft names are either name or minecraft:name
 # Mod names MUST have the modid in front, that is modid:name.
@@ -48,15 +55,23 @@ R2
 # All blocks made of wooden material
 # &wood
 
+# All logs
+# [1]log
+# OR
+# log|log2
+
 # All blocks
 # @
+
+# All blocks except logs
+# @^(log|log2)
 
 ####### DETAILS #######
 
 # name
-# this is the block name, e.g. wool. Add "" for minecraft's blocks. Don't add "tile." in front.
+# this is the block name, e.g. wool. Add "minecraft:" for minecraft's blocks. Don't add "tile." in front.
 
-# name[(+|-)damage_specifier]...
+# name[(+|-)DamageSpecifier]...
 # This is the same as above, but it specifies which damage values are allowed, using one or more damage specifiers.
 
 # &name[(+|-)DamageSpecifier]...

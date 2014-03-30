@@ -17,6 +17,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.item.ItemSword;
 import net.minecraft.world.World;
 import net.minecraftforge.common.ForgeHooks;
+import thebombzen.mods.autoswitch.configuration.Configuration;
 import thebombzen.mods.thebombzenapi.ThebombzenAPI;
 import cpw.mods.fml.common.registry.GameRegistry;
 import cpw.mods.fml.relauncher.Side;
@@ -33,24 +34,28 @@ public final class Tests {
 	private static World fakedWorld = null;
 	private static boolean randomCurrentlyFaked = false;
 	
-	public static boolean canHarvestBlock(ItemStack itemstack, Block block, int metadata) {
+	public static int getHarvestLevel(ItemStack itemstack, Block block, int metadata) {
 		if (block == null) {
-			return false;
+			return -3;
 		} else {
+			int state = AutoSwitch.instance.getConfiguration().getHarvestOverrideState(itemstack, block, metadata);
+			if (state == Configuration.OVERRIDDEN_NO){
+				return -2;
+			} else if (state == Configuration.OVERRIDDEN_YES){
+				return 2;
+			}
 			fakeItemForPlayer(itemstack);
 			boolean can = block.canHarvestBlock(mc.thePlayer, metadata);
 			unFakeItemForPlayer();
-			return can;
+			return can ? 1 : -1;
 		}
 	}
 	
 
 	public static ItemStack createStackedBlock(Block block, int metadata) {
-		/*return ThebombzenAPI.invokePrivateMethod(block, Block.class,
+		return ThebombzenAPI.invokePrivateMethod(block, Block.class,
 				new String[] { "createStackedBlock", "func_149644_j", "j" },
 				new Class<?>[] { int.class }, metadata);
-			*/
-		return ThebombzenAPI.invokePrivateMethod(block, Block.class, "createStackedBlock", new Class<?>[]{int.class}, ItemStack.class, metadata);
 	}
 	
 	public static boolean doesFortuneWorkOnBlock(World world, int x, int y, int z) {
@@ -62,9 +67,10 @@ public final class Tests {
 			return false;
 		}
 
-		if (AutoSwitch.instance.getConfiguration().isFortuneOverriddenToNotWork(block, metadata)) {
+		int state = AutoSwitch.instance.getConfiguration().getFortuneOverrideState(block, metadata);
+		if (state == Configuration.OVERRIDDEN_NO){
 			return false;
-		} else if (AutoSwitch.instance.getConfiguration().isFortuneOverriddenToWork(block, metadata)) {
+		} else if (state == Configuration.OVERRIDDEN_YES){
 			return true;
 		}
 
@@ -104,9 +110,10 @@ public final class Tests {
 			return false;
 		}
 
-		if (AutoSwitch.instance.getConfiguration().isSilkTouchOverriddenToNotWork(block, metadata)) {
+		int state = AutoSwitch.instance.getConfiguration().getSilkTouchOverrideState(block, metadata);
+		if (state == Configuration.OVERRIDDEN_NO){
 			return false;
-		} else if (AutoSwitch.instance.getConfiguration().isSilkTouchOverriddenToWork(block, metadata)) {
+		} else if (state == Configuration.OVERRIDDEN_YES){
 			return true;
 		}
 
@@ -271,40 +278,44 @@ public final class Tests {
 		}
 		Block block = world.getBlock(x, y, z);
 		int metadata = world.getBlockMetadata(x, y, z);
-		if (AutoSwitch.instance.getConfiguration().isToolOverriddenAsNotStandardOnBlock(itemstack,
-				block, metadata)) {
+		int state = AutoSwitch.instance.getConfiguration().getStandardToolOverrideState(itemstack, block, metadata);
+		if (state == Configuration.OVERRIDDEN_NO){
 			return -2;
-		} else if (AutoSwitch.instance.getConfiguration().isToolOverriddenAsStandardOnBlock(itemstack,
-				block, metadata)) {
+		} else if (state == Configuration.OVERRIDDEN_YES){
 			return 2;
 		}
-		if (getBlockHardness(world, x, y, z) != 0
-				&& getDigSpeed(itemstack, block, metadata) > 1.5F) {
-			return 1;
-		} else {
-			if (isItemStackDamageableOnBlock(itemstack, world, x, y, z)) {
+		if (getBlockHardness(world, x, y, z) != 0){
+			float blockStrForNull = Tests.getBlockStrength(null, world, x, y, z);
+			float blockStr = Tests.getBlockStrength(itemstack, world, x, y, z);
+			if (blockStr > blockStrForNull){
+				return 1;
+			} else if (isItemStackDamageableOnBlock(itemstack, world, x, y, z)) {
 				return -1;
-			} else {
-				return 0;
 			}
 		}
+		return 0;
 	}
 
 	public static boolean isItemStackDamageable(ItemStack itemstack) {
-		if (itemstack == null) {
-			return false;
-		}
-		return itemstack.getItem().isDamageable();
+		return itemstack != null && itemstack.getItem().isDamageable();
 	}
 	
 	
 
 	public static boolean isItemStackDamageableOnBlock(ItemStack itemstack,
 			World world, int x, int y, int z) {
+		Block block = world.getBlock(x, y, z);
+		int metadata = world.getBlockMetadata(x, y, z);
+		int state = AutoSwitch.instance.getConfiguration().getDamageableOverrideState(itemstack, block, metadata);
+		if (state == Configuration.OVERRIDDEN_NO){
+			return false;
+		} else if (state == Configuration.OVERRIDDEN_YES){
+			return true;
+		}
 		if (!isItemStackDamageable(itemstack)) {
 			return false;
 		}
-		return getBlockHardness(world, x, y, z) > 0.0F;
+		return getBlockHardness(world, x, y, z) != 0.0F;
 	}
 
 	public static boolean isSword(ItemStack itemstack) {
@@ -314,7 +325,7 @@ public final class Tests {
 		if (itemstack.getItem() instanceof ItemSword){
 			return true;
 		}
-		if (GameRegistry.findUniqueIdentifierFor(itemstack.getItem()).name.matches("(?i)sword")){
+		if (GameRegistry.findUniqueIdentifierFor(itemstack.getItem()).name.toLowerCase().contains("sword")){
 			return true;
 		}
 		return false;

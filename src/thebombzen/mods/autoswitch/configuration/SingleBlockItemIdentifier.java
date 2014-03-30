@@ -1,4 +1,4 @@
-package thebombzen.mods.autoswitch;
+package thebombzen.mods.autoswitch.configuration;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -7,15 +7,16 @@ import java.util.Scanner;
 
 import net.minecraft.block.Block;
 import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
+import thebombzen.mods.thebombzenapi.ThebombzenAPI;
+import thebombzen.mods.thebombzenapi.configuration.BooleanTester;
+import thebombzen.mods.thebombzenapi.configuration.ConfigFormatException;
 import cpw.mods.fml.common.registry.GameRegistry;
-import cpw.mods.fml.common.registry.GameRegistry.UniqueIdentifier;
 
 /**
  * Represents a block or item with the given String namespace, name, and damage values.
  * @author thebombzen
  */
-public class BlockItemIdentifier {
+public class SingleBlockItemIdentifier implements BooleanTester<SingleValueIdentifier> {
 
 	public static final int ALL = 0;
 	public static final int NAME = 1;
@@ -23,36 +24,60 @@ public class BlockItemIdentifier {
 	public static final int MATERIAL = 3;
 	
 	/**
-	 * Parse and identifier from a string.
+	 * Parse an identifier from a string.
 	 */
-	public static BlockItemIdentifier parseBlockItemIdentifier(String info){
+	public static SingleBlockItemIdentifier parseSingleBlockItemIdentifier(String info) throws ConfigFormatException {
+		if (info.length() == 0){
+			throw new ConfigFormatException();
+		}
+		char type = info.charAt(0);
+		int superNum = 0;
+		if (type == '@' || type == '$'){
+			info = info.substring(1);
+		} else if (type == '['){
+			int lastIndex = info.indexOf(']');
+			if (lastIndex == -1){
+				throw new ConfigFormatException();
+			}
+			String superNumS = info.substring(1, lastIndex);
+			try {
+				superNum = ThebombzenAPI.parseInteger(superNumS);
+			} catch (NumberFormatException e){
+				throw new ConfigFormatException(e);
+			}
+			info = info.substring(lastIndex + 1);
+		}
+		
+		boolean all = info.startsWith("+") || info.startsWith("-");
+		
+		if (all){
+			info = "false_prefix" + info;
+		}
+		
 		Scanner scanner = new Scanner(info);
 		scanner.useDelimiter("(?<=[^\\+-])(?=[\\+-])");
-		char type = info.charAt(0);
 		
 		if (!scanner.hasNext()){
 			scanner.close();
-			return new BlockItemIdentifier(BlockItemIdentifier.ALL);
+			return new SingleBlockItemIdentifier(SingleBlockItemIdentifier.ALL);
 		}
 		
 		String fullname = scanner.next();
-		String namespace;
+		String modid;
 		String name;
 		
-		if (fullname.startsWith("@") || fullname.startsWith("&")){
-			fullname = fullname.substring(1);
-		}
+		//System.out.println(fullname);
 		
-		if (fullname.length() == 0){
-			namespace = "";
+		if (all){
+			modid = "";
 			name = "";
 		} else {
 			int index = fullname.indexOf(':');
 			if (index < 0){
-				namespace = "minecraft";
+				modid = "minecraft";
 				name = fullname;
 			} else {
-				namespace = fullname.substring(0, index);
+				modid = fullname.substring(0, index);
 				name = fullname.substring(index + 1);
 			}
 		}
@@ -69,24 +94,26 @@ public class BlockItemIdentifier {
 		
 		ValueSet[] sets = valueSets.toArray(new ValueSet[valueSets.size()]);
 		
-		if (fullname.length() == 0){
-			return new BlockItemIdentifier(BlockItemIdentifier.ALL, sets);
+		if (all){
+			return new SingleBlockItemIdentifier(SingleBlockItemIdentifier.ALL, sets);
 		}
 		
 		switch(type){
 		case '@':
-			return new BlockItemIdentifier(BlockItemIdentifier.CLASS, namespace, name, sets);
-		case '&':
-			return new BlockItemIdentifier(BlockItemIdentifier.MATERIAL, namespace, name, sets);
+		case '[':
+			return new SingleBlockItemIdentifier(SingleBlockItemIdentifier.CLASS, modid, name, superNum, sets);
+		case '$':
+			return new SingleBlockItemIdentifier(SingleBlockItemIdentifier.MATERIAL, modid, name, 0, sets);
 		default:
-			return new BlockItemIdentifier(BlockItemIdentifier.NAME, namespace, name, sets);
+			return new SingleBlockItemIdentifier(SingleBlockItemIdentifier.NAME, modid, name, 0, sets);
 		}
 	}
-	private String namespace;
+	private String modid;
 	private String name;
 	private ValueSet[] damageValues;
 
 	private int type;
+	private int superNum;
 	
 	/**
 	 * Construct an identifier with the given String namespace, name, and damage value.
@@ -94,8 +121,8 @@ public class BlockItemIdentifier {
 	 * @param name The String name such as "log"
 	 * @param damageValue The Damage value
 	 */
-	public BlockItemIdentifier(int type, String namespace, String name, int damageValue){
-		this(type, namespace, name, new ValueSet(damageValue, false));
+	public SingleBlockItemIdentifier(int type, String namespace, String name, int damageValue){
+		this(type, namespace, name, 0, new ValueSet(damageValue, false));
 	}
 	
 	/**
@@ -104,15 +131,20 @@ public class BlockItemIdentifier {
 	 * @param name The String name such as "log"
 	 * @param damageValues The Damage values
 	 */
-	public BlockItemIdentifier(int type, String namespace, String name, ValueSet... damageValues){
+	public SingleBlockItemIdentifier(int type, String namespace, String name, int superNum, ValueSet... damageValues){
+		
 		if (type < 0 || type > 3){
 			throw new IllegalArgumentException();
 		}
+		this.superNum = superNum;
 		this.type = type;
-		this.namespace = namespace;
+		this.modid = namespace;
 		this.name = name;
-		if (damageValues.length == 0){
-			damageValues = new ValueSet[] { new ValueSet() } ;
+		if (damageValues.length == 0 || damageValues.length > 0 && damageValues[0].doesSubtract()){
+			ValueSet[] temp = new ValueSet[damageValues.length + 1];
+			System.arraycopy(damageValues, 0, temp, 1, damageValues.length);
+			temp[0] = new ValueSet();
+			damageValues = temp;
 		}
 		this.damageValues = damageValues;
 	}
@@ -121,21 +153,8 @@ public class BlockItemIdentifier {
 	 * Construct a BlockItemIdentifier that matches the damages values on any item/block.
 	 * @param damageValues
 	 */
-	public BlockItemIdentifier(int type, ValueSet... damageValues){
-		this(type, "", "", damageValues);
-	}
-
-	public boolean contains(Block block, int metadata){
-		UniqueIdentifier id = GameRegistry.findUniqueIdentifierFor(block);
-		return contains(id.modId, id.name, metadata);
-	}
-
-	public boolean contains(ItemStack itemStack){
-		if (itemStack == null){
-			return false;
-		}
-		UniqueIdentifier id = GameRegistry.findUniqueIdentifierFor(itemStack.getItem());
-		return contains(id.modId, id.name, itemStack.getItemDamage());
+	public SingleBlockItemIdentifier(int type, ValueSet... damageValues){
+		this(type, "", "", 0, damageValues);
 	}
 
 	/**
@@ -143,27 +162,46 @@ public class BlockItemIdentifier {
 	 * @param name The String name of this block/item
 	 * @param damageValue The damage value of this block/item
 	 */
-	public boolean contains(String namespace, String name, int damageValue){
-		
+	@Override
+	public boolean contains(SingleValueIdentifier identifier){
+		String modid = identifier.getModid();
+		String name = identifier.getName();
+		int damageValue = identifier.getDamageValue();
 		switch (type){
 		case ALL:
 			break;
 		case NAME:
-			if (!getName().equals(name) || !getNamespace().equals(namespace)){
+			if (!getName().equals(name) || !getModId().equals(modid)){
 				return false;
 			}
 			break;
 		case CLASS:
-			Block block = GameRegistry.findBlock(namespace, name);
+			Block block = GameRegistry.findBlock(modid, name);
 			if (block != null && getBlock() != null){
-				if (!getBlock().getClass().isAssignableFrom(block.getClass())){
+				Class<?> clazz = getBlock().getClass();
+				for (int i = 0; i < superNum; i++){
+					if (clazz.getSuperclass() != null){
+						clazz = clazz.getSuperclass();
+					} else {
+						break;
+					}
+				}
+				if (!clazz.isAssignableFrom(block.getClass())){
 					return false;
 				}
 				break;
 			}
-			Item item = GameRegistry.findItem(namespace, name);
+			Item item = GameRegistry.findItem(modid, name);
 			if (item != null && getItem() != null){
-				if (!getItem().getClass().isAssignableFrom(item.getClass())){
+				Class<?> clazz = getItem().getClass();
+				for (int i = 0; i < superNum; i++){
+					if (clazz.getSuperclass() != null){
+						clazz = clazz.getSuperclass();
+					} else {
+						break;
+					}
+				}
+				if (!clazz.isAssignableFrom(item.getClass())){
 					return false;
 				}
 			} else {
@@ -171,7 +209,7 @@ public class BlockItemIdentifier {
 			}
 			break;
 		case MATERIAL:
-			block = GameRegistry.findBlock(namespace, name);
+			block = GameRegistry.findBlock(modid, name);
 			if (block == null || getBlock() == null){
 				return false;
 			}
@@ -180,11 +218,10 @@ public class BlockItemIdentifier {
 			}
 			break;
 		}
-		
 		for (int i = damageValues.length - 1; i >= 0; i--){
 			int testDamageValue = damageValue;
 			if (damageValues[i].getMask() < 0){
-				testDamageValue = GameRegistry.findItem(namespace, name).getMaxDamage() - damageValue;
+				testDamageValue = GameRegistry.findItem(modid, name).getMaxDamage() - damageValue;
 			}
 			if (damageValues[i].contains(testDamageValue)){
 				return !damageValues[i].doesSubtract();
@@ -201,7 +238,7 @@ public class BlockItemIdentifier {
 			return false;
 		if (getClass() != obj.getClass())
 			return false;
-		BlockItemIdentifier other = (BlockItemIdentifier) obj;
+		SingleBlockItemIdentifier other = (SingleBlockItemIdentifier) obj;
 		if (!Arrays.equals(damageValues, other.damageValues))
 			return false;
 		if (name == null) {
@@ -209,10 +246,10 @@ public class BlockItemIdentifier {
 				return false;
 		} else if (!name.equals(other.name))
 			return false;
-		if (namespace == null) {
-			if (other.namespace != null)
+		if (modid == null) {
+			if (other.modid != null)
 				return false;
-		} else if (!namespace.equals(other.namespace))
+		} else if (!modid.equals(other.modid))
 			return false;
 		if (type != other.type)
 			return false;
@@ -224,7 +261,7 @@ public class BlockItemIdentifier {
 	 * null if this is not a block.
 	 */
 	public Block getBlock() {
-		return GameRegistry.findBlock(namespace, name);
+		return GameRegistry.findBlock(modid, name);
 	}
 
 	/**
@@ -239,22 +276,22 @@ public class BlockItemIdentifier {
 	 * will return the corresponding ItemBlock.
 	 */
 	public Item getItem() {
-		return GameRegistry.findItem(namespace, name);
+		return GameRegistry.findItem(modid, name);
 	}
 
+	/**
+	 * Gets the String namespace of this item/block
+	 * @return
+	 */
+	public String getModId(){
+		return modid;
+	}
+	
 	/**
 	 * Gets the String name of this item/block
 	 */
 	public String getName(){
 		return name;
-	}
-	
-	/**
-	 * Gets the String namespace of this item/block
-	 * @return
-	 */
-	public String getNamespace(){
-		return namespace;
 	}
 	
 	@Override
@@ -264,7 +301,7 @@ public class BlockItemIdentifier {
 		result = prime * result + Arrays.hashCode(damageValues);
 		result = prime * result + ((name == null) ? 0 : name.hashCode());
 		result = prime * result
-				+ ((namespace == null) ? 0 : namespace.hashCode());
+				+ ((modid == null) ? 0 : modid.hashCode());
 		result = prime * result + type;
 		return result;
 	}
@@ -298,15 +335,17 @@ public class BlockItemIdentifier {
 		StringBuilder builder = new StringBuilder();
 		switch (type){
 		case ALL:
-		case CLASS:
 			builder.append('@');
+			break;
+		case CLASS:
+			builder.append("[").append(superNum).append("]");
 			break;
 		case MATERIAL:
 			builder.append('&');
 			break;
 		}
-		if (namespace.length() != 0){
-			builder.append(namespace).append(":");
+		if (modid.length() != 0){
+			builder.append(modid).append(":");
 		}
 		builder.append(name);
 		for (int i = 0; i < damageValues.length; i++){
