@@ -276,11 +276,11 @@ public class SingleBlockItemIdentifier implements BooleanTester<SingleValueIdent
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
-		result = prime * result + Arrays.hashCode(valueSets);
+		result = prime * result + ((modid == null) ? 0 : modid.hashCode());
 		result = prime * result + ((name == null) ? 0 : name.hashCode());
-		result = prime * result
-				+ ((modid == null) ? 0 : modid.hashCode());
+		result = prime * result + superNum;
 		result = prime * result + type;
+		result = prime * result + Arrays.hashCode(valueSets);
 		return result;
 	}
 	
@@ -330,6 +330,34 @@ public class SingleBlockItemIdentifier implements BooleanTester<SingleValueIdent
 			builder.append(valueSets[i]);
 		}
 		return builder.toString();
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		SingleBlockItemIdentifier other = (SingleBlockItemIdentifier) obj;
+		if (modid == null) {
+			if (other.modid != null)
+				return false;
+		} else if (!modid.equals(other.modid))
+			return false;
+		if (name == null) {
+			if (other.name != null)
+				return false;
+		} else if (!name.equals(other.name))
+			return false;
+		if (superNum != other.superNum)
+			return false;
+		if (type != other.type)
+			return false;
+		if (!Arrays.equals(valueSets, other.valueSets))
+			return false;
+		return true;
 	}
 
 }

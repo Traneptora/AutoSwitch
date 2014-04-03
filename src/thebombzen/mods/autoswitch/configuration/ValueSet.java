@@ -198,9 +198,18 @@ public class ValueSet implements BooleanTester<SingleValueIdentifier> {
 		ValueSet other = (ValueSet) obj;
 		if (data != other.data)
 			return false;
-		if (subtract != other.subtract)
+		if (enchantment == null) {
+			if (other.enchantment != null)
+				return false;
+		} else if (!enchantment.equals(other.enchantment))
 			return false;
 		if (mask != other.mask)
+			return false;
+		if (max != other.max)
+			return false;
+		if (min != other.min)
+			return false;
+		if (subtract != other.subtract)
 			return false;
 		return true;
 	}
@@ -218,8 +227,12 @@ public class ValueSet implements BooleanTester<SingleValueIdentifier> {
 		final int prime = 31;
 		int result = 1;
 		result = prime * result + data;
-		result = prime * result + (subtract ? 1231 : 1237);
+		result = prime * result
+				+ ((enchantment == null) ? 0 : enchantment.hashCode());
 		result = prime * result + mask;
+		result = prime * result + max;
+		result = prime * result + min;
+		result = prime * result + (subtract ? 1231 : 1237);
 		return result;
 	}
 

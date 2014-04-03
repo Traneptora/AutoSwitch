@@ -77,5 +77,41 @@ public class SingleValueIdentifier {
 		} else {
 			return GameRegistry.findUniqueIdentifierFor(block);
 		}
+	}
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((block == null) ? 0 : block.hashCode());
+		result = prime * result + (isItem ? 1231 : 1237);
+		result = prime * result
+				+ ((itemStack == null) ? 0 : itemStack.hashCode());
+		result = prime * result + metadata;
+		return result;
+	}
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		SingleValueIdentifier other = (SingleValueIdentifier) obj;
+		if (block == null) {
+			if (other.block != null)
+				return false;
+		} else if (!block.equals(other.block))
+			return false;
+		if (isItem != other.isItem)
+			return false;
+		if (itemStack == null) {
+			if (other.itemStack != null)
+				return false;
+		} else if (!itemStack.equals(other.itemStack))
+			return false;
+		if (metadata != other.metadata)
+			return false;
+		return true;
 	}	
 }
