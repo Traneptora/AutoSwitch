@@ -5,8 +5,6 @@ import net.minecraft.item.ItemStack;
 import thebombzen.mods.thebombzenapi.ThebombzenAPI;
 import thebombzen.mods.thebombzenapi.configuration.CompoundExpression;
 import thebombzen.mods.thebombzenapi.configuration.ConfigFormatException;
-import cpw.mods.fml.common.registry.GameRegistry;
-import cpw.mods.fml.common.registry.GameRegistry.UniqueIdentifier;
 
 public class BlockItemIdentifier extends CompoundExpression<SingleValueIdentifier> {
 
@@ -81,20 +79,14 @@ public class BlockItemIdentifier extends CompoundExpression<SingleValueIdentifie
 	}
 
 	public boolean contains(Block block, int metadata){
-		UniqueIdentifier id = GameRegistry.findUniqueIdentifierFor(block);
-		return contains(new SingleValueIdentifier(id.modId, id.name, metadata));
+		return contains(new SingleValueIdentifier(block, metadata));
 	}
 	
 	public boolean contains(ItemStack itemStack){
 		if (itemStack == null){
 			return false;
 		}
-		UniqueIdentifier id = GameRegistry.findUniqueIdentifierFor(itemStack.getItem());
-		return contains(new SingleValueIdentifier(id.modId, id.name, itemStack.getItemDamage()));
-	}
-	
-	public boolean contains(String modId, String name, int damageValue){
-		return this.contains(new SingleValueIdentifier(modId, name, damageValue));
+		return contains(new SingleValueIdentifier(itemStack));
 	}
 	
 }

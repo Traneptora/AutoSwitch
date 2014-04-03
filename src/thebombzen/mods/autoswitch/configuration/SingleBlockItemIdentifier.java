@@ -110,7 +110,7 @@ public class SingleBlockItemIdentifier implements BooleanTester<SingleValueIdent
 	}
 	private String modid;
 	private String name;
-	private ValueSet[] damageValues;
+	private ValueSet[] valueSets;
 
 	private int type;
 	private int superNum;
@@ -122,7 +122,7 @@ public class SingleBlockItemIdentifier implements BooleanTester<SingleValueIdent
 	 * @param damageValue The Damage value
 	 */
 	public SingleBlockItemIdentifier(int type, String namespace, String name, int damageValue){
-		this(type, namespace, name, 0, new ValueSet(damageValue, false));
+		this(type, namespace, name, 0, new ValueSet(damageValue, Integer.MAX_VALUE, false));
 	}
 	
 	/**
@@ -146,7 +146,7 @@ public class SingleBlockItemIdentifier implements BooleanTester<SingleValueIdent
 			temp[0] = new ValueSet();
 			damageValues = temp;
 		}
-		this.damageValues = damageValues;
+		this.valueSets = damageValues;
 	}
 	
 	/**
@@ -164,9 +164,8 @@ public class SingleBlockItemIdentifier implements BooleanTester<SingleValueIdent
 	 */
 	@Override
 	public boolean contains(SingleValueIdentifier identifier){
-		String modid = identifier.getModid();
+		String modid = identifier.getModId();
 		String name = identifier.getName();
-		int damageValue = identifier.getDamageValue();
 		switch (type){
 		case ALL:
 			break;
@@ -176,7 +175,7 @@ public class SingleBlockItemIdentifier implements BooleanTester<SingleValueIdent
 			}
 			break;
 		case CLASS:
-			Block block = GameRegistry.findBlock(modid, name);
+			Block block = identifier.getBlock();
 			if (block != null && getBlock() != null){
 				Class<?> clazz = getBlock().getClass();
 				for (int i = 0; i < superNum; i++){
@@ -191,7 +190,7 @@ public class SingleBlockItemIdentifier implements BooleanTester<SingleValueIdent
 				}
 				break;
 			}
-			Item item = GameRegistry.findItem(modid, name);
+			Item item = identifier.getItem();
 			if (item != null && getItem() != null){
 				Class<?> clazz = getItem().getClass();
 				for (int i = 0; i < superNum; i++){
@@ -209,7 +208,7 @@ public class SingleBlockItemIdentifier implements BooleanTester<SingleValueIdent
 			}
 			break;
 		case MATERIAL:
-			block = GameRegistry.findBlock(modid, name);
+			block = identifier.getBlock();
 			if (block == null || getBlock() == null){
 				return false;
 			}
@@ -218,42 +217,21 @@ public class SingleBlockItemIdentifier implements BooleanTester<SingleValueIdent
 			}
 			break;
 		}
-		for (int i = damageValues.length - 1; i >= 0; i--){
-			int testDamageValue = damageValue;
-			if (damageValues[i].getMask() < 0){
-				testDamageValue = GameRegistry.findItem(modid, name).getMaxDamage() - damageValue;
+		for (int i = valueSets.length - 1; i >= 0; i--){
+			ValueSet set = valueSets[i];
+			SingleValueIdentifier id2 = identifier;
+			if (set.getMask() < 0){
+				if (!identifier.isItem()){
+					continue;
+				}
+				id2 = new SingleValueIdentifier(identifier);
+				id2.setDamageValue(id2.getItem().getMaxDamage() - identifier.getDamageValue());
 			}
-			if (damageValues[i].contains(testDamageValue)){
-				return !damageValues[i].doesSubtract();
+			if (set.contains(id2)){
+				return !set.doesSubtract();
 			}
 		}
 		return false;
-	}
-	
-	@Override
-	public boolean equals(Object obj) {
-		if (this == obj)
-			return true;
-		if (obj == null)
-			return false;
-		if (getClass() != obj.getClass())
-			return false;
-		SingleBlockItemIdentifier other = (SingleBlockItemIdentifier) obj;
-		if (!Arrays.equals(damageValues, other.damageValues))
-			return false;
-		if (name == null) {
-			if (other.name != null)
-				return false;
-		} else if (!name.equals(other.name))
-			return false;
-		if (modid == null) {
-			if (other.modid != null)
-				return false;
-		} else if (!modid.equals(other.modid))
-			return false;
-		if (type != other.type)
-			return false;
-		return true;
 	}
 	
 	/**
@@ -268,7 +246,7 @@ public class SingleBlockItemIdentifier implements BooleanTester<SingleValueIdent
 	 * Return the array of ValueSets
 	 */
 	public ValueSet[] getDamageValues() {
-		return damageValues;
+		return valueSets;
 	}
 
 	/**
@@ -298,7 +276,7 @@ public class SingleBlockItemIdentifier implements BooleanTester<SingleValueIdent
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
-		result = prime * result + Arrays.hashCode(damageValues);
+		result = prime * result + Arrays.hashCode(valueSets);
 		result = prime * result + ((name == null) ? 0 : name.hashCode());
 		result = prime * result
 				+ ((modid == null) ? 0 : modid.hashCode());
@@ -341,15 +319,15 @@ public class SingleBlockItemIdentifier implements BooleanTester<SingleValueIdent
 			builder.append("[").append(superNum).append("]");
 			break;
 		case MATERIAL:
-			builder.append('&');
+			builder.append('$');
 			break;
 		}
 		if (modid.length() != 0){
 			builder.append(modid).append(":");
 		}
 		builder.append(name);
-		for (int i = 0; i < damageValues.length; i++){
-			builder.append(damageValues[i]);
+		for (int i = 0; i < valueSets.length; i++){
+			builder.append(valueSets[i]);
 		}
 		return builder.toString();
 	}

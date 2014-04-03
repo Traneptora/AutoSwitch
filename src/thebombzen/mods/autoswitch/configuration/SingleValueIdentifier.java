@@ -1,70 +1,81 @@
 package thebombzen.mods.autoswitch.configuration;
 
+import net.minecraft.block.Block;
+import net.minecraft.item.Item;
+import net.minecraft.item.ItemStack;
+import cpw.mods.fml.common.registry.GameRegistry;
 import cpw.mods.fml.common.registry.GameRegistry.UniqueIdentifier;
 
 public class SingleValueIdentifier {
-	private String modid;
-	private String name;
-	private int damageValue;
-	public SingleValueIdentifier(String modid, String name, int damageValue){
-		this.modid = modid;
-		this.name = name;
-		this.damageValue = damageValue;
+	private ItemStack itemStack = null;
+	private Block block = null;
+	private int metadata = 0;
+	private boolean isItem;
+	public SingleValueIdentifier(SingleValueIdentifier id){
+		isItem = id.isItem;
+		itemStack = id.itemStack == null ? null : id.itemStack.copy();
+		block = id.block;
+		metadata = id.metadata;
 	}
-	@Override
-	public boolean equals(Object obj) {
-		if (this == obj)
-			return true;
-		if (obj == null)
-			return false;
-		if (getClass() != obj.getClass())
-			return false;
-		SingleValueIdentifier other = (SingleValueIdentifier) obj;
-		if (damageValue != other.damageValue)
-			return false;
-		if (modid == null) {
-			if (other.modid != null)
-				return false;
-		} else if (!modid.equals(other.modid))
-			return false;
-		if (name == null) {
-			if (other.name != null)
-				return false;
-		} else if (!name.equals(other.name))
-			return false;
-		return true;
+	public SingleValueIdentifier(ItemStack stack){
+		itemStack = stack.copy();
+		isItem = true;
 	}
-	public int getDamageValue() {
-		return damageValue;
+	public SingleValueIdentifier(Block block, int metadata){
+		this.block = block;
+		this.metadata = metadata;
+		isItem = false;
 	}
-	public String getModid() {
-		return modid;
+	
+	public boolean isItem(){
+		return isItem;
 	}
-	public String getName() {
-		return name;
+	
+	public ItemStack getItemStack(){
+		if (!isItem){
+			return null;
+		} else {
+			return itemStack;
+		}
 	}
+	
+	public Item getItem(){
+		return GameRegistry.findItem(getModId(), getName());
+	}
+	
+	public Block getBlock(){
+		return GameRegistry.findBlock(getModId(), getName());
+	}
+	
+	public int getDamageValue(){
+		if (isItem){
+			return itemStack.getItemDamage();
+		} else {
+			return metadata;
+		}
+	}
+	
+	public void setDamageValue(int damage){
+		if (isItem){
+			itemStack.setItemDamage(damage);
+		} else {
+			metadata = damage;
+		}
+	}
+	
+	public String getModId(){
+		return getUniqueIdentifier().modId;
+	}
+	
+	public String getName(){
+		return getUniqueIdentifier().name;
+	}
+	
 	public UniqueIdentifier getUniqueIdentifier(){
-		return new UniqueIdentifier(modid + ":" + name);
-	}
-	@Override
-	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + damageValue;
-		result = prime * result + ((modid == null) ? 0 : modid.hashCode());
-		result = prime * result + ((name == null) ? 0 : name.hashCode());
-		return result;
-	}
-	public void setDamageValue(int damageValue) {
-		this.damageValue = damageValue;
-	}
-	public void setModid(String modid) {
-		this.modid = modid;
-	}
-	
-	public void setName(String name) {
-		this.name = name;
-	}
-	
-	
+		if (isItem){
+			return GameRegistry.findUniqueIdentifierFor(itemStack.getItem());
+		} else {
+			return GameRegistry.findUniqueIdentifierFor(block);
+		}
+	}	
 }

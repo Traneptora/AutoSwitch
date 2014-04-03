@@ -21,6 +21,7 @@ import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
 
 import thebombzen.mods.autoswitch.configuration.Configuration;
+import thebombzen.mods.autoswitch.configuration.ToolSelectionMode;
 import thebombzen.mods.thebombzenapi.ThebombzenAPIBaseMod;
 import cpw.mods.fml.common.FMLCommonHandler;
 import cpw.mods.fml.common.Mod;
@@ -40,7 +41,7 @@ import cpw.mods.fml.relauncher.SideOnly;
  * @author thebombzen
  */
 @SideOnly(Side.CLIENT)
-@Mod(modid = "autoswitch", name = "AutoSwitch", version = "4.4.0pre5", dependencies = "required-after:thebombzenapi", guiFactory = "thebombzen.mods.autoswitch.configuration.ConfigGuiFactory")
+@Mod(modid = "autoswitch", name = "AutoSwitch", version = "4.4.0pre6", dependencies = "required-after:thebombzenapi", guiFactory = "thebombzen.mods.autoswitch.configuration.ConfigGuiFactory")
 public class AutoSwitch extends ThebombzenAPIBaseMod {
 
 	public static final int STAGE_H0 = 0;
@@ -155,7 +156,7 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 
 	@Override
 	public String getLongVersionString() {
-		return "AutoSwitch, version 4.4.0pre5, Minecraft 1.7.2";
+		return "AutoSwitch, version 4.4.0pre6, Minecraft 1.7.2";
 	}
 
 	@Override
@@ -223,6 +224,7 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 				metadata);
 		int oldHarvest = Tests.getHarvestLevel(oldItemStack, block,
 				metadata);
+		
 		debug("newBlockStr: %f, oldBlockStr %f", newBlockStr, oldBlockStr);
 		debug("newHarvest: %d, oldHarvest: %d", newHarvest, oldHarvest);
 		debug("newStrength: %f, oldStrength: %f", newStr, oldStr);
@@ -230,19 +232,16 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 		float newEff = Tests.getEff(newStr, newItemStack);
 		float oldEff = Tests.getEff(oldStr, oldItemStack);
 		debug("newEff: %f, oldEff: %f", newEff, oldEff);
-
-		if (newHarvest > oldHarvest) {
-			debug("Switching because new can harvest and old can't.");
-			return true;
-		} else if (oldHarvest > newHarvest) {
-			debug("Not switching because old can harvest and new can't.");
-			return false;
-		}
-
-		int newStandard = Tests.getToolStandardness(newItemStack, world, x, y,
-				z);
-		int oldStandard = Tests.getToolStandardness(oldItemStack, world, x, y,
-				z);
+		
+		ToolSelectionMode toolSelectionMode = configuration.getToolSelectionMode(block, metadata);
+		debug("Tool Selection Mode: %s", toolSelectionMode.toString());
+		
+		int newStandard = Tests.getToolStandardness(newItemStack, world,
+					x, y, z);
+		int oldStandard = Tests.getToolStandardness(oldItemStack, world,
+					x, y, z);
+		
+		
 		debug("newStandard: %d, oldStandard: %d", newStandard, oldStandard);
 
 		boolean newDamageable = Tests.isItemStackDamageableOnBlock(
@@ -251,11 +250,10 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 				oldItemStack, world, x, y, z);
 		debug("newDamageable: %b, oldDamageable: %b", newDamageable,
 				oldDamageable);
-
-		int toolSelectionMode = configuration.getToolSelectionMode(block, metadata);
 		
-		if (toolSelectionMode == Configuration.FAST_STANDARD
-				|| toolSelectionMode == Configuration.SLOW_STANDARD) {
+		int blockStrComparison = Float.compare(newBlockStr, oldBlockStr);
+		
+		if (toolSelectionMode.isStandard()) {
 			if (newStandard > oldStandard) {
 				debug("Switching because new item is more standard than old.");
 				return true;
@@ -273,6 +271,24 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 					}
 				}
 			}
+		} else {
+			if (toolSelectionMode.isFast()) {
+				if (blockStrComparison > 0) {
+					debug("Switching because new tool is stronger.");
+					return true;
+				} else if (blockStrComparison < 0) {
+					debug("Not switching because old tool is stronger.");
+					return false;
+				}
+			} else {
+				if (blockStrComparison < 0) {
+					debug("Switching because new item is worse than old item and SLOW STANDARD is on.");
+					return true;
+				} else if (blockStrComparison > 0) {
+					debug("Not switching because new item is better than old item and SLOW STANDARD is on.");
+					return false;
+				}
+			}
 		}
 
 		boolean silkWorks = Tests.doesSilkTouchWorkOnBlock(world, x, y, z);
@@ -280,12 +296,12 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 				Enchantment.silkTouch.effectId, newItemStack) > 0;
 		boolean oldHasSilk = EnchantmentHelper.getEnchantmentLevel(
 				Enchantment.silkTouch.effectId, oldItemStack) > 0;
-		debug("silkWorks: %b, newHasSilk: %b, oldHasSilk: %b", silkWorks,
-				newHasSilk, oldHasSilk);
 		
 		if (configuration.shouldIgnoreSilkTouch(block, metadata)){
 			debug("Ignoring Silk Touch.");
 		} else {
+			debug("silkWorks: %b, newHasSilk: %b, oldHasSilk: %b", silkWorks,
+					newHasSilk, oldHasSilk);
 			if (newHasSilk && !oldHasSilk) {
 				if (silkWorks) {
 					debug("Switching because new has silk touch and old doesn't, and new works.");
@@ -322,12 +338,12 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 		int oldFortuneLevel = EnchantmentHelper.getEnchantmentLevel(
 				Enchantment.fortune.effectId, oldItemStack);
 
-		debug("fortuneWorks: %b, newFortuneLevel: %d, oldFortuneLevel: %d",
-				fortuneWorks, newFortuneLevel, oldFortuneLevel);
-		
+
 		if (configuration.shouldIgnoreFortune(block, metadata)){
 			debug("Ignoring Fortune.");
 		} else {
+			debug("fortuneWorks: %b, newFortuneLevel: %d, oldFortuneLevel: %d",
+					fortuneWorks, newFortuneLevel, oldFortuneLevel);
 			if (newFortuneLevel > oldFortuneLevel) {
 				if (fortuneWorks) {
 					debug("Switching because new fortune is more than old, and new works.");
@@ -357,24 +373,19 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 			}
 		}
 
-		int comparison = Float.compare(newBlockStr, oldBlockStr);
-
-		debug("Tool Selection Mode: %s",
-				toolSelectionMode);
-
-		if (toolSelectionMode == Configuration.FAST_STANDARD || toolSelectionMode == Configuration.FAST_NONSTANDARD) {
-			if (comparison > 0) {
+		if (toolSelectionMode.isFast()) {
+			if (blockStrComparison > 0) {
 				debug("Switching because new tool is stronger.");
 				return true;
-			} else if (comparison < 0) {
+			} else if (blockStrComparison < 0) {
 				debug("Not switching because old tool is stronger.");
 				return false;
 			}
-		} else if (toolSelectionMode == Configuration.SLOW_STANDARD) {
-			if (comparison < 0) {
+		} else {
+			if (blockStrComparison < 0) {
 				debug("Switching because new item is worse than old item and SLOW STANDARD is on.");
 				return true;
-			} else if (comparison > 0) {
+			} else if (blockStrComparison > 0) {
 				debug("Not switching because new item is better than old item and SLOW STANDARD is on.");
 				return false;
 			}
@@ -409,20 +420,11 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 		}
 
 		if (newDamageable && oldDamageable) {
-
 			if (newFortuneLevel > oldFortuneLevel) {
 				debug("Not switching because new fortune is bad and items are damageable.");
 				return false;
 			} else if (oldFortuneLevel > newFortuneLevel) {
 				debug("Switching because old fortune is bad and items are damageable.");
-				return true;
-			}
-
-			if (newEff <= 1.5F && oldEff > 1.5F) {
-				debug("Not switching because new item is wrong for the block and damageable, and old is right.");
-				return false;
-			} else if (oldEff <= 1.5F && newEff > 1.5F) {
-				debug("Switching because old item is wrong for the block and damageable, and new is right.");
 				return true;
 			}
 

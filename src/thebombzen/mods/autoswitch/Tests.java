@@ -35,20 +35,19 @@ public final class Tests {
 	private static boolean randomCurrentlyFaked = false;
 	
 	public static int getHarvestLevel(ItemStack itemstack, Block block, int metadata) {
-		if (block == null) {
-			return -3;
-		} else {
-			int state = AutoSwitch.instance.getConfiguration().getHarvestOverrideState(itemstack, block, metadata);
-			if (state == Configuration.OVERRIDDEN_NO){
-				return -2;
-			} else if (state == Configuration.OVERRIDDEN_YES){
-				return 2;
-			}
-			fakeItemForPlayer(itemstack);
-			boolean can = block.canHarvestBlock(mc.thePlayer, metadata);
-			unFakeItemForPlayer();
-			return can ? 1 : -1;
+		int state = AutoSwitch.instance.getConfiguration().getHarvestOverrideState(itemstack, block, metadata);
+		if (state == Configuration.OVERRIDDEN_NO){
+			return -2;
+		} else if (state == Configuration.OVERRIDDEN_YES){
+			return 2;
 		}
+		if (block.getMaterial().isToolNotRequired()){
+			return 0;
+		}
+		fakeItemForPlayer(itemstack);
+		boolean can = block.canHarvestBlock(mc.thePlayer, metadata);
+		unFakeItemForPlayer();
+		return can ? 1 : -1;
 	}
 	
 
@@ -271,6 +270,21 @@ public final class Tests {
 		return ret;
 	}
 
+	public static int getWeakToolStandardness(ItemStack itemstack, World world, int x, int y, int z){
+		if (itemstack == null) {
+			return 0;
+		}
+		Block block = world.getBlock(x, y, z);
+		int metadata = world.getBlockMetadata(x, y, z);
+		int state = AutoSwitch.instance.getConfiguration().getStandardToolOverrideState(itemstack, block, metadata);
+		if (state == Configuration.OVERRIDDEN_NO){
+			return -1;
+		} else if (state == Configuration.OVERRIDDEN_YES){
+			return 1;
+		}
+		return 0;
+	}
+	
 	public static int getToolStandardness(ItemStack itemstack, World world, int x,
 			int y, int z) {
 		if (itemstack == null) {
@@ -280,27 +294,39 @@ public final class Tests {
 		int metadata = world.getBlockMetadata(x, y, z);
 		int state = AutoSwitch.instance.getConfiguration().getStandardToolOverrideState(itemstack, block, metadata);
 		if (state == Configuration.OVERRIDDEN_NO){
-			return -2;
+			return -4;
 		} else if (state == Configuration.OVERRIDDEN_YES){
-			return 2;
+			return 4;
 		}
-		if (getBlockHardness(world, x, y, z) != 0){
+		int harvestLevel = Tests.getHarvestLevel(itemstack, block, metadata);
+		if (harvestLevel == -2){
+			return -3;
+		} else if (harvestLevel == 2){
+			return 3;
+		} else if (harvestLevel == -1){
+			return -2;
+		} else if (harvestLevel == 1){
+			return 2;
+		} else {
+			float hardness = Tests.getBlockHardness(world, x, y, z);
+			if (hardness <= 0F){
+				return 0;
+			}
 			float blockStrForNull = Tests.getBlockStrength(null, world, x, y, z);
 			float blockStr = Tests.getBlockStrength(itemstack, world, x, y, z);
-			if (blockStr > blockStrForNull){
+			if (blockStr > blockStrForNull * 1.5F){
 				return 1;
-			} else if (isItemStackDamageableOnBlock(itemstack, world, x, y, z)) {
+			} else if (Tests.isItemStackDamageableOnBlock(itemstack, world, x, y, z)) {
 				return -1;
+			} else {
+				return 0;
 			}
 		}
-		return 0;
 	}
 
 	public static boolean isItemStackDamageable(ItemStack itemstack) {
 		return itemstack != null && itemstack.getItem().isDamageable();
 	}
-	
-	
 
 	public static boolean isItemStackDamageableOnBlock(ItemStack itemstack,
 			World world, int x, int y, int z) {

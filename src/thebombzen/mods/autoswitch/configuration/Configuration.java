@@ -24,8 +24,6 @@ import thebombzen.mods.thebombzenapi.configuration.ConfigFormatException;
 import thebombzen.mods.thebombzenapi.configuration.ConfigOption;
 import thebombzen.mods.thebombzenapi.configuration.SingleMultiBoolean;
 import thebombzen.mods.thebombzenapi.configuration.ThebombzenAPIConfiguration;
-import cpw.mods.fml.common.registry.GameRegistry;
-import cpw.mods.fml.common.registry.GameRegistry.UniqueIdentifier;
 import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
 
@@ -45,10 +43,6 @@ public class Configuration extends ThebombzenAPIConfiguration {
 	 * 3: AS 4.4.0+ // More config configurability! :D
 	 */
 	public static final int CONFIG_VERSION = 3;
-	
-	public static final int FAST_STANDARD = 0;
-	public static final int SLOW_STANDARD = 1;
-	public static final int FAST_NONSTANDARD = 2;
 	
 	public static final int OVERRIDDEN_YES = 1;
 	public static final int OVERRIDDEN_NO = -1;
@@ -184,10 +178,8 @@ public class Configuration extends ThebombzenAPIConfiguration {
 			return -1;
 		}
 		
-		UniqueIdentifier id = GameRegistry.findUniqueIdentifierFor(itemstack.getItem());
-		
 		for (BlockItemIdentifier itemID : customWeapons.keySet()){
-			if (itemID.contains(id.modId, id.name, itemstack.getItemDamage())){
+			if (itemID.contains(itemstack)){
 				return customWeapons.get(itemID);
 			}
 		}
@@ -199,31 +191,27 @@ public class Configuration extends ThebombzenAPIConfiguration {
 		return extraConfigFile;
 	}
 
-	public int getToolSelectionMode(Block block, int metadata) {
+	public ToolSelectionMode getToolSelectionMode(Block block, int metadata) {
 		if (getBooleanProperty(TREEFELLER_COMPAT) && AutoSwitch.instance.isTreefellerOn()){
-			return SLOW_STANDARD;
+			return ToolSelectionMode.SLOW_STANDARD;
 		}
 		if (this.isSlowStandardOverridden(block, metadata)){
-			return SLOW_STANDARD;
+			return ToolSelectionMode.SLOW_STANDARD;
 		} else if (this.isFastNonStandardOverridden(block, metadata)){
-			return FAST_NONSTANDARD;
+			return ToolSelectionMode.FAST_NONSTANDARD;
 		} else if (this.isFastStandardOverridden(block, metadata)){
-			return FAST_STANDARD;
+			return ToolSelectionMode.FAST_STANDARD;
 		}
-		int toolSelectionMode = FAST_STANDARD;
-		if (getStringProperty(TOOL_SELECTION_MODE).equalsIgnoreCase(
-				"Fast Standard")) {
-			toolSelectionMode = FAST_STANDARD;
-		} else if (getStringProperty(TOOL_SELECTION_MODE)
-				.equalsIgnoreCase("Slow Standard")) {
-			toolSelectionMode = SLOW_STANDARD;
-		} else if (getStringProperty(TOOL_SELECTION_MODE)
-				.equalsIgnoreCase("Fast Nonstandard")) {
-			toolSelectionMode = FAST_NONSTANDARD;
-		} else {
-			setToolSelectionMode(FAST_STANDARD);
+		return this.getDefaultToolSelectionMode();
+	}
+	
+	public ToolSelectionMode getDefaultToolSelectionMode(){
+		ToolSelectionMode mode = ToolSelectionMode.parse(getStringProperty(TOOL_SELECTION_MODE));
+		if (mode == null){
+			mode = ToolSelectionMode.FAST_STANDARD;
+			setToolSelectionMode(mode);
 		}
-		return toolSelectionMode;
+		return mode;
 	}
 
 	private boolean isFastNonStandardOverridden(Block block, int metadata){
@@ -509,16 +497,8 @@ public class Configuration extends ThebombzenAPIConfiguration {
 		}
 	}
 
-	public void setToolSelectionMode(int mode) {
-		if (mode == FAST_STANDARD) {
-			setProperty(TOOL_SELECTION_MODE, "Fast Standard");
-		} else if (mode == SLOW_STANDARD) {
-			setProperty(TOOL_SELECTION_MODE, "Slow Standard");
-		} else if (mode == FAST_NONSTANDARD) {
-			setProperty(TOOL_SELECTION_MODE, "Fast Nonstandard");
-		} else {
-			this.setToolSelectionMode(FAST_STANDARD);
-		}
+	public void setToolSelectionMode(ToolSelectionMode mode) {
+		setProperty(TOOL_SELECTION_MODE, mode.toString());
 	}
 
 	public boolean shouldIgnoreFortune(Block block, int metadata){

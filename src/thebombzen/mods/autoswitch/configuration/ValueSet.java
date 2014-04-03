@@ -2,6 +2,9 @@ package thebombzen.mods.autoswitch.configuration;
 
 import java.util.Scanner;
 
+import net.minecraft.enchantment.Enchantment;
+import net.minecraft.item.ItemStack;
+import net.minecraft.nbt.NBTTagList;
 import thebombzen.mods.thebombzenapi.ThebombzenAPI;
 import thebombzen.mods.thebombzenapi.configuration.BooleanTester;
 import thebombzen.mods.thebombzenapi.configuration.ConfigFormatException;
@@ -12,11 +15,12 @@ import thebombzen.mods.thebombzenapi.configuration.ConfigFormatException;
  * a one-item set, or a set based off a mask.
  * @author thebombzen
  */
-public class ValueSet implements BooleanTester<Integer> {
+public class ValueSet implements BooleanTester<SingleValueIdentifier> {
 	
 	public static ValueSet parseValueSet(String s) throws ConfigFormatException {
-		int data;
-		int mask;
+		int first;
+		int second;
+		int third;
 		boolean subtract;
 		
 		switch (s.charAt(0)){
@@ -27,15 +31,30 @@ public class ValueSet implements BooleanTester<Integer> {
 			subtract = true;
 			break;
 		default:
-				throw new ConfigFormatException("Does not contain +/-!");
+				throw new ConfigFormatException("Value Set doesn't start with + or -: " + s);
 		}
 		
 		Scanner scanner = new Scanner(s.substring(1));
 		scanner.useDelimiter(":");
 		
+		boolean enchant = false;
+		
 		if (scanner.hasNext()){
 			String num = scanner.next();
-			data = ThebombzenAPI.parseInteger(num);
+			if (Character.toUpperCase(num.charAt(0)) == 'E'){
+				num = num.substring(1);
+				enchant = true;
+			}
+			try {
+				first = ThebombzenAPI.parseInteger(num);
+			} catch (NumberFormatException nfe){
+				scanner.close();
+				throw new ConfigFormatException("Invalid number: " + num);
+			}
+			if (enchant && (first < 0 || first >= Enchantment.enchantmentsList.length || Enchantment.enchantmentsList[first] == null)){
+				scanner.close();
+				throw new ConfigFormatException("Invalid Enchantment ID: " + first);
+			}
 		} else {
 			scanner.close();
 			return new ValueSet(0, 0, subtract);
@@ -43,13 +62,39 @@ public class ValueSet implements BooleanTester<Integer> {
 		
 		if (scanner.hasNext()){
 			String num = scanner.next();
-			mask = ThebombzenAPI.parseInteger(num);
+			try {
+				second = ThebombzenAPI.parseInteger(num);
+			} catch (NumberFormatException nfe){
+				scanner.close();
+				throw new ConfigFormatException("Invalid number: " + num);
+			}
 		} else {
-			mask = Integer.MAX_VALUE;
+			scanner.close();
+			if (enchant){
+				return new ValueSet(Enchantment.enchantmentsList[first], 1, Integer.MAX_VALUE, subtract);
+			} else {
+				return new ValueSet(first, Integer.MAX_VALUE, subtract);
+			}
 		}
 		
-		scanner.close();
-		return new ValueSet(data, mask, subtract);
+		if (enchant){
+			if (scanner.hasNext()){
+				String num = scanner.next();
+				scanner.close();
+				try {
+					third = ThebombzenAPI.parseInteger(num);
+				} catch (NumberFormatException e){
+					throw new ConfigFormatException("Invalid number: " + num);
+				}
+				return new ValueSet(Enchantment.enchantmentsList[first], second, third, subtract);
+			} else {
+				scanner.close();
+				return new ValueSet(Enchantment.enchantmentsList[first], second, Integer.MAX_VALUE, subtract);
+			}
+		} else {
+			scanner.close();
+			return new ValueSet(first, second, subtract);
+		}
 	}
 	
 	private int data;
@@ -60,20 +105,15 @@ public class ValueSet implements BooleanTester<Integer> {
 	 */
 	private boolean subtract;
 	
+	private int min;
+	private int max;
+	private Enchantment enchantment;
+	
 	/**
 	 * Construct a universal set
 	 */
 	public ValueSet(){
 		this(0, 0, false);
-	}
-	
-	/**
-	 * Construct a set that only matches the specified value
-	 * @param value the value
-	 * @param subtract whether to subtract (true) or add (false) the value.
-	 */
-	public ValueSet(int value, boolean subtract){
-		this(value, Integer.MAX_VALUE, subtract);
 	}
 	
 	/**
@@ -86,16 +126,58 @@ public class ValueSet implements BooleanTester<Integer> {
 		this.data = data;
 		this.mask = mask;
 		this.subtract = subtract;
+		this.enchantment = null;
+	}
+	
+	public ValueSet(Enchantment enchantment, int min, int max, boolean subtract){
+		this.subtract = subtract;
+		this.min = min;
+		this.max = max;
+		this.enchantment = enchantment;
+	}
+	
+	public boolean contains(SingleValueIdentifier id){
+		if (id.isItem()){
+			return contains(id.getItemStack());
+		} else {
+			return contains(id.getDamageValue());
+		}
+	}
+	
+	private boolean contains(int value){
+		return (value & mask) == data;
 	}
 	
 	/**
 	 * Returns true if this set contains the value
 	 * @param value the value to check
 	 */
-	@Override
-	public boolean contains(Integer value){
-		//System.out.format("value: %s%nmask: %s%ndata: %s%n", Integer.toBinaryString(value), Integer.toBinaryString(mask), Integer.toBinaryString(data));
-		return (value & mask) == data;
+	private boolean contains(ItemStack stack){
+		if (stack == null){
+			return false;
+		}
+		if (enchantment != null){
+			NBTTagList list = stack.getEnchantmentTagList();
+			if (list == null){
+				return false;
+			}
+			for (int i = 0; i < list.tagCount(); i++){
+				short id = list.getCompoundTagAt(i).getShort("id");
+				short lvl = list.getCompoundTagAt(i).getShort("lvl");
+				if (id == enchantment.effectId){
+					if (lvl >= min && lvl <= max){
+						return true;
+					} else {
+						return false;
+					}
+				} else {
+					continue;
+				}
+			}
+			return false;
+		} else {
+			return (stack.getItemDamage() & mask) == data;
+		}
 	}
 
 	/**
