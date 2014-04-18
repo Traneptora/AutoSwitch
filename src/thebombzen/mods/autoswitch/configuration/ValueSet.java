@@ -241,7 +241,13 @@ public class ValueSet implements BooleanTester<SingleValueIdentifier> {
 	 */
 	@Override
 	public String toString() {
-		return (subtract ? '-' : '+') + "0x" + Integer.toHexString(data) + (mask != Integer.MAX_VALUE ? ":0x" + Integer.toHexString(mask) : "");
+		StringBuilder b = new StringBuilder(subtract ? '-' : '+');
+		if (enchantment != null){
+			b.append('E').append("0x").append(Integer.toHexString(enchantment.effectId)).append(":0x").append(Integer.toHexString(min)).append(":0x").append(Integer.toHexString(max));
+		} else {
+			b.append("0x").append(Integer.toHexString(data)).append(":0x").append(Integer.toHexString(mask));
+		}
+		return b.toString();
 	}
 	
 }

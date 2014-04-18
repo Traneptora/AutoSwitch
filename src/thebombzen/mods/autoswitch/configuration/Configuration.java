@@ -69,6 +69,10 @@ public class Configuration extends ThebombzenAPIConfiguration {
 			"Use AutoSwitch when digging blocks.");
 	public static final ConfigOption MOBS = new ConfigOption(SingleMultiBoolean.ALWAYS, "MOBS", "Use on mobs",
 			"Use AutoSwitch when attacking mobs.");
+	public static final ConfigOption SWITCHBACK_BLOCKS = new ConfigOption(SingleMultiBoolean.ALWAYS, "SWITCHBACK_BLOCKS", "Unswitch on blocks",
+			"Switch back after digging a block.");
+	public static final ConfigOption SWITCHBACK_MOBS = new ConfigOption(SingleMultiBoolean.ALWAYS, "SWITCHBACK_MOBS", "Unswitch on weapons",
+			"Switch back after attacking a mob.");
 	public static final ConfigOption DEBUG = new ConfigOption(false, "DEBUG", "Debug Logging",
 			"Log debug output to",
 			".minecraft/mods/AutoSwitch/DEBUG.txt");
@@ -169,7 +173,7 @@ public class Configuration extends ThebombzenAPIConfiguration {
 
 	@Override
 	public ConfigOption[] getAllOptions() {
-		return new ConfigOption[]{TOGGLE_KEY, PULSE_KEY, DEFAULT_ENABLED, TOOL_SELECTION_MODE, BLOCKS, MOBS, DEBUG, USE_IN_CREATIVE, TREEFELLER_COMPAT};
+		return new ConfigOption[]{TOGGLE_KEY, PULSE_KEY, DEFAULT_ENABLED, TOOL_SELECTION_MODE, BLOCKS, MOBS, SWITCHBACK_BLOCKS, SWITCHBACK_MOBS, DEBUG, USE_IN_CREATIVE, TREEFELLER_COMPAT};
 	}
 
 	public int getCustomWeaponDamage(ItemStack itemstack) {

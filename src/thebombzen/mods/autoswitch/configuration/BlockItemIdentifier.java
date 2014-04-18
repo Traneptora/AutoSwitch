@@ -10,60 +10,56 @@ public class BlockItemIdentifier extends CompoundExpression<SingleValueIdentifie
 
 	public static BlockItemIdentifier parseBlockItemIdentifier(String info) throws ConfigFormatException {
 		
-		if (info.startsWith("(") && info.endsWith(")")){
-			return parseBlockItemIdentifier(info.substring(1, info.length() - 1));
+		if (info.length() == 0){
+			throw new ConfigFormatException("Error parsing identifier!");
 		}
 		
-		int indexOfX = info.indexOf('^');
-		int indexOfO = info.indexOf('|');
-		int indexOfA = info.indexOf('&');
-		
-		
-		if (indexOfA < 0 && indexOfO < 0 && indexOfX < 0 && info.indexOf('!') < 0){
+		if (!info.contains("&") && !info.contains("|") && !info.contains("^") && !info.contains("!")){
+			if (info.startsWith("(") && info.endsWith(")")){
+				return parseBlockItemIdentifier(info.substring(1, info.length() - 1));
+			}
 			return new BlockItemIdentifier(SingleBlockItemIdentifier.parseSingleBlockItemIdentifier(info));
 		}
 		
-		
-		if (indexOfX >= 0){
-			String before = info.substring(0, indexOfX);
-			String after = info.substring(indexOfX + 1);
-			int beforeLeftCount = ThebombzenAPI.countOccurrences(before, '(');
-			int beforeRightCount = ThebombzenAPI.countOccurrences(before, ')');
-			int afterLeftCount = ThebombzenAPI.countOccurrences(after, '(');
-			int afterRightCount = ThebombzenAPI.countOccurrences(after, ')');
-			if (beforeLeftCount == beforeRightCount && afterLeftCount == afterRightCount){
+		int index = info.indexOf('^');
+		while (index >= 0){
+			if (ThebombzenAPI.isSeparatorAtTopLevel(info, index)){
+				String before = info.substring(0, index);
+				String after = info.substring(index + 1);
 				return new BlockItemIdentifier(XOR, BlockItemIdentifier.parseBlockItemIdentifier(before), BlockItemIdentifier.parseBlockItemIdentifier(after));
+			} else {
+				index = info.indexOf('^', index + 1);
 			}
 		}
 		
-		
-		if (indexOfO >= 0){
-			String before = info.substring(0, indexOfO);
-			String after = info.substring(indexOfO + 1);
-			int beforeLeftCount = ThebombzenAPI.countOccurrences(before, '(');
-			int beforeRightCount = ThebombzenAPI.countOccurrences(before, ')');
-			int afterLeftCount = ThebombzenAPI.countOccurrences(after, '(');
-			int afterRightCount = ThebombzenAPI.countOccurrences(after, ')');
-			if (beforeLeftCount == beforeRightCount && afterLeftCount == afterRightCount){
+		index = info.indexOf('|');
+		while (index >= 0){
+			if (ThebombzenAPI.isSeparatorAtTopLevel(info, index)){
+				String before = info.substring(0, index);
+				String after = info.substring(index + 1);
 				return new BlockItemIdentifier(OR, BlockItemIdentifier.parseBlockItemIdentifier(before), BlockItemIdentifier.parseBlockItemIdentifier(after));
+			} else {
+				index = info.indexOf('|', index + 1);
 			}
 		}
 		
-		
-		if (indexOfA >= 0){
-			String before = info.substring(0, indexOfA);
-			String after = info.substring(indexOfA + 1);
-			int beforeLeftCount = ThebombzenAPI.countOccurrences(before, '(');
-			int beforeRightCount = ThebombzenAPI.countOccurrences(before, ')');
-			int afterLeftCount = ThebombzenAPI.countOccurrences(after, '(');
-			int afterRightCount = ThebombzenAPI.countOccurrences(after, ')');
-			if (beforeLeftCount == beforeRightCount && afterLeftCount == afterRightCount){
+		index = info.indexOf('&');
+		while (index >= 0){
+			if (ThebombzenAPI.isSeparatorAtTopLevel(info, index)){
+				String before = info.substring(0, index);
+				String after = info.substring(index + 1);
 				return new BlockItemIdentifier(AND, BlockItemIdentifier.parseBlockItemIdentifier(before), BlockItemIdentifier.parseBlockItemIdentifier(after));
+			} else {
+				index = info.indexOf('&', index + 1);
 			}
 		}
 		
 		if (info.startsWith("!")){
 			return new BlockItemIdentifier(NOT, BlockItemIdentifier.parseBlockItemIdentifier(info.substring(1)), null);
+		}
+		
+		if (info.startsWith("(") && info.endsWith(")")){
+			return BlockItemIdentifier.parseBlockItemIdentifier(info.substring(1, info.length() - 1));
 		}
 		
 		throw new ConfigFormatException("Error parsing identifier!");

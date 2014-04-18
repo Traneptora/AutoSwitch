@@ -219,9 +219,12 @@ public final class Tests {
 	}
 	
 	public static double getItemStackDamage(ItemStack itemStack){
+		double damage = AutoSwitch.instance.getConfiguration().getCustomWeaponDamage(itemStack);
+		if (damage >= 0){
+			return damage;
+		}
 		fakeItemForPlayer(itemStack);
-		double damage = mc.thePlayer.getEntityAttribute(
-				SharedMonsterAttributes.attackDamage).getAttributeValue();
+		damage = mc.thePlayer.getEntityAttribute(SharedMonsterAttributes.attackDamage).getAttributeValue();
 		unFakeItemForPlayer();
 		return damage;
 	}
@@ -351,7 +354,7 @@ public final class Tests {
 		if (itemstack.getItem() instanceof ItemSword){
 			return true;
 		}
-		if (GameRegistry.findUniqueIdentifierFor(itemstack.getItem()).name.toLowerCase().contains("sword")){
+		if (GameRegistry.findUniqueIdentifierFor(itemstack.getItem()).name.toLowerCase().contains("_sword")){
 			return true;
 		}
 		return false;

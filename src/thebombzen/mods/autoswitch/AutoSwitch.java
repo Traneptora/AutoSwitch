@@ -22,6 +22,7 @@ import org.lwjgl.input.Mouse;
 
 import thebombzen.mods.autoswitch.configuration.Configuration;
 import thebombzen.mods.autoswitch.configuration.ToolSelectionMode;
+import thebombzen.mods.thebombzenapi.ThebombzenAPI;
 import thebombzen.mods.thebombzenapi.ThebombzenAPIBaseMod;
 import cpw.mods.fml.common.FMLCommonHandler;
 import cpw.mods.fml.common.Mod;
@@ -41,7 +42,7 @@ import cpw.mods.fml.relauncher.SideOnly;
  * @author thebombzen
  */
 @SideOnly(Side.CLIENT)
-@Mod(modid = "autoswitch", name = "AutoSwitch", version = "4.4.0pre6", dependencies = "required-after:thebombzenapi", guiFactory = "thebombzen.mods.autoswitch.configuration.ConfigGuiFactory")
+@Mod(modid = "autoswitch", name = "AutoSwitch", version = "4.4.0pre7", dependencies = "required-after:thebombzenapi", guiFactory = "thebombzen.mods.autoswitch.configuration.ConfigGuiFactory")
 public class AutoSwitch extends ThebombzenAPIBaseMod {
 
 	public static final int STAGE_H0 = 0;
@@ -58,21 +59,27 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 	private boolean prevMouseDown = false;
 	private boolean prevPulse = false;
 	private int prevtool = 0;
-	private int prevWorld = 0;
 	private boolean pulseOn = false;
-	private boolean switched = false;
+	private boolean switchback = false;
 	private boolean treefellerOn = false;
 
 	@Instance(value = "autoswitch")
 	public static AutoSwitch instance;
-
+	
 	@SubscribeEvent
 	public void clientChat(ClientChatReceivedEvent event){
-		//debug(event.message.getUnformattedText());
-		if (event.message.getUnformattedText().equals("**YOU READY YOUR AXE**")){
+		String text = event.message.getUnformattedText();
+		if (text.equals("**YOU READY YOUR AXE**")){
 			treefellerOn = true;
-		}
-		if (event.message.getUnformattedText().equals("**YOU LOWER YOUR AXE**") || event.message.getUnformattedText().equals("**Tree Feller has worn off**")){
+		} else if (text.matches("\\*\\*YOU READY YOUR [A-Z]+\\*\\*")) {
+			treefellerOn = false;
+		} else if (text.equals("**YOU LOWER YOUR AXE**")){
+			treefellerOn = false;
+		} else if (text.equals("**Tree Feller has worn off**")){
+			treefellerOn = false;
+		} else if (text.equals("YOUR AXE SPLINTERS INTO DOZENS OF PIECES!")){
+			treefellerOn = false;
+		} else if (text.matches("^You are too tired to use that ability again. \\(\\d+s\\)$")){
 			treefellerOn = false;
 		}
 		//debug("treefellerOn: %b", treefellerOn);
@@ -89,7 +96,7 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 			return;
 		}
 		
-		if (prevWorld != System.identityHashCode(mc.theWorld)){
+		if (ThebombzenAPI.hasWorldChanged()){
 			treefellerOn = false;
 		}
 
@@ -125,7 +132,6 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 		}
 		prevMouseDown = mouseDown;
 		prevPulse = pulseOn;
-		prevWorld = System.identityHashCode(mc.theWorld);
 	}
 	
 	private void debug(String string) {
@@ -156,7 +162,7 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 
 	@Override
 	public String getLongVersionString() {
-		return "AutoSwitch, version 4.4.0pre6, Minecraft 1.7.2";
+		return "AutoSwitch, version 4.4.0pre7, Minecraft 1.7.2";
 	}
 
 	@Override
@@ -253,7 +259,7 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 		
 		int blockStrComparison = Float.compare(newBlockStr, oldBlockStr);
 		
-		if (toolSelectionMode.isStandard()) {
+		if (toolSelectionMode.isStandard() || (Math.abs(newStandard) >= 4 && Math.abs(oldStandard) < 4) || (Math.abs(newStandard) < 4 && Math.abs(oldStandard) >= 4)) {
 			if (newStandard > oldStandard) {
 				debug("Switching because new item is more standard than old.");
 				return true;
@@ -456,16 +462,8 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 
 		boolean isPlayer = entityover instanceof EntityPlayer;
 
-		double oldDamage = configuration.getCustomWeaponDamage(oldItemStack);
-		double newDamage = configuration.getCustomWeaponDamage(newItemStack);
-
-		if (oldDamage == -1) {
-			oldDamage = Tests.getItemStackDamage(oldItemStack);
-		}
-
-		if (newDamage == -1) {
-			newDamage = Tests.getItemStackDamage(newItemStack);
-		}
+		double oldDamage = Tests.getItemStackDamage(oldItemStack);
+		double newDamage = Tests.getItemStackDamage(newItemStack);
 
 		oldDamage += Tests.getEnchantmentModifierLiving(oldItemStack,
 				entityover);
@@ -591,6 +589,14 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 			debug("Not switching because old weapon is sword and new isn't.");
 			return false;
 		}
+		
+		if (newDamage > oldDamage) {
+			debug("Switching because new damage is more and all else is equal.");
+			return true;
+		} else if (newDamage < oldDamage) {
+			debug("Not switching because old damage is more and all else is equal.");
+			return false;
+		}
 
 		boolean newDamageable = Tests.isItemStackDamageable(newItemStack);
 		boolean oldDamageable = Tests.isItemStackDamageable(oldItemStack);
@@ -616,14 +622,6 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 				&& oldUnbreakingLevel > newUnbreakingLevel) {
 			debug("Not switching because old unbreaking, %d, is more than new, %d.",
 					oldUnbreakingLevel, newUnbreakingLevel);
-			return false;
-		}
-
-		if (newDamage > oldDamage) {
-			debug("Switching because new damage is more and all else is equal.");
-			return true;
-		} else if (newDamage < oldDamage) {
-			debug("Not switching because old damage is more and all else is equal.");
 			return false;
 		}
 
@@ -698,9 +696,9 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 	}
 
 	private void switchBack() {
-		if (switched) {
+		if (switchback) {
 			mc.thePlayer.inventory.currentItem = prevtool;
-			switched = false;
+			switchback = false;
 			debug("Switching tools back to %d", prevtool);
 		}
 	}
@@ -747,8 +745,12 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 		}
 		debug("Current best is %d, which is %s", currentBest,
 				names[currentBest]);
-		switchToolsToN(currentBest == -1 ? mc.thePlayer.inventory.currentItem
-				: currentBest);
+		switchToolsToN(currentBest);
+		if (configuration.getSingleMultiProperty(Configuration.SWITCHBACK_BLOCKS)){
+			switchback = true;
+		} else {
+			prevtool = currentBest;
+		}
 	}
 
 	private void switchToBestWeapon(EntityPlayer entityplayer,
@@ -784,10 +786,14 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 			}
 		}
 		switchToolsToN(currentBest);
+		if (configuration.getSingleMultiProperty(Configuration.SWITCHBACK_MOBS)){
+			switchback = true;
+		} else {
+			prevtool = currentBest;
+		}
 	}
 
 	private void switchToolsToN(int n) {
-		switched = true;
 		EntityPlayer entityplayer = mc.thePlayer;
 		entityplayer.inventory.currentItem = n;
 		String name;

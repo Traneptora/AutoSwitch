@@ -79,6 +79,7 @@ F > @wheat
 # This one makes AS treat coal like a nonfortune block (remove the # to add)
 # F < coal_ore
 
+F << $log
 
 # ========= STANDARD TOOLS ==========
 # TODO desc
