@@ -274,9 +274,6 @@ public final class Tests {
 	}
 
 	public static int getWeakToolStandardness(ItemStack itemstack, World world, int x, int y, int z){
-		if (itemstack == null) {
-			return 0;
-		}
 		Block block = world.getBlock(x, y, z);
 		int metadata = world.getBlockMetadata(x, y, z);
 		int state = AutoSwitch.instance.getConfiguration().getStandardToolOverrideState(itemstack, block, metadata);
@@ -290,9 +287,6 @@ public final class Tests {
 	
 	public static int getToolStandardness(ItemStack itemstack, World world, int x,
 			int y, int z) {
-		if (itemstack == null) {
-			return 0;
-		}
 		Block block = world.getBlock(x, y, z);
 		int metadata = world.getBlockMetadata(x, y, z);
 		int state = AutoSwitch.instance.getConfiguration().getStandardToolOverrideState(itemstack, block, metadata);
