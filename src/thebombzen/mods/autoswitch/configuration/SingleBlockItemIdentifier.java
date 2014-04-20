@@ -221,7 +221,7 @@ public class SingleBlockItemIdentifier implements BooleanTester<SingleValueIdent
 			ValueSet set = valueSets[i];
 			SingleValueIdentifier id2 = identifier;
 			if (set.getMask() < 0){
-				if (!identifier.isItem()){
+				if (!identifier.isItem() || identifier.getItem().getMaxDamage() < identifier.getDamageValue()){
 					continue;
 				}
 				id2 = new SingleValueIdentifier(identifier);
