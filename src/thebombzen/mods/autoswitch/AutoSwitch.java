@@ -5,7 +5,6 @@ import java.util.Set;
 
 import net.minecraft.block.Block;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.multiplayer.PlayerControllerMP;
 import net.minecraft.enchantment.Enchantment;
 import net.minecraft.enchantment.EnchantmentHelper;
 import net.minecraft.entity.EntityLivingBase;
@@ -17,7 +16,6 @@ import net.minecraft.world.World;
 import net.minecraftforge.client.event.ClientChatReceivedEvent;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.entity.player.AttackEntityEvent;
-import net.minecraftforge.event.entity.player.PlayerEvent;
 
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
@@ -682,8 +680,8 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 	}
 
 	public boolean potentiallySwitchTools(World world, int x, int y, int z) {
-		if (pulseOn == isToggleEnabled(0)
-				|| mc.thePlayer.capabilities.isCreativeMode
+		if (pulseOn == isToggleEnabled(Configuration.DEFAULT_ENABLED.getDefaultToggleIndex())
+				|| mc.playerController.isInCreativeMode()
 				&& !configuration
 						.getBooleanProperty(Configuration.USE_IN_CREATIVE)
 				|| mc.currentScreen != null || !configuration.getSingleMultiProperty(Configuration.BLOCKS)) {
@@ -691,7 +689,6 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 		}
 		debug("====================================================");
 		debug(getLongVersionString());
-		debug("Switching on block, x = %d, y = %d, z = %d", x, y, z);
 		try {
 			switchToBestTool(mc.theWorld, x, y, z);
 			return true;
@@ -704,7 +701,7 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 	public boolean potentiallySwitchWeapons(EntityLivingBase entity) {
 		// System.out.println("Here!");
 		if (pulseOn == isToggleEnabled(Configuration.DEFAULT_ENABLED.getDefaultToggleIndex())
-				|| mc.thePlayer.capabilities.isCreativeMode
+				|| mc.playerController.isInCreativeMode()
 				&& !configuration
 						.getBooleanProperty(Configuration.USE_IN_CREATIVE)
 				|| mc.currentScreen != null || !configuration.getSingleMultiProperty(Configuration.MOBS)) {

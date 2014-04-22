@@ -17,7 +17,6 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.item.ItemSword;
 import net.minecraft.util.MathHelper;
 import net.minecraft.world.World;
-import net.minecraftforge.common.ForgeHooks;
 import thebombzen.mods.autoswitch.configuration.Configuration;
 import thebombzen.mods.thebombzenapi.ThebombzenAPI;
 import cpw.mods.fml.common.registry.GameRegistry;
