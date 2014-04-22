@@ -24,7 +24,7 @@ R3
 # To specify all blocks or all items use a single @ instead of the name
 
 # To specify all similar blocks, material-wise, put a $ in front of the block name
-# For example, $planks means every single block that's made out of a wooden material.
+# For example, $planks means every block that's made out of a wooden material.
  
 # To specify all similar blocks or items, behavior-wise, put an @ in front of the block or item name
 # For example, @redstone_ore means both lit and unlit ore
@@ -46,7 +46,7 @@ R3
 # [0]dropper means all droppers
 # [1]dropper means droppers and dispensers
 # [2]dropper means all blocks that hold items
-# [3]dropper means all 
+# [3]dropper means all items
 
 # ========= SILK TOUCH =============
 
