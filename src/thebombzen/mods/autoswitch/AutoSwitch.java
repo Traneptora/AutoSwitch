@@ -44,7 +44,7 @@ import cpw.mods.fml.relauncher.SideOnly;
  * @author thebombzen
  */
 @SideOnly(Side.CLIENT)
-@Mod(modid = "autoswitch", name = "AutoSwitch", version = "4.4.0pre7", dependencies = "required-after:thebombzenapi", guiFactory = "thebombzen.mods.autoswitch.configuration.ConfigGuiFactory")
+@Mod(modid = "autoswitch", name = "AutoSwitch", version = "4.4.0pre8", dependencies = "required-after:thebombzenapi", guiFactory = "thebombzen.mods.autoswitch.configuration.ConfigGuiFactory")
 public class AutoSwitch extends ThebombzenAPIBaseMod {
 
 	public static final int STAGE_H0 = 0;
@@ -169,7 +169,7 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 
 	@Override
 	public String getLongVersionString() {
-		return "AutoSwitch, version 4.4.0pre7, Minecraft 1.7.2";
+		return "AutoSwitch, version 4.4.0pre8, Minecraft 1.7.2";
 	}
 
 	@Override
