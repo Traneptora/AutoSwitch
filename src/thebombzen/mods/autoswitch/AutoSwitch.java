@@ -5,6 +5,7 @@ import java.util.Set;
 
 import net.minecraft.block.Block;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.PlayerControllerMP;
 import net.minecraft.enchantment.Enchantment;
 import net.minecraft.enchantment.EnchantmentHelper;
 import net.minecraft.entity.EntityLivingBase;
@@ -16,6 +17,7 @@ import net.minecraft.world.World;
 import net.minecraftforge.client.event.ClientChatReceivedEvent;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.entity.player.AttackEntityEvent;
+import net.minecraftforge.event.entity.player.PlayerEvent;
 
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
@@ -65,6 +67,11 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 
 	@Instance(value = "autoswitch")
 	public static AutoSwitch instance;
+	
+	/*@SubscribeEvent
+	public void getPlayerBreakSpeed(PlayerEvent.BreakSpeed event){
+		System.err.println(event.originalSpeed);
+	}*/
 	
 	@SubscribeEvent
 	public void clientChat(ClientChatReceivedEvent event){
@@ -220,8 +227,10 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 				.getBlockStrength(newItemStack, world, x, y, z);
 		float oldBlockStr = Tests
 				.getBlockStrength(oldItemStack, world, x, y, z);
+		int newAdjustedBlockStr = Tests.getAdjustedBlockStr(newBlockStr);
+		int oldAdjustedBlockStr = Tests.getAdjustedBlockStr(oldBlockStr);
 
-		if (newBlockStr == 0.0F && oldBlockStr == 0.0F) {
+		if (newBlockStr <= 0F && oldBlockStr <= 0F) {
 			debug("Not switching because block is unbreakable by either item.");
 			return false;
 		}
@@ -231,9 +240,10 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 		int oldHarvest = Tests.getHarvestLevel(oldItemStack, block,
 				metadata);
 		
-		debug("newBlockStr: %f, oldBlockStr %f", newBlockStr, oldBlockStr);
+		debug("newBlockStr: %.10f, oldBlockStr %.10f", newBlockStr, oldBlockStr);
 		debug("newHarvest: %d, oldHarvest: %d", newHarvest, oldHarvest);
 		debug("newStrength: %f, oldStrength: %f", newStr, oldStr);
+		debug("newAdjustedBlockStr: %d, oldAdjustedBlockStr: %d", newAdjustedBlockStr, oldAdjustedBlockStr);
 
 		float newEff = Tests.getEff(newStr, newItemStack);
 		float oldEff = Tests.getEff(oldStr, oldItemStack);
@@ -257,9 +267,10 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 		debug("newDamageable: %b, oldDamageable: %b", newDamageable,
 				oldDamageable);
 		
+		int adjustedBlockStrComparison = new Integer(newAdjustedBlockStr).compareTo(oldAdjustedBlockStr);
 		int blockStrComparison = Float.compare(newBlockStr, oldBlockStr);
 		
-		if (toolSelectionMode.isStandard() || (Math.abs(newStandard) >= 4 && Math.abs(oldStandard) < 4) || (Math.abs(newStandard) < 4 && Math.abs(oldStandard) >= 4)) {
+		if (toolSelectionMode.isStandard() || (Math.abs(newStandard) >= 4 && Math.abs(oldStandard) < 4) || (Math.abs(newStandard) < 4 && Math.abs(oldStandard) >= 4) || (Math.abs(newStandard) >= 4 && Math.abs(oldStandard) >= 4 && oldStandard != newStandard)) {
 			if (newStandard > oldStandard) {
 				debug("Switching because new item is more standard than old.");
 				return true;
@@ -279,18 +290,18 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 			}
 		} else {
 			if (toolSelectionMode.isFast()) {
-				if (blockStrComparison > 0) {
+				if (adjustedBlockStrComparison > 0) {
 					debug("Switching because new tool is stronger.");
 					return true;
-				} else if (blockStrComparison < 0) {
+				} else if (adjustedBlockStrComparison < 0) {
 					debug("Not switching because old tool is stronger.");
 					return false;
 				}
 			} else {
-				if (blockStrComparison < 0) {
+				if (adjustedBlockStrComparison < 0) {
 					debug("Switching because new item is worse than old item and SLOW STANDARD is on.");
 					return true;
-				} else if (blockStrComparison > 0) {
+				} else if (adjustedBlockStrComparison > 0) {
 					debug("Not switching because new item is better than old item and SLOW STANDARD is on.");
 					return false;
 				}
@@ -380,18 +391,18 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 		}
 
 		if (toolSelectionMode.isFast()) {
-			if (blockStrComparison > 0) {
+			if (adjustedBlockStrComparison > 0) {
 				debug("Switching because new tool is stronger.");
 				return true;
-			} else if (blockStrComparison < 0) {
+			} else if (adjustedBlockStrComparison < 0) {
 				debug("Not switching because old tool is stronger.");
 				return false;
 			}
 		} else {
-			if (blockStrComparison < 0) {
+			if (adjustedBlockStrComparison < 0) {
 				debug("Switching because new item is worse than old item and SLOW STANDARD is on.");
 				return true;
-			} else if (blockStrComparison > 0) {
+			} else if (adjustedBlockStrComparison > 0) {
 				debug("Not switching because new item is better than old item and SLOW STANDARD is on.");
 				return false;
 			}
@@ -416,7 +427,7 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 				return false;
 			}
 		}
-
+		
 		if (newDamageable && !oldDamageable) {
 			debug("Not switching because new tool is damageable and old isn't.");
 			return false;
@@ -444,6 +455,24 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 				return true;
 			} else if (oldUnbreakingLevel > newUnbreakingLevel) {
 				debug("Not switching because old unbreaking is more than new unbreaking.");
+				return false;
+			}
+		}
+		
+		if (toolSelectionMode.isFast() && !(newDamageable && oldDamageable)) {
+			if (blockStrComparison > 0) {
+				debug("Switching because new tool is stronger.");
+				return true;
+			} else if (blockStrComparison < 0) {
+				debug("Not switching because old tool is stronger.");
+				return false;
+			}
+		} else {
+			if (blockStrComparison < 0) {
+				debug("Switching because new item is worse than old item and SLOW STANDARD is on.");
+				return true;
+			} else if (blockStrComparison > 0) {
+				debug("Not switching because new item is better than old item and SLOW STANDARD is on.");
 				return false;
 			}
 		}

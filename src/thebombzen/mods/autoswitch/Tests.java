@@ -15,6 +15,7 @@ import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.SharedMonsterAttributes;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.ItemSword;
+import net.minecraft.util.MathHelper;
 import net.minecraft.world.World;
 import net.minecraftforge.common.ForgeHooks;
 import thebombzen.mods.autoswitch.configuration.Configuration;
@@ -184,8 +185,7 @@ public final class Tests {
 			int y, int z) {
 		Block block = world.getBlock(x, y, z);
 		fakeItemForPlayer(itemstack);
-		float str = ForgeHooks.blockStrength(block, mc.thePlayer, world, x, y,
-				z);
+		float str = block.getPlayerRelativeBlockHardness(mc.thePlayer, world, x, y, z);
 		unFakeItemForPlayer();
 		return str;
 	}
@@ -374,6 +374,14 @@ public final class Tests {
 		prevRandom = null;
 		fakedWorld = null;
 		randomCurrentlyFaked = false;
+	}
+	
+	public static int getAdjustedBlockStr(double blockStr){
+		if (blockStr <= 0){
+			return Integer.MIN_VALUE;
+		} else {
+			return -MathHelper.ceiling_double_int(1D / blockStr);
+		}
 	}
 	
 	private Tests() {
