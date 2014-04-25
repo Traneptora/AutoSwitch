@@ -62,6 +62,7 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 	private boolean pulseOn = false;
 	private boolean switchback = false;
 	private boolean treefellerOn = false;
+	private StringBuilder debugBuilder = new StringBuilder();
 
 	@Instance(value = "autoswitch")
 	public static AutoSwitch instance;
@@ -148,7 +149,7 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 	public void debug(String string) {
 		debug("%s", string);
 	}
-
+	
 	public void debug(String format, Object... args) {
 		if (configuration.getBooleanProperty(Configuration.DEBUG)) {
 			forceDebug(format, args);
@@ -693,7 +694,7 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 				|| mc.currentScreen != null || !configuration.getSingleMultiProperty(Configuration.BLOCKS)) {
 			return false;
 		}
-		debug("====================================================");
+		debug("====START====");
 		debug(getLongVersionString());
 		try {
 			switchToBestTool(mc.theWorld, x, y, z);
@@ -701,6 +702,8 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 		} catch (Throwable e) {
 			throwException("Error switching tools", e, false);
 			return false;
+		} finally {
+			debug("====END====");
 		}
 	}
 
@@ -713,7 +716,7 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 				|| mc.currentScreen != null || !configuration.getSingleMultiProperty(Configuration.MOBS)) {
 			return false;
 		}
-		debug("====================================================");
+		debug("====START====");
 		debug(getLongVersionString());
 		debug("Switching on an entity, %s", entity.toString());
 		try {
@@ -724,6 +727,8 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 		} catch (Throwable e) {
 			throwException("Error switching weapons", e, false);
 			return false;
+		} finally {
+			debug("====END====");
 		}
 	}
 
