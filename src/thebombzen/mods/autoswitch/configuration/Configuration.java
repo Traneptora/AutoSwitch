@@ -58,11 +58,11 @@ public class Configuration extends ThebombzenAPIConfiguration {
 			"and on worlds AutoSwitch hasn't",
 			"been used on before.");
 	public static final ConfigOption TOOL_SELECTION_MODE = new ConfigOption("FAST STANDARD", new String[]{"Fast Standard", "Slow Standard", "Fast Nonstandard"},"TOOL_SELECTION_MODE", "Tool Selection Mode",
-			"FAST STANDARD picks the best standard tool,",
+			"Fast Standard picks the best standard tool,",
 			"    where faster is better.",
-			"SLOW STANDARD picks the best standard tool,",
+			"Slow Standard picks the best standard tool,",
 			"    where slower is better.",
-			"FAST NONSTANDARD picks the best tool,",
+			"Fast Nonstandard picks the best tool,",
 			"    ignoring what's standard.");
 	public static final ConfigOption BLOCKS = new ConfigOption(SingleMultiBoolean.ALWAYS, "BLOCKS", "Use on blocks",
 			"Use AutoSwitch when digging blocks.");
@@ -78,10 +78,36 @@ public class Configuration extends ThebombzenAPIConfiguration {
 	public static final ConfigOption USE_IN_CREATIVE = new ConfigOption(true, "USE_IN_CREATIVE", "Use in creative",
 			"Use AutoSwitch when in creative mode");
 	public static final ConfigOption TREEFELLER_COMPAT = new ConfigOption(false, "TREEFELLER_COMPAT", "Detect Tree Feller",
-				"Automatically detect when",
-				"mcMMO Tree Feller is activated",
-				"and temporarily set the tool selection",
-				"mode to SLOW STANDARD.");
+			"Automatically detect when",
+			"mcMMO Tree Feller is activated",
+			"and temporarily set the tool selection",
+			"mode to SLOW STANDARD.");
+	public static final ConfigOption TREEFELLER_READY_AXE = new ConfigOption("**YOU READY YOUR AXE**", "TREEFELLER_READY_AXE", "mcMMO Ready Axe",
+			"When detecting tree feller,",
+			"this says you've readied your axe.",
+			"Some servers might have this in a different language.");
+	public static final ConfigOption TREEFELLER_READY_OTHER = new ConfigOption("^\\*\\*YOU READY YOUR [A-Z]+\\*\\*$", "TREEFELLER_READY_OTHER", "mcMMO Ready Other",
+			"When detecting tree feller,",
+			"this says another tool is ready.",
+			"This is a regular expression.");
+	public static final ConfigOption TREEFELLER_LOWER_AXE = new ConfigOption("**YOU LOWER YOUR AXE**", "TREEFELLER_LOWER_AXE", "mcMMO Lower Axe",
+			"When detecting tree feller,",
+			"this says you've lowered your axe.");
+	public static final ConfigOption TREEFELLER_WORNOFF = new ConfigOption("**Tree Feller has worn off**", "TREEFELLER_WORNOFF", "mcMMO Treefeller Worn Off",
+			"When detecting tree feller,",
+			"this says treefeller has worn off.");
+	public static final ConfigOption TREEFELLER_AXE_SPLINTER = new ConfigOption("YOUR AXE SPLINTERS INTO DOZENS OF PIECES!", "TREEFELLER_AXE_SPLINTER", "mcMMO Axe Splinter",
+			"When detecting tree feller,",
+			"this says your axe has splintered.");
+	public static final ConfigOption TREEFELLER_TOO_TIRED = new ConfigOption("^You are too tired to use that ability again\\. \\(\\d+s\\)$", "TREEFELLER_TOO_TIRED", "mcMMO Too Tired",
+			"When detecting tree feller,",
+			"this says you are too tired.",
+			"This is a regular expression.");
+	public static final ConfigOption TREEFELLER_SKULL_SPLITTER = new ConfigOption("**Skull Splitter ACTIVATED**", "TREEFELLER_SKULL_SPLITTER", "mcMMO Skull Splitter",
+			"When detecting tree feller,",
+			"this says you have used skull splitter",
+			"instead of treefeller.");
+	
 	
 	private static int doesYesNoSetContainBlock(Set<? extends BlockItemIdentifier> no, Set<? extends BlockItemIdentifier> yes, Block block, int metadata){
 		if (doesSetContainBlock(no, block, metadata)){

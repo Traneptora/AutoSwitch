@@ -74,17 +74,19 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 	@SubscribeEvent
 	public void clientChat(ClientChatReceivedEvent event){
 		String text = event.message.getUnformattedText();
-		if (text.equals("**YOU READY YOUR AXE**")){
+		if (text.equals(configuration.getStringProperty(Configuration.TREEFELLER_READY_AXE))){
 			treefellerOn = true;
-		} else if (text.matches("\\*\\*YOU READY YOUR [A-Z]+\\*\\*")) {
+		} else if (text.matches(configuration.getStringProperty(Configuration.TREEFELLER_READY_OTHER))) {
 			treefellerOn = false;
-		} else if (text.equals("**YOU LOWER YOUR AXE**")){
+		} else if (text.equals(configuration.getStringProperty(Configuration.TREEFELLER_LOWER_AXE))){
 			treefellerOn = false;
-		} else if (text.equals("**Tree Feller has worn off**")){
+		} else if (text.equals(configuration.getStringProperty(Configuration.TREEFELLER_WORNOFF))){
 			treefellerOn = false;
-		} else if (text.equals("YOUR AXE SPLINTERS INTO DOZENS OF PIECES!")){
+		} else if (text.equals(configuration.getStringProperty(Configuration.TREEFELLER_AXE_SPLINTER))){
 			treefellerOn = false;
-		} else if (text.matches("^You are too tired to use that ability again. \\(\\d+s\\)$")){
+		} else if (text.matches(configuration.getStringProperty(Configuration.TREEFELLER_TOO_TIRED))){
+			treefellerOn = false;
+		} else if (text.equals(configuration.getStringProperty(Configuration.TREEFELLER_SKULL_SPLITTER))){
 			treefellerOn = false;
 		}
 		//debug("treefellerOn: %b", treefellerOn);
