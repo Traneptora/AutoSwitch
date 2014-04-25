@@ -28,7 +28,7 @@ public class SingleBlockItemIdentifier implements BooleanTester<SingleValueIdent
 	 */
 	public static SingleBlockItemIdentifier parseSingleBlockItemIdentifier(String info) throws ConfigFormatException {
 		if (info.length() == 0){
-			throw new ConfigFormatException();
+			throw new ConfigFormatException("Empty block/item identifier");
 		}
 		char type = info.charAt(0);
 		int superNum = 0;
@@ -36,14 +36,14 @@ public class SingleBlockItemIdentifier implements BooleanTester<SingleValueIdent
 			info = info.substring(1);
 		} else if (type == '['){
 			int lastIndex = info.indexOf(']');
-			if (lastIndex == -1){
-				throw new ConfigFormatException();
+			if (lastIndex < 0){
+				throw new ConfigFormatException("No closing ]: " + info);
 			}
 			String superNumS = info.substring(1, lastIndex);
 			try {
 				superNum = ThebombzenAPI.parseInteger(superNumS);
 			} catch (NumberFormatException e){
-				throw new ConfigFormatException(e);
+				throw new ConfigFormatException("Invalid broadening number: " + superNumS, e);
 			}
 			info = info.substring(lastIndex + 1);
 		}

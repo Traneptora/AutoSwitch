@@ -6,7 +6,6 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.PrintWriter;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -161,13 +160,7 @@ public class Configuration extends ThebombzenAPIConfiguration {
 			defaultConfig = builder.toString();
 		}
 		if (oldExtraConfigFile.exists()){
-			try {
-				PrintWriter w = new PrintWriter(new FileWriter(oldExtraConfigFile));
-				w.println("The AutoSwitch overrides file has moved to AutoSwitch_Overrides.txt");
-				w.close();
-			} catch (IOException ioe){
-				autoSwitch.throwException("Failed to fix redirect old config.", ioe, false);
-			}
+			oldExtraConfigFile.delete();
 		}
 	}
 
@@ -196,7 +189,7 @@ public class Configuration extends ThebombzenAPIConfiguration {
 	}
 
 	public ToolSelectionMode getToolSelectionMode(Block block, int metadata) {
-		if (getBooleanProperty(TREEFELLER_COMPAT) && AutoSwitch.instance.isTreefellerOn()){
+		if (AutoSwitch.instance.isTreefellerOn() && getBooleanProperty(TREEFELLER_COMPAT)){
 			return ToolSelectionMode.SLOW_STANDARD;
 		}
 		if (this.isSlowStandardOverridden(block, metadata)){
@@ -290,6 +283,7 @@ public class Configuration extends ThebombzenAPIConfiguration {
 			plus = false;
 		} else {
 			AutoSwitch.instance.forceDebug("Error on line: %s", line);
+			AutoSwitch.instance.forceDebug("Error caused by: Expected > or < but not both.");
 			return;
 		}
 		try {
@@ -297,8 +291,9 @@ public class Configuration extends ThebombzenAPIConfiguration {
 			BlockItemIdentifier tool = BlockItemIdentifier.parseBlockItemIdentifier(toolSub);
 			(plus ? yes : no).add(new BlockToolPair(block, tool));
 		} catch (ConfigFormatException e){
-			e.printStackTrace();
 			AutoSwitch.instance.forceDebug("Error on line: %s", line);
+			AutoSwitch.instance.forceDebug("Error caused by: %s", e.toString());
+			AutoSwitch.instance.debugException(e);
 		}
 	}
 
@@ -306,10 +301,19 @@ public class Configuration extends ThebombzenAPIConfiguration {
 		fortuneNoWorks.clear();
 		fortuneWorks.clear();
 		notStandardBlocksAndTools.clear();
+		standardBlocksAndTools.clear();
 		silkTouchNoWorks.clear();
 		silkTouchWorks.clear();
-		standardBlocksAndTools.clear();
 		customWeapons.clear();
+		ignoreFortune.clear();
+		ignoreSilkTouch.clear();
+		fastStandardOverrides.clear();
+		fastNonStandardOverrides.clear();
+		slowStandardOverrides.clear();
+		harvestWorks.clear();
+		harvestNoWorks.clear();
+		damageableYes.clear();
+		damageableNo.clear();
 		Scanner s = new Scanner(config);
 		s.useDelimiter(ThebombzenAPI.NEWLINE);
 		int version = -1;
@@ -324,6 +328,7 @@ public class Configuration extends ThebombzenAPIConfiguration {
 				continue;
 			} else if (line.length() < 2) {
 				AutoSwitch.instance.forceDebug("Error on line: %s", line);
+				AutoSwitch.instance.forceDebug("Error caused by: Line is too short");
 				continue;
 			}
 			char first = line.charAt(0);
@@ -342,9 +347,8 @@ public class Configuration extends ThebombzenAPIConfiguration {
 					} catch (IOException ioe) {
 						mod.throwException("Could not write config file!", ioe,
 								true);
-					} finally {
-						parseConfig(defaultConfig);
 					}
+					parseConfig(defaultConfig);
 					s.close();
 					return;
 				}
@@ -357,11 +361,13 @@ public class Configuration extends ThebombzenAPIConfiguration {
 						silkTouchWorks.add(BlockItemIdentifier.parseBlockItemIdentifier(line.substring(2)));
 					} catch (ConfigFormatException e){
 						AutoSwitch.instance.forceDebug("Error on line: %s", line);
+						AutoSwitch.instance.forceDebug("Error caused by: %s", e.toString());
+						AutoSwitch.instance.debugException(e);
 					}
 				} else if (second == '<') {
 					try {
 						if (line.length() < 3){
-							throw new ConfigFormatException();
+							throw new ConfigFormatException("Line is too short");
 						}
 						if (line.charAt(2) == '<'){
 							ignoreSilkTouch.add(BlockItemIdentifier.parseBlockItemIdentifier(line.substring(3)));
@@ -371,10 +377,13 @@ public class Configuration extends ThebombzenAPIConfiguration {
 						
 					} catch (ConfigFormatException e){
 						AutoSwitch.instance.forceDebug("Error on line: %s", line);
+						AutoSwitch.instance.forceDebug("Error caused by: %s", e.toString());
+						AutoSwitch.instance.debugException(e);
 					}
 							
 				} else {
 					AutoSwitch.instance.forceDebug("Error on line: %s", line);
+					AutoSwitch.instance.forceDebug("Error caused by: Expected < or >. Found %c", second);
 					continue;
 				}
 				break;
@@ -386,11 +395,12 @@ public class Configuration extends ThebombzenAPIConfiguration {
 						fortuneWorks.add(BlockItemIdentifier.parseBlockItemIdentifier(line.substring(2)));
 					} catch (ConfigFormatException e){
 						AutoSwitch.instance.forceDebug("Error on line: %s", line);
+						AutoSwitch.instance.forceDebug("Error caused by: %s", e.toString());
 					}
 				} else if (second == '<') {
 					try {
 						if (line.length() < 3){
-							throw new ConfigFormatException();
+							throw new ConfigFormatException("Line is too short");
 						}
 						if (line.charAt(2) == '<'){
 							ignoreFortune.add(BlockItemIdentifier.parseBlockItemIdentifier(line.substring(3)));
@@ -399,9 +409,12 @@ public class Configuration extends ThebombzenAPIConfiguration {
 						}
 					} catch (ConfigFormatException e){
 						AutoSwitch.instance.forceDebug("Error on line: %s", line);
+						AutoSwitch.instance.forceDebug("Error caused by: %s", e.toString());
+						AutoSwitch.instance.debugException(e);
 					}
 				} else {
 					AutoSwitch.instance.forceDebug("Error on line: %s", line);
+					AutoSwitch.instance.forceDebug("Error caused by: Expected < or >. Found %c", second);
 					continue;
 				}
 				break;
@@ -422,6 +435,7 @@ public class Configuration extends ThebombzenAPIConfiguration {
 				int indexE = line.indexOf('=');
 				if (indexE < 0 || indexE >= line.length() - 1) {
 					AutoSwitch.instance.forceDebug("Error on line: %s", line);
+					AutoSwitch.instance.forceDebug("Error caused by: Expected = in middle of line.");
 					continue;
 				}
 				String blockSub = line.substring(1, indexE);
@@ -436,22 +450,16 @@ public class Configuration extends ThebombzenAPIConfiguration {
 						} else {
 							setToAdd = fastStandardOverrides;
 						}
-					} else if (typeSub.startsWith("s") || typeSub.contains("slow")){
-						setToAdd = slowStandardOverrides;
-					} else if (typeSub.contains("f")){
-						if (typeSub.contains("non")){
-							setToAdd = fastNonStandardOverrides;
-						} else {
-							setToAdd = fastStandardOverrides;
-						}
-					} else if (typeSub.contains("s")){
+					} else if (typeSub.contains("slow")){
 						setToAdd = slowStandardOverrides;
 					} else {
-						throw new ConfigFormatException();
+						throw new ConfigFormatException("Invalid Tool Selection Mode.");
 					}
 					setToAdd.add(block);
 				} catch (ConfigFormatException e){
 					AutoSwitch.instance.forceDebug("Error on line: %s", line);
+					AutoSwitch.instance.forceDebug("Error caused by: %s", e.toString());
+					AutoSwitch.instance.debugException(e);
 					continue;
 				}
 				break;
@@ -460,6 +468,7 @@ public class Configuration extends ThebombzenAPIConfiguration {
 				indexE = line.lastIndexOf('=');
 				if (indexE < 0 || indexE >= line.length() - 1) {
 					AutoSwitch.instance.forceDebug("Error on line: %s", line);
+					AutoSwitch.instance.forceDebug("Error caused by: Expected = in middle of line.");
 					continue;
 				}
 				sub = line.substring(1, indexE);
@@ -469,6 +478,7 @@ public class Configuration extends ThebombzenAPIConfiguration {
 					damage = ThebombzenAPI.parseInteger(damageString);
 				} catch (NumberFormatException nfe) {
 					AutoSwitch.instance.forceDebug("Error on line: %s", line);
+					AutoSwitch.instance.forceDebug("Error caused by: Invalid Number: %s", nfe.toString());
 					continue;
 				}
 				try {
@@ -476,6 +486,8 @@ public class Configuration extends ThebombzenAPIConfiguration {
 					customWeapons.put(tool, damage);
 				} catch (ConfigFormatException e){
 					AutoSwitch.instance.forceDebug("Error on line: %s", line);
+					AutoSwitch.instance.forceDebug("Error caused by: %s", e.toString());
+					AutoSwitch.instance.debugException(e);
 				}
 			}
 		}

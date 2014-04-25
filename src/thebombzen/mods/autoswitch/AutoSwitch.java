@@ -137,11 +137,17 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 		prevPulse = pulseOn;
 	}
 	
-	private void debug(String string) {
+	public void debugException(Throwable exception){
+		if (configuration.getBooleanProperty(Configuration.DEBUG)){
+			forceDebugException(exception);
+		}
+	}
+	
+	public void debug(String string) {
 		debug("%s", string);
 	}
 
-	private void debug(String format, Object... args) {
+	public void debug(String format, Object... args) {
 		if (configuration.getBooleanProperty(Configuration.DEBUG)) {
 			forceDebug(format, args);
 		}

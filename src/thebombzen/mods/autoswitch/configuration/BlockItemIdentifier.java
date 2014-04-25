@@ -11,18 +11,22 @@ public class BlockItemIdentifier extends CompoundExpression<SingleValueIdentifie
 	public static BlockItemIdentifier parseBlockItemIdentifier(String info) throws ConfigFormatException {
 		
 		if (info.length() == 0){
-			throw new ConfigFormatException("Error parsing identifier!");
+			throw new ConfigFormatException("Empty block/item identifier");
 		}
 		
 		if (!info.contains("&") && !info.contains("|") && !info.contains("^") && !info.contains("!")){
 			if (info.startsWith("(") && info.endsWith(")")){
 				return parseBlockItemIdentifier(info.substring(1, info.length() - 1));
+			} else {
+				return new BlockItemIdentifier(SingleBlockItemIdentifier.parseSingleBlockItemIdentifier(info));
 			}
-			return new BlockItemIdentifier(SingleBlockItemIdentifier.parseSingleBlockItemIdentifier(info));
 		}
 		
 		int index = info.indexOf('^');
 		while (index >= 0){
+			if (index == 0){
+				throw new ConfigFormatException("^ requires something on both sides: " + info);
+			}
 			if (ThebombzenAPI.isSeparatorAtTopLevel(info, index)){
 				String before = info.substring(0, index);
 				String after = info.substring(index + 1);
@@ -34,6 +38,9 @@ public class BlockItemIdentifier extends CompoundExpression<SingleValueIdentifie
 		
 		index = info.indexOf('|');
 		while (index >= 0){
+			if (index == 0){
+				throw new ConfigFormatException("| requires something on both sides: " + info);
+			}
 			if (ThebombzenAPI.isSeparatorAtTopLevel(info, index)){
 				String before = info.substring(0, index);
 				String after = info.substring(index + 1);
@@ -45,6 +52,9 @@ public class BlockItemIdentifier extends CompoundExpression<SingleValueIdentifie
 		
 		index = info.indexOf('&');
 		while (index >= 0){
+			if (index == 0){
+				throw new ConfigFormatException("& requires something on both sides: " + info);
+			}
 			if (ThebombzenAPI.isSeparatorAtTopLevel(info, index)){
 				String before = info.substring(0, index);
 				String after = info.substring(index + 1);
@@ -62,7 +72,7 @@ public class BlockItemIdentifier extends CompoundExpression<SingleValueIdentifie
 			return BlockItemIdentifier.parseBlockItemIdentifier(info.substring(1, info.length() - 1));
 		}
 		
-		throw new ConfigFormatException("Error parsing identifier!");
+		throw new ConfigFormatException("Malformed block/item identifier: " + info);
 		
 	}
 	
