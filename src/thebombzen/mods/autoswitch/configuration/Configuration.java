@@ -489,6 +489,10 @@ public class Configuration extends ThebombzenAPIConfiguration {
 					AutoSwitch.instance.forceDebug("Error caused by: %s", e.toString());
 					AutoSwitch.instance.debugException(e);
 				}
+				break;
+			default:
+				AutoSwitch.instance.forceDebug("Error on line: %s", line);
+				AutoSwitch.instance.forceDebug("Error caused by: Unrecognized first character.");
 			}
 		}
 		if (version != CONFIG_VERSION) {
