@@ -3,8 +3,7 @@ AutoSwitch
 
 #### AutoSwitch Minecraft Mod ####
 
-An update for Minecraft 1.7.2 is coming soon, now open-source! I've always wanted to make AS open-source, I've just never gotten around to learning how to use git. Now I know :D (No, really. I love open-source software. I wouldn't use Linux if I didn't.)
+AutoSwitch is a very advanced mod that automatically switches your tools and weapons.
 
-Also, AutoSwitch is now licensed under the GNU Lesser General Public License Version 3. 
-
+Note: If you want to contribute, feel free! Just send me a pull request and I'll review it before adding it.
 
