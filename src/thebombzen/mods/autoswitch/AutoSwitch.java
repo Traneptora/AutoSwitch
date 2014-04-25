@@ -18,6 +18,7 @@ import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.entity.player.AttackEntityEvent;
 
 import org.lwjgl.input.Keyboard;
+import org.lwjgl.input.Mouse;
 
 import thebombzen.mods.autoswitch.configuration.Configuration;
 import thebombzen.mods.autoswitch.configuration.ToolSelectionMode;
@@ -27,7 +28,6 @@ import cpw.mods.fml.common.FMLCommonHandler;
 import cpw.mods.fml.common.Mod;
 import cpw.mods.fml.common.Mod.Instance;
 import cpw.mods.fml.common.event.FMLPreInitializationEvent;
-import cpw.mods.fml.common.eventhandler.EventPriority;
 import cpw.mods.fml.common.eventhandler.SubscribeEvent;
 import cpw.mods.fml.common.gameevent.TickEvent.ClientTickEvent;
 import cpw.mods.fml.common.gameevent.TickEvent.Phase;
@@ -90,7 +90,7 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 		//debug("treefellerOn: %b", treefellerOn);
 	}
 	
-	@SubscribeEvent(priority=EventPriority.LOW)
+	@SubscribeEvent
 	public void clientTick(ClientTickEvent event) {
 
 		if (!event.phase.equals(Phase.START)) {
@@ -115,7 +115,9 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 
 		pulseOn = Keyboard.isKeyDown(configuration.getKeyCodeProperty(Configuration.PULSE_KEY));
 		// func_151463_i() == getKeyCode()
-		boolean mouseDown = mc.gameSettings.keyBindAttack.getIsKeyPressed();
+		int keyCode = mc.gameSettings.keyBindAttack.getKeyCode();
+		boolean mouseDown = keyCode < 0 ? Mouse.isButtonDown(keyCode + 100)
+				: Keyboard.isKeyDown(keyCode);
 		if (!mouseDown && prevMouseDown || mouseDown && pulseOn ^ prevPulse) {
 			switchBack();
 		}
