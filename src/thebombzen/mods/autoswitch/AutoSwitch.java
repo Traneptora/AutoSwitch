@@ -62,7 +62,6 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 	private boolean pulseOn = false;
 	private boolean switchback = false;
 	private boolean treefellerOn = false;
-	private StringBuilder debugBuilder = new StringBuilder();
 
 	@Instance(value = "autoswitch")
 	public static AutoSwitch instance;
