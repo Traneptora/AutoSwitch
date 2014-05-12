@@ -175,7 +175,7 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 
 	@Override
 	public String getLongVersionString() {
-		return "AutoSwitch, version 4.4.0pre9, Minecraft 1.7.2";
+		return "AutoSwitch, version 5.0.0, Minecraft 1.7.2";
 	}
 
 	@Override
