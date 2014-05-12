@@ -1,20 +1,63 @@
-# TODO description
+# This is the AutoSwitch advanced config file
+# This allows you to override AutoSwitch's calculations
+# to completely customize its behavior
+
+# Basic options are not stored in this file
+# Basic options are obtained by going to the main menu of Minecraft
+#    - Main Menu
+#    - Go to Mods
+#    - Scroll down and click AutoSwitch
+#    - Click Config
+
+# If you need to change some things such as localization strings,
+# then you can open AutoSwitch.txt and change those settings
+
+# ########## GENERAL RULES ###########
+
+# Any errors in the config will be printed to .minecraft/mods/AutoSwitch/DEBUG.txt
+# Even if DEBUG is turned off. 
+# An error on one line won't jeopardize your entire config file
+# It will just cause that one line to be ignored 
 
 # Lines beginning with # are ignored
+# You can say whatever you want as long as it starts with a #
 
-# General rule:
-# All numbers can be specified as normal numbers,
-# But could also be specified as hexadecimal numbers by adding 0x to the front
+# All numbers can be specified as normal numbers
+# but could also be specified as hexadecimal numbers by adding 0x to the front
 # or as binary numbers by adding 0b to the front. (e.g. 0b10001 = 0x11 = 17)
 
-# Config version number:
+# All numbers can contain underscores (_)
+# All numbers can have a - in front, to mean negative
+# All numbers can have a ~ in front, to indicate the one's complement or bitwise inverse
+# (~ is useful for masks)
+
+# Whitespace is irrelevant
+# The parser will strip away any whitespace before it parses the config line
+# This means that you can even put whitespace in the middle of a word
+
+# All config lines begin with a single character which indicates the command
+# R indicates the config Revision
+# T indicates a silk Touch override
+# F indicates a Fortune override
+# D indicates a Damageability override
+# H indicates a Harvestability override
+# S indicates a Standardness override
+# M indicates a tool selection Mode override
+# W indicates a Weapon damage override
+# Anything else will be ignored and an error will be printed to .minecraft/mods/AutoSwitch/DEBUG.txt
+
+
+# ########### CONFIG VERSION NUMBER #########
+
 # If this is not found or does not match the current number, AutoSwitch will replace your config with the default one.
 R3
 
 # ===== HOW TO SPECIFY A BLOCK OR ITEM =====
 
 # Use the block or item name
+# The same name you'd use in /give
 # For example, diamond_pickaxe
+
 # To specify a specific damage value, then use a +
 # For example, birch planks are planks+2
 # For example, an unbroken gold axe is gold_axe+0
@@ -114,6 +157,13 @@ H shears > tallgrass
 
 # This one tells AS that hoes are standard on crops (for mcMMO)
 S @diamond_hoe > @wheat
+
+# This one tells AS that all fortune-enchanted items are standard on crops 
+# (this way you'll use them instead of a hoe if you have both)
+S @+E35 > @wheat
+
+# Note that if you have both a fortune item and a hoe, AS will pick the fortune item
+# Because fortune works (as is overridden above)
 
 # This one tells AS that shovels are not standard tools against farmland
 # (this is so you don't dig up your farmland when harvesting crops)
