@@ -199,8 +199,7 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 
 	@Override
 	protected String getVersionFileURLString() {
-		//return "https://dl.dropboxusercontent.com/u/51080973/Mods/AutoSwitch/ASVersion.txt";
-		return "";
+		return "https://dl.dropboxusercontent.com/u/51080973/Mods/AutoSwitch/ASVersion.txt";
 	}
 
 	@Override
