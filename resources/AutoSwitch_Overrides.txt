@@ -27,10 +27,8 @@ R3
 # For example, $planks means every block that's made out of a wooden material.
  
 # To specify all similar blocks or items, behavior-wise, put an @ in front of the block or item name
-# For example, @redstone_ore means both lit and unlit ore
+# For example, @redstone_ore means both lit and unlit redstone ore
 # For example, @diamond_pickaxe means all pickaxes
-# Careful with perfectly generic items or blocks with no special properties like diamonds or cobblestone
-# @diamond means all items and @cobblestone means all blocks 
 
 # If the above thing is too narrow, you can broaden the definition of similarity
 # To specify a broader similarity put [N] in front of the block or item name where N is some number
@@ -43,21 +41,21 @@ R3
 # [0]diamond_pickaxe means all pickaxes
 # [1]diamond_pickaxe means all tools
 # [2]diamond_pickaxe means all items
-# [0]dropper means all droppers
-# [1]dropper means droppers and dispensers
-# [2]dropper means all blocks that hold items
-# [3]dropper means all items
 
 # ========= SILK TOUCH =============
 
-# TODO description
-
-# Also, you can use T << block to skip the silk touch calculation.
+# AutoSwitch normally calculates whether silk touch works on a block.
+# You don't need to add in all the silk touch blocks by hand.
+# If you want to override AutoSwitch's calculation then do it here:
+# Add T < block to tell AutoSwitch that silk touch doesn't work on that block.
+# Add T > block to tell AutoSwitch that silk touch does work on that block.
+# Also, you can use T << block to skip the silk touch calculation for that block.
 
 # Note: No always takes priority over yes.
 
 # This one tells AS to assume Silk Touch does not work on smooth stone.
-T < stone 
+# Without it, AS will correctly calculate that silk touch works. 
+T < stone
 
 # This one tells AS to assume Silk Touch does not work on gravel.
 # This line is necessary because silk touch does actually work on gravel:
@@ -67,9 +65,12 @@ T < gravel
 
 # ========= FORTUNE =================
 
-# TODO description
-
-# Also, you can use use F << block to skip the fortune calculation.
+# AutoSwitch normally calculates whether fortune works on a block.
+# You don't need to add in all the fortune blocks by hand.
+# If you want to override AutoSwitch's calculation then do it here:
+# Add F < block to tell AutoSwitch that fortune doesn't work on that block.
+# Add F > block to tell AutoSwitch that fortune does work on that block.
+# Also, you can use F << block to skip the fortune calculation for that block.
 
 # Note: No always takes priority over yes.
 
@@ -79,22 +80,213 @@ F > @wheat
 # This one makes AS treat coal like a nonfortune block (remove the # to add)
 # F < coal_ore
 
+# This one tells AS to skip the fortune calculation on blocks with a wooden material
+# Otherwise it's kinda annoying using a fortune axe
 F << $log
 
 # ========= STANDARD TOOLS ==========
-# TODO desc
+
+# One of the core parts of AutoSwitch is determining how "standard"
+# a particular tool is against a particular block.
+
+# AutoSwitch calculates certain things, such as whether the tool can harvest the block,
+# how fast the tool digs the block, and if the tool is damageable against the block,
+# in order to determine how "standard" a tool is
+
+# If you want to override the harvestability calculation
+# or override the damageablility calculation
+# or override the standardness calculation as a whole then do it here
+
+# Use H tool > block to tell AutoSwitch that the tool can harvest the block
+# Use H tool < block to tell AutoSwitch that the tool cannot harvest the block
+# Use D tool > block to tell AutoSwitch that the tool can be damaged by digging the block
+# Use D tool < block to tell AutoSwitch that the tool cannot be damaged by digging the block
+# Use S tool > block to tell AutoSwitch that the tool is standard no matter what
+# Use S tool < block to tell AutoSwitch that the tool is not standard no matter what
 
 # Note: No always takes priority over yes.
 
+# This one tells AS that shears can harvest vines
 H shears > vine
+
+# This one tells AS that shears can harvest tall grass
 H shears > tallgrass
+
+# This one tells AS that hoes are standard on crops (for mcMMO)
 S @diamond_hoe > @wheat
+
+# This one tells AS that shovels are not standard tools against farmland
+# (this is so you don't dig up your farmland when harvesting crops)
 S @diamond_shovel < farmland
+
+# This one tells AS that shears are not damageable against blocks that
+# don't have the same material as vines, tallgrass, or leaves
 D shears < !($vine|$tallgrass|$leaves)
 
+# This one tells AS that tools within 4 hits of breaking are not standard against any block
+# (meaning you won't use them)
+# (remove the # to add)
 # S @+0:~0b11-0 < @
 
 # ======== WEAPON OVERRIDES =========
-# TODO desc
 
+# AutoSwitch normally calculates how much damage a weapon does
+# You can override this
+# To override this add W item = damage
+# For example if your server plugin makes feathers do 10 damage then add
+# W feather = 10
+# in order to make AutoSwitch switch correctly
 
+# ========== TOOL SELECTION MODES ===========
+
+# AutoSwitch has a "tool selection mode" option which allows you to set it to Fast Standard, Slow Standard, or Fast Nonstandard.
+# Fast Standard picks the best standard tool where faster is better
+# Slow Standard picks the best standard tool where slower is better
+# Fast Nonstandard skips the standardness calculation and you might use a faster tool that's worthless but is faster
+# (Slow Nonstandard doesn't exist because you'd always use a fist)
+
+# Sometimes you want to override the mode in the Config Screen with different behavior on specific blocks
+# Use M block = mode to override behavior
+# For example you can use
+# M glowstone = Fast Nonstandard
+# to set AutoSwitch to use the Fast Nonstandard method on glowstone, even if something else is selected in the Config Screen.
+
+# ==== HOW TO SPECIFY A BLOCK OR ITEM (BEWARE: ULTRA-ADVANCED) =====
+
+# You specify a block or item using a block/item identifier
+# Any block or item that matches the block/item identifier will count
+
+# A Simple Block/Item Identifier consists of an optional prefix, and optional modid, a mandatory name, and 0 or more ValueSets.
+# The format is prefix modid:name ValueSet...
+# You can use spaces or no spaces; it doesn't matter because the parser strips all whitespace before parsing 
+# The name can be an empty string but only if the prefix is universal; see prefixes for details
+
+# ########### modid:name ############
+# The modid:name is the String name of the block or item. This is the one you would use in /give commands, etc.
+# e.g. Diamonds are minecraft:diamond
+
+# All Vanilla names have a modid of minecraft; thus, all vanilla blocks/items will be minecraft:name where name is the name
+# As a result, if you leave out the modid: in front of the block, AS will assume you mean minecraft:
+# Thus, minecraft:diamond and diamond are the same
+
+# If the block or item comes from a mod, you need to use the mod's modid.
+# As in, ic2:wrench for an industrialcraft2 wrench
+# Just using wrench will not work because AS will assume minecraft:wrench, which doesn't exist
+
+# ########### prefix ###########
+
+# If the prefix is missing then the block/item identifier will only indicate blocks or items with the same name
+# as the one given in the identifier
+
+# The prefix can be a universal prefix which is a single @ followed by an empty string in place of the modid:name
+# Just an @ by itself means all blocks or items (which one depends on context)
+
+# A $ in front of the name indicates material similarity (only works for blocks).
+# This means the block/item identifier indicates any block that has the
+# same material as the block whose name appears in the block/item identifier
+# For example, $log indicates any block whose material is the same as that of a log
+# This would mean all wooden blocks
+
+# A @ in front of the name indicates behavioral similarity.
+
+# (Programmers only: A @name indicates all blocks whose Java class is a subclass
+# of the one indicated by name. So @wheat is all blocks whose class is a subclass of
+# BlockCrops.)
+
+# For example, @wheat indicates all crops, @diamond_pickaxe is all pickaxes,
+# and @redstone_ore is any redstone ore, not just unlit
+
+# The last kind of prefix is a number between brackets
+# e.g. [1]log
+# A number between brackets indicates wider behavioral similarity. For example,
+# @log still only means oak,spruce,birch,jungle
+# and @log2 means acacia,darkoak
+# Using [1]log gets both of them
+# and [2]log indicates all rotated pillar blocks
+# (Note that [0]name is the same as @name)
+# For example, [0]diamond_pickaxe means all pickaxes
+# but [1]diamond_pickaxe means all main tools
+# and [2]diamond_pickaxe is all items
+
+# ################ Value Sets ##############
+
+# Value Sets filter the identifier to only indicate blocks with certain values
+# There are two types of value sets: a damage value set, and an enchantment value set
+
+# A damage value set restricts the damage values that the identifier identifies
+# The format is a + or - followed by a a damage value
+# Or a + or - followed by a damage value and a mask
+# planks+2 indicates only planks with a damage value of 2.
+# planks-2 indicates all planks with a damage value that's NOT 2.
+
+# You can also use a damage and a mask, as in damage:mask
+# AS will calculate (testvalue & mask) == damage
+# Rather than (testvalue == damage)
+# For example, log+0b10:0b11
+# This one means all birch logs because every birch log block has the value 0b10 in the two bits 0b11
+
+# If the mask is negative (obtained via - or ~) and the tool has a maximum damage,
+# AS will check the tool's damage based on how far away it is from breaking rather than its damage value
+# so @+0:~0b11 indicates all tools that are within 4 of breaking, or have 0 damage
+
+# The second kind of value set is an enchantment value set. 
+# You specify these by putting an E in front of the first number, like in a damage value set
+
+# For example, fortune has enchantment ID 35. 
+# To indicate diamond pickaxes with fortune enchantments, use
+# diamond_pickaxe+E35
+# To indicate diamond pickaxes without fortune enchantments, use
+# diamond_pickaxe-E35
+# To add a minimum level use Eid:minimumlevel
+# As in E32:2 means Efficiency, but only level 2+
+# To add a maximum level then use two :s
+# As in, E32:2:4 means Efficiency, but only level 2-4
+# As usual, a + means add and a - means subtract
+
+# One big thing about ValueSets is you can chain them together. Adding additional Value Sets that start with + will add to the list,
+# and adding additional value sets that start with a - with subtract from the list
+# For example, diamond_pickaxe+E35-0 means fortune enchanted diamond pickaxes, but not ones with a damage value of 0 (which is unbroken)
+# The precedence is right-to-left, so the ones furthest to the right have higher priority
+# Think of it as moving along the line left-to-right and adding or subtracting from the list you already have
+# One rule to know though: If the first Value Set is a +, it starts out with just that valueset
+# If the first ValueSet is a -, then it starts out with everything but that valueset
+# Meaning, planks+0 means only oak planks, and planks-0 means all nonoak planks
+# Then, after the first one, +s add to the list and -s subtract from the list
+# So planks-0+0 is the same as all planks
+# and planks+0-0 means nothing.
+# Note than you can combine enchantment and damage sets in one chain
+
+# This finally explains our set @+0:~0b11-0, which means all tools within 4 of breaking
+# The @ signifies all blocks/items, in this case items
+# +0:~0b11 means a damage value of 0 and a mask of ~0b11
+# ~0b11 has every bit set except the last two, so when AS checks if the damage value matches 0, it ignores the last two bits
+# Thus anything within 4 counts
+# Also, AS checks the damage from breaking rather than the damage because ~0b11 is negative. 
+# However, this will always indicate items with a 0 damage value as well, so we add -0 at the end to fix this problem. Thus,
+# @+0:~0b11-0 indicates all blocks within 4 of breaking.
+
+# ################ compound block/item identifiers #############
+
+# All of the above information comprises a simple block/item identifier
+# Stuff like [1]minecraft:diamond_pickaxe+E32:2-0
+# are all a single block/item identifier
+
+# You can combine multiple block/item identifiers by using &, |, ^, !, and parentheses in their
+# traditional logical sense
+# E.g. lapis_ore|diamond_ore means "lapis ore, or diamond ore"
+# !lapis_ore means "not lapis ore"
+# and !(lapis_ore|diamond_ore) means "not (lapis ore or diamond ore)"
+# this is the same as !lapis_ore & !diamond_ore
+# The order of precedence is
+# () > ! > & > | > ^
+# All of the binary operations are associative so associativity is irrelevant 
+
+# This allows for some very complex rules
+# $stone&!(emerald_ore|diamond_ore|lapis_ore)
+# means any block that has a stone material and is not emerald ore, diamond ore, or lapis ore
+# meaning:
+# S diamond_pickaxe+E35:2 < $stone&!(emerald_ore|diamond_ore|lapis_ore)
+# This line tells AS not to use any diamond pickaxe with fortune level at least 2 on any stone-materialed block that isn't
+# diamond_ore, lapis_ore, or emerald_ore
+
+# Well, enjoy configuring AS!
