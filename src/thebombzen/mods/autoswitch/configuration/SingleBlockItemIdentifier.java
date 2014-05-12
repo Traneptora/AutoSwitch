@@ -234,6 +234,34 @@ public class SingleBlockItemIdentifier implements BooleanTester<SingleValueIdent
 		return false;
 	}
 	
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		SingleBlockItemIdentifier other = (SingleBlockItemIdentifier) obj;
+		if (modid == null) {
+			if (other.modid != null)
+				return false;
+		} else if (!modid.equals(other.modid))
+			return false;
+		if (name == null) {
+			if (other.name != null)
+				return false;
+		} else if (!name.equals(other.name))
+			return false;
+		if (superNum != other.superNum)
+			return false;
+		if (type != other.type)
+			return false;
+		if (!Arrays.equals(valueSets, other.valueSets))
+			return false;
+		return true;
+	}
+
 	/**
 	 * Gets the block associated with this identifier.
 	 * null if this is not a block.
@@ -256,7 +284,7 @@ public class SingleBlockItemIdentifier implements BooleanTester<SingleValueIdent
 	public Item getItem() {
 		return GameRegistry.findItem(modid, name);
 	}
-
+	
 	/**
 	 * Gets the String namespace of this item/block
 	 * @return
@@ -283,7 +311,7 @@ public class SingleBlockItemIdentifier implements BooleanTester<SingleValueIdent
 		result = prime * result + Arrays.hashCode(valueSets);
 		return result;
 	}
-	
+
 	/**
 	 * Determines whether this IDMetadataPair is a valid (non-null) block. Air
 	 * is not a valid block.
@@ -330,34 +358,6 @@ public class SingleBlockItemIdentifier implements BooleanTester<SingleValueIdent
 			builder.append(valueSets[i]);
 		}
 		return builder.toString();
-	}
-
-	@Override
-	public boolean equals(Object obj) {
-		if (this == obj)
-			return true;
-		if (obj == null)
-			return false;
-		if (getClass() != obj.getClass())
-			return false;
-		SingleBlockItemIdentifier other = (SingleBlockItemIdentifier) obj;
-		if (modid == null) {
-			if (other.modid != null)
-				return false;
-		} else if (!modid.equals(other.modid))
-			return false;
-		if (name == null) {
-			if (other.name != null)
-				return false;
-		} else if (!name.equals(other.name))
-			return false;
-		if (superNum != other.superNum)
-			return false;
-		if (type != other.type)
-			return false;
-		if (!Arrays.equals(valueSets, other.valueSets))
-			return false;
-		return true;
 	}
 
 }

@@ -34,29 +34,13 @@ public final class Tests {
 	private static World fakedWorld = null;
 	private static boolean randomCurrentlyFaked = false;
 	
-	public static int getHarvestLevel(ItemStack itemstack, Block block, int metadata) {
-		int state = AutoSwitch.instance.getConfiguration().getHarvestOverrideState(itemstack, block, metadata);
-		if (state == Configuration.OVERRIDDEN_NO){
-			return -2;
-		} else if (state == Configuration.OVERRIDDEN_YES){
-			return 2;
-		}
-		if (block.getMaterial().isToolNotRequired()){
-			return 0;
-		}
-		fakeItemForPlayer(itemstack);
-		boolean can = block.canHarvestBlock(mc.thePlayer, metadata);
-		unFakeItemForPlayer();
-		return can ? 1 : -1;
-	}
-	
-
 	public static ItemStack createStackedBlock(Block block, int metadata) {
 		return ThebombzenAPI.invokePrivateMethod(block, Block.class,
 				new String[] { "createStackedBlock", "func_149644_j", "j" },
 				new Class<?>[] { int.class }, metadata);
 	}
 	
+
 	public static boolean doesFortuneWorkOnBlock(World world, int x, int y, int z) {
 
 		Block block = world.getBlock(x, y, z);
@@ -99,7 +83,7 @@ public final class Tests {
 			return false;
 		}
 	}
-
+	
 	public static boolean doesSilkTouchWorkOnBlock(World world, int x, int y, int z) {
 
 		Block block = world.getBlock(x, y, z);
@@ -169,6 +153,14 @@ public final class Tests {
 		fakedWorld = world;
 		randomCurrentlyFaked = true;
 	}
+
+	public static int getAdjustedBlockStr(double blockStr){
+		if (blockStr <= 0){
+			return Integer.MIN_VALUE;
+		} else {
+			return -MathHelper.ceiling_double_int(1D / blockStr);
+		}
+	}
 	
 	public static float getBlockHardness(World world, int x, int y, int z) {
 		Block block = world.getBlock(x, y, z);
@@ -217,6 +209,22 @@ public final class Tests {
 		return modifier;
 	}
 	
+	public static int getHarvestLevel(ItemStack itemstack, Block block, int metadata) {
+		int state = AutoSwitch.instance.getConfiguration().getHarvestOverrideState(itemstack, block, metadata);
+		if (state == Configuration.OVERRIDDEN_NO){
+			return -2;
+		} else if (state == Configuration.OVERRIDDEN_YES){
+			return 2;
+		}
+		if (block.getMaterial().isToolNotRequired()){
+			return 0;
+		}
+		fakeItemForPlayer(itemstack);
+		boolean can = block.canHarvestBlock(mc.thePlayer, metadata);
+		unFakeItemForPlayer();
+		return can ? 1 : -1;
+	}
+	
 	public static double getItemStackDamage(ItemStack itemStack){
 		double damage = AutoSwitch.instance.getConfiguration().getCustomWeaponDamage(itemStack);
 		if (damage >= 0){
@@ -227,7 +235,7 @@ public final class Tests {
 		unFakeItemForPlayer();
 		return damage;
 	}
-	
+
 	@SuppressWarnings("unchecked")
 	public static Set<Enchantment> getNonstandardNondamageEnchantmentsOnBothStacks(
 			ItemStack stack1, ItemStack stack2) {
@@ -271,18 +279,6 @@ public final class Tests {
 
 		return ret;
 	}
-
-	public static int getWeakToolStandardness(ItemStack itemstack, World world, int x, int y, int z){
-		Block block = world.getBlock(x, y, z);
-		int metadata = world.getBlockMetadata(x, y, z);
-		int state = AutoSwitch.instance.getConfiguration().getStandardToolOverrideState(itemstack, block, metadata);
-		if (state == Configuration.OVERRIDDEN_NO){
-			return -1;
-		} else if (state == Configuration.OVERRIDDEN_YES){
-			return 1;
-		}
-		return 0;
-	}
 	
 	public static int getToolStandardness(ItemStack itemstack, World world, int x,
 			int y, int z) {
@@ -320,6 +316,18 @@ public final class Tests {
 		}
 	}
 
+	public static int getWeakToolStandardness(ItemStack itemstack, World world, int x, int y, int z){
+		Block block = world.getBlock(x, y, z);
+		int metadata = world.getBlockMetadata(x, y, z);
+		int state = AutoSwitch.instance.getConfiguration().getStandardToolOverrideState(itemstack, block, metadata);
+		if (state == Configuration.OVERRIDDEN_NO){
+			return -1;
+		} else if (state == Configuration.OVERRIDDEN_YES){
+			return 1;
+		}
+		return 0;
+	}
+
 	public static boolean isItemStackDamageable(ItemStack itemstack) {
 		return itemstack != null && itemstack.getItem().isDamageable();
 	}
@@ -352,7 +360,6 @@ public final class Tests {
 		}
 		return false;
 	}
-	
 
 	private static void unFakeItemForPlayer() {
 		ItemStack fakedStack = mc.thePlayer.inventory.mainInventory[mc.thePlayer.inventory.currentItem];
@@ -367,20 +374,12 @@ public final class Tests {
 		}
 		heldItemCurrentlyFaked = false;
 	}
-
+	
 	private static void unFakeRandomForWorld() {
 		fakedWorld.rand = prevRandom;
 		prevRandom = null;
 		fakedWorld = null;
 		randomCurrentlyFaked = false;
-	}
-	
-	public static int getAdjustedBlockStr(double blockStr){
-		if (blockStr <= 0){
-			return Integer.MIN_VALUE;
-		} else {
-			return -MathHelper.ceiling_double_int(1D / blockStr);
-		}
 	}
 	
 	private Tests() {

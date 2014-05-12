@@ -5,12 +5,6 @@ public enum ToolSelectionMode {
 	SLOW_STANDARD("Slow Standard"),
 	FAST_NONSTANDARD("Fast Nonstandard");
 	
-	private String name;
-	
-	private ToolSelectionMode(String name){
-		this.name = name;
-	}
-	
 	public static ToolSelectionMode parse(String info){
 		String line = info.replaceAll("\\s", "").replace("_", "").toLowerCase();
 		if (line.equals("faststandard")){
@@ -24,6 +18,12 @@ public enum ToolSelectionMode {
 		}
 	}
 	
+	private String name;
+	
+	private ToolSelectionMode(String name){
+		this.name = name;
+	}
+	
 	public boolean isFast(){
 		return this != SLOW_STANDARD;
 	}
@@ -32,6 +32,7 @@ public enum ToolSelectionMode {
 		return this != FAST_NONSTANDARD;
 	}
 	
+	@Override
 	public String toString(){
 		return name;
 	}

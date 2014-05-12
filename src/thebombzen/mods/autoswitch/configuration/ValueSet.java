@@ -116,6 +116,13 @@ public class ValueSet implements BooleanTester<SingleValueIdentifier> {
 		this(0, 0, false);
 	}
 	
+	public ValueSet(Enchantment enchantment, int min, int max, boolean subtract){
+		this.subtract = subtract;
+		this.min = min;
+		this.max = max;
+		this.enchantment = enchantment;
+	}
+	
 	/**
 	 * Construct a set that matches all values whose mask matches the data
 	 * @param data The data
@@ -127,21 +134,6 @@ public class ValueSet implements BooleanTester<SingleValueIdentifier> {
 		this.mask = mask;
 		this.subtract = subtract;
 		this.enchantment = null;
-	}
-	
-	public ValueSet(Enchantment enchantment, int min, int max, boolean subtract){
-		this.subtract = subtract;
-		this.min = min;
-		this.max = max;
-		this.enchantment = enchantment;
-	}
-	
-	public boolean contains(SingleValueIdentifier id){
-		if (id.isItem()){
-			return contains(id.getItemStack());
-		} else {
-			return contains(id.getDamageValue());
-		}
 	}
 	
 	private boolean contains(int value){
@@ -177,6 +169,15 @@ public class ValueSet implements BooleanTester<SingleValueIdentifier> {
 			return false;
 		} else {
 			return (stack.getItemDamage() & mask) == data;
+		}
+	}
+	
+	@Override
+	public boolean contains(SingleValueIdentifier id){
+		if (id.isItem()){
+			return contains(id.getItemStack());
+		} else {
+			return contains(id.getDamageValue());
 		}
 	}
 

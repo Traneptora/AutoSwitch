@@ -109,16 +109,6 @@ public class Configuration extends ThebombzenAPIConfiguration {
 			"instead of treefeller.");
 	
 	
-	private static int doesYesNoSetContainBlock(Set<? extends BlockItemIdentifier> no, Set<? extends BlockItemIdentifier> yes, Block block, int metadata){
-		if (doesSetContainBlock(no, block, metadata)){
-			return OVERRIDDEN_NO;
-		} else if (doesSetContainBlock(yes, block,  metadata)){
-			return OVERRIDDEN_YES;
-		} else {
-			return NOT_OVERRIDDEN;
-		}
-	}
-	
 	private static boolean doesSetContainBlock(Set<? extends BlockItemIdentifier> set, Block block, int metadata){
 		for (BlockItemIdentifier test : set) {
 			if (test.contains(block, metadata)){
@@ -128,6 +118,25 @@ public class Configuration extends ThebombzenAPIConfiguration {
 		return false;
 	}
 	
+	private static boolean doesSetContainToolAndBlock(Set<? extends BlockToolPair> set, ItemStack tool, Block block, int metadata){
+		for (BlockToolPair pair : set){
+			if (pair.getBlock().contains(block, metadata) && pair.getTool().contains(tool)){
+				return true;
+			}
+		}
+		return false;
+	}
+	
+	private static int doesYesNoSetContainBlock(Set<? extends BlockItemIdentifier> no, Set<? extends BlockItemIdentifier> yes, Block block, int metadata){
+		if (doesSetContainBlock(no, block, metadata)){
+			return OVERRIDDEN_NO;
+		} else if (doesSetContainBlock(yes, block,  metadata)){
+			return OVERRIDDEN_YES;
+		} else {
+			return NOT_OVERRIDDEN;
+		}
+	}
+
 	private static int doesYesNoSetContainToolAndBlock(Set<? extends BlockToolPair> no, Set<? extends BlockToolPair> yes, ItemStack tool, Block block, int metadata){
 		if (doesSetContainToolAndBlock(no, tool, block, metadata)){
 			return OVERRIDDEN_NO;
@@ -136,15 +145,6 @@ public class Configuration extends ThebombzenAPIConfiguration {
 		} else {
 			return NOT_OVERRIDDEN;
 		}
-	}
-
-	private static boolean doesSetContainToolAndBlock(Set<? extends BlockToolPair> set, ItemStack tool, Block block, int metadata){
-		for (BlockToolPair pair : set){
-			if (pair.getBlock().contains(block, metadata) && pair.getTool().contains(tool)){
-				return true;
-			}
-		}
-		return false;
 	}
 	
 	private Map<BlockItemIdentifier, Integer> customWeapons = new HashMap<BlockItemIdentifier, Integer>();
@@ -210,10 +210,39 @@ public class Configuration extends ThebombzenAPIConfiguration {
 		return -1;
 	}
 
+	public int getDamageableOverrideState(ItemStack tool, Block block, int metadata){
+		return doesYesNoSetContainToolAndBlock(damageableNo, damageableYes, tool, block, metadata);
+	}
+
+	public ToolSelectionMode getDefaultToolSelectionMode(){
+		ToolSelectionMode mode = ToolSelectionMode.parse(getStringProperty(TOOL_SELECTION_MODE));
+		if (mode == null){
+			mode = ToolSelectionMode.FAST_STANDARD;
+			setToolSelectionMode(mode);
+		}
+		return mode;
+	}
+	
 	public File getExtraConfigFile() {
 		return extraConfigFile;
 	}
 
+	public int getFortuneOverrideState(Block block, int metadata){
+		return doesYesNoSetContainBlock(fortuneNoWorks, fortuneWorks, block, metadata);
+	}
+
+	public int getHarvestOverrideState(ItemStack tool, Block block, int metadata){
+		return doesYesNoSetContainToolAndBlock(harvestNoWorks, harvestWorks, tool, block, metadata);
+	}
+	
+	public int getSilkTouchOverrideState(Block block, int metadata){
+		return doesYesNoSetContainBlock(silkTouchNoWorks, silkTouchWorks, block, metadata);
+	}
+	
+	public int getStandardToolOverrideState(ItemStack tool, Block block, int metadata){
+		return doesYesNoSetContainToolAndBlock(notStandardBlocksAndTools, standardBlocksAndTools, tool, block, metadata);
+	}
+	
 	public ToolSelectionMode getToolSelectionMode(Block block, int metadata) {
 		if (AutoSwitch.instance.isTreefellerOn() && getBooleanProperty(TREEFELLER_COMPAT)){
 			return ToolSelectionMode.SLOW_STANDARD;
@@ -228,49 +257,20 @@ public class Configuration extends ThebombzenAPIConfiguration {
 		return this.getDefaultToolSelectionMode();
 	}
 	
-	public ToolSelectionMode getDefaultToolSelectionMode(){
-		ToolSelectionMode mode = ToolSelectionMode.parse(getStringProperty(TOOL_SELECTION_MODE));
-		if (mode == null){
-			mode = ToolSelectionMode.FAST_STANDARD;
-			setToolSelectionMode(mode);
-		}
-		return mode;
-	}
-
 	private boolean isFastNonStandardOverridden(Block block, int metadata){
 		return doesSetContainBlock(fastNonStandardOverrides, block, metadata);
 	}
-
+	
 	private boolean isFastStandardOverridden(Block block, int metadata){
 		return doesSetContainBlock(fastStandardOverrides, block, metadata);
-	}
-	
-	public int getFortuneOverrideState(Block block, int metadata){
-		return doesYesNoSetContainBlock(fortuneNoWorks, fortuneWorks, block, metadata);
 	}
 	
 	public boolean isSilkTouchOverriddenToWork(Block block, int metadata) {
 		return doesSetContainBlock(silkTouchWorks, block, metadata);
 	}
 	
-	public int getSilkTouchOverrideState(Block block, int metadata){
-		return doesYesNoSetContainBlock(silkTouchNoWorks, silkTouchWorks, block, metadata);
-	}
-	
 	private boolean isSlowStandardOverridden(Block block, int metadata){
 		return doesSetContainBlock(slowStandardOverrides, block, metadata);
-	}
-	
-	public int getStandardToolOverrideState(ItemStack tool, Block block, int metadata){
-		return doesYesNoSetContainToolAndBlock(notStandardBlocksAndTools, standardBlocksAndTools, tool, block, metadata);
-	}
-	
-	public int getHarvestOverrideState(ItemStack tool, Block block, int metadata){
-		return doesYesNoSetContainToolAndBlock(harvestNoWorks, harvestWorks, tool, block, metadata);
-	}
-	
-	public int getDamageableOverrideState(ItemStack tool, Block block, int metadata){
-		return doesYesNoSetContainToolAndBlock(damageableNo, damageableYes, tool, block, metadata);
 	}
 
 	@Override
