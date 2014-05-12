@@ -164,6 +164,9 @@ D shears < !($vine|$tallgrass|$leaves)
 # ########### modid:name ############
 # The modid:name is the String name of the block or item. This is the one you would use in /give commands, etc.
 # e.g. Diamonds are minecraft:diamond
+# To figure out the name, look it up on the minecraft wiki
+# To figure out the name for modded blocks/items, type /give and where you would type in an item
+#    hit tab and it will pop up a list of things that start with what you entered
 
 # All Vanilla names have a modid of minecraft; thus, all vanilla blocks/items will be minecraft:name where name is the name
 # As a result, if you leave out the modid: in front of the block, AS will assume you mean minecraft:
