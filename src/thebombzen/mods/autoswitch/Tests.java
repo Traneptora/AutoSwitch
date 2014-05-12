@@ -29,10 +29,7 @@ public final class Tests {
 	private static final Minecraft mc = Minecraft.getMinecraft();
 	
 	private static ItemStack prevHeldItem = null;
-	private static boolean heldItemCurrentlyFaked = false;
 	private static Random prevRandom = null;
-	private static World fakedWorld = null;
-	private static boolean randomCurrentlyFaked = false;
 	
 	public static ItemStack createStackedBlock(Block block, int metadata) {
 		return ThebombzenAPI.invokePrivateMethod(block, Block.class,
@@ -68,11 +65,12 @@ public final class Tests {
 		fakeRandomForWorld(world, maxRandom);
 		defaultMaxRandom = block.getDrops(world, x, y, z, metadata, 0);
 		fortuneMaxRandom = block.getDrops(world, x, y, z, metadata, 3);
+		unFakeRandomForWorld(world);
 
 		fakeRandomForWorld(world, zeroRandom);
 		defaultZeroRandom = block.getDrops(world, x, y, z, metadata, 0);
 		fortuneZeroRandom = block.getDrops(world, x, y, z, metadata, 3);
-		unFakeRandomForWorld();
+		unFakeRandomForWorld(world);
 
 		if (!ThebombzenAPI.areItemStackCollectionsEqual(defaultMaxRandom,
 				fortuneMaxRandom)
@@ -116,10 +114,11 @@ public final class Tests {
 		
 		fakeRandomForWorld(world, maxRandom);
 		defaultMaxRandom = block.getDrops(world, x, y, z, metadata, 0);
+		unFakeRandomForWorld(world);
 
 		fakeRandomForWorld(world, zeroRandom);
 		defaultZeroRandom = block.getDrops(world, x, y, z, metadata, 0);
-		unFakeRandomForWorld();
+		unFakeRandomForWorld(world);
 		
 		if (!ThebombzenAPI.areItemStackCollectionsEqual(stackedBlockList, defaultMaxRandom) || !ThebombzenAPI.areItemStackCollectionsEqual(stackedBlockList, defaultZeroRandom)){
 			return true;
@@ -129,9 +128,6 @@ public final class Tests {
 	}
 
 	private static void fakeItemForPlayer(ItemStack itemstack) {
-		if (heldItemCurrentlyFaked){
-			unFakeItemForPlayer();
-		}
 		prevHeldItem = mc.thePlayer.inventory.mainInventory[mc.thePlayer.inventory.currentItem];
 		mc.thePlayer.inventory.mainInventory[mc.thePlayer.inventory.currentItem] = itemstack;
 		if (prevHeldItem != null) {
@@ -141,17 +137,11 @@ public final class Tests {
 			mc.thePlayer.getAttributeMap().applyAttributeModifiers(
 					itemstack.getAttributeModifiers());
 		}
-		heldItemCurrentlyFaked = true;
 	}
 
 	private static void fakeRandomForWorld(World world, Random random) {
-		if (randomCurrentlyFaked){
-			unFakeRandomForWorld();
-		}
 		prevRandom = world.rand;
 		world.rand = random;
-		fakedWorld = world;
-		randomCurrentlyFaked = true;
 	}
 
 	public static int getAdjustedBlockStr(double blockStr){
@@ -372,14 +362,11 @@ public final class Tests {
 			mc.thePlayer.getAttributeMap().applyAttributeModifiers(
 					prevHeldItem.getAttributeModifiers());
 		}
-		heldItemCurrentlyFaked = false;
 	}
 	
-	private static void unFakeRandomForWorld() {
-		fakedWorld.rand = prevRandom;
+	private static void unFakeRandomForWorld(World world) {
+		world.rand = prevRandom;
 		prevRandom = null;
-		fakedWorld = null;
-		randomCurrentlyFaked = false;
 	}
 	
 	private Tests() {
