@@ -274,7 +274,7 @@ D shears < !($vine|$tallgrass|$leaves)
 # Stuff like [1]minecraft:diamond_pickaxe+E32:2-0
 # are all a single block/item identifier
 
-# You can combine multiple block/item identifiers by using &, |, ^, !, and parentheses in their
+# You can combine multiple simple block/item identifiers by using &, |, ^, !, and parentheses in their
 # traditional logical sense
 # E.g. lapis_ore|diamond_ore means "lapis ore, or diamond ore"
 # !lapis_ore means "not lapis ore"
