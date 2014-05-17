@@ -42,7 +42,7 @@ import cpw.mods.fml.relauncher.SideOnly;
  * @author thebombzen
  */
 @SideOnly(Side.CLIENT)
-@Mod(modid = "autoswitch", name = "AutoSwitch", version = "5.0.0", dependencies = "required-after:thebombzenapi", guiFactory = "thebombzen.mods.autoswitch.configuration.ConfigGuiFactory")
+@Mod(modid = "autoswitch", name = "AutoSwitch", version = "5.0.1", dependencies = "required-after:thebombzenapi", guiFactory = "thebombzen.mods.autoswitch.configuration.ConfigGuiFactory")
 public class AutoSwitch extends ThebombzenAPIBaseMod {
 
 	public static final int STAGE_H0 = 0;
@@ -175,7 +175,7 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 
 	@Override
 	public String getLongVersionString() {
-		return "AutoSwitch, version 5.0.0, Minecraft 1.7.2";
+		return "AutoSwitch, version 5.0.1, Minecraft 1.7.2";
 	}
 
 	@Override
@@ -262,7 +262,6 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 		int oldStandard = Tests.getToolStandardness(oldItemStack, world,
 					x, y, z);
 		
-		
 		debug("newStandard: %d, oldStandard: %d", newStandard, oldStandard);
 
 		boolean newDamageable = Tests.isItemStackDamageableOnBlock(
@@ -275,7 +274,7 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 		int adjustedBlockStrComparison = new Integer(newAdjustedBlockStr).compareTo(oldAdjustedBlockStr);
 		int blockStrComparison = Float.compare(newBlockStr, oldBlockStr);
 		
-		if (toolSelectionMode.isStandard() || (Math.abs(newStandard) >= 4 && Math.abs(oldStandard) < 4) || (Math.abs(newStandard) < 4 && Math.abs(oldStandard) >= 4) || (Math.abs(newStandard) >= 4 && Math.abs(oldStandard) >= 4 && oldStandard != newStandard)) {
+		if (toolSelectionMode.isStandard() || configuration.getStandardToolOverrideState(newItemStack, block, metadata) != configuration.getStandardToolOverrideState(oldItemStack, block, metadata)) {
 			if (newStandard > oldStandard) {
 				debug("Switching because new item is more standard than old.");
 				return true;
@@ -302,7 +301,7 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 					debug("Not switching because old tool is stronger.");
 					return false;
 				}
-			} else {
+			} else { // This should never happen
 				if (adjustedBlockStrComparison < 0) {
 					debug("Switching because new item is worse than old item and SLOW STANDARD is on.");
 					return true;
