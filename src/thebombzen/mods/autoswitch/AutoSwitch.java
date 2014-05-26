@@ -16,10 +16,6 @@ import net.minecraft.world.World;
 import net.minecraftforge.client.event.ClientChatReceivedEvent;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.entity.player.AttackEntityEvent;
-
-import org.lwjgl.input.Keyboard;
-import org.lwjgl.input.Mouse;
-
 import thebombzen.mods.autoswitch.configuration.Configuration;
 import thebombzen.mods.autoswitch.configuration.ToolSelectionMode;
 import thebombzen.mods.thebombzenapi.ThebombzenAPI;
@@ -115,11 +111,10 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 			return;
 		}
 
-		pulseOn = Keyboard.isKeyDown(configuration.getKeyCodeProperty(Configuration.PULSE_KEY));
+		pulseOn = ThebombzenAPI.isExtendedKeyDown(configuration.getKeyCodeProperty(Configuration.PULSE_KEY));
 		// func_151463_i() == getKeyCode()
 		int keyCode = mc.gameSettings.keyBindAttack.getKeyCode();
-		boolean mouseDown = keyCode < 0 ? Mouse.isButtonDown(keyCode + 100)
-				: Keyboard.isKeyDown(keyCode);
+		boolean mouseDown = ThebombzenAPI.isExtendedKeyDown(keyCode);
 		if (!mouseDown && prevMouseDown || mouseDown && pulseOn ^ prevPulse) {
 			switchBack();
 		}

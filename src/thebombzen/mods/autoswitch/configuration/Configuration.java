@@ -539,7 +539,7 @@ public class Configuration extends ThebombzenAPIConfiguration {
 			String value) {
 		super.setPropertyWithoutSave(option, value);
 		if (option.equals(TOGGLE_KEY)) {
-			mod.setToggleKeyCode(0, Keyboard.getKeyIndex(value));
+			mod.setToggleKeyCode(DEFAULT_ENABLED.getDefaultToggleIndex(), ThebombzenAPI.getExtendedKeyIndex(value));
 		}
 	}
 
