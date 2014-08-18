@@ -11,14 +11,19 @@ import net.minecraft.block.Block;
 import net.minecraft.client.Minecraft;
 import net.minecraft.enchantment.Enchantment;
 import net.minecraft.enchantment.EnchantmentHelper;
+import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.SharedMonsterAttributes;
+import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.ItemSword;
+import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.potion.Potion;
 import net.minecraft.util.MathHelper;
 import net.minecraft.world.World;
 import thebombzen.mods.autoswitch.configuration.Configuration;
 import thebombzen.mods.thebombzenapi.ThebombzenAPI;
+import cpw.mods.fml.common.Loader;
 import cpw.mods.fml.common.registry.GameRegistry;
 import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
@@ -134,8 +139,7 @@ public final class Tests {
 			mc.thePlayer.getAttributeMap().removeAttributeModifiers(prevHeldItem.getAttributeModifiers());
 		}
 		if (itemstack != null) {
-			mc.thePlayer.getAttributeMap().applyAttributeModifiers(
-					itemstack.getAttributeModifiers());
+			mc.thePlayer.getAttributeMap().applyAttributeModifiers(itemstack.getAttributeModifiers());
 		}
 	}
 
@@ -218,15 +222,145 @@ public final class Tests {
 		return can ? 1 : -1;
 	}
 	
-	public static double getItemStackDamage(ItemStack itemStack){
-		double damage = AutoSwitch.instance.getConfiguration().getCustomWeaponDamage(itemStack);
-		if (damage >= 0){
-			return damage;
+	public static int getFullTinkersConstructItemStackDamage(ItemStack stack,
+			EntityLivingBase entity) throws ClassNotFoundException {
+		NBTTagCompound tags = stack.getTagCompound();
+		NBTTagCompound toolTags = stack.getTagCompound().getCompoundTag(
+				"InfiTool");
+		int damage = toolTags.getInteger("Attack");
+		boolean broken = toolTags.getBoolean("Broken");
+		int durability = tags.getCompoundTag("InfiTool").getInteger("Damage");
+		float stonebound = tags.getCompoundTag("InfiTool").getFloat("Shoddy");
+		float stoneboundDamage = (float) Math.log(durability / 72f + 1) * -2
+				* stonebound;
+		int earlyModDamage = 0;
+		Iterable<?> activeModifiers = ThebombzenAPI.getPrivateField(null,
+				Class.forName("tconstruct.library.TConstructRegistry"),
+				"activeModifiers");
+		Class<?> activeToolModClass = Class
+				.forName("tconstruct.library.ActiveToolMod");
+		Class<?> toolCoreClass = Class
+				.forName("tconstruct.library.tools.ToolCore");
+		Class<?>[] attackModClasses = new Class<?>[] { int.class, int.class,
+				toolCoreClass, NBTTagCompound.class, NBTTagCompound.class,
+				ItemStack.class, EntityLivingBase.class, Entity.class };
+		Item tool = stack.getItem();
+		for (Object activeToolMod : activeModifiers) {
+			earlyModDamage = ThebombzenAPI.invokePrivateMethod(activeToolMod,
+					activeToolModClass, "baseAttackDamage", attackModClasses,
+					earlyModDamage, damage, tool, tags, toolTags, stack,
+					mc.thePlayer, entity);
 		}
+		damage += earlyModDamage;
+		if (mc.thePlayer.isPotionActive(Potion.damageBoost)) {
+			damage += 3 << mc.thePlayer.getActivePotionEffect(
+					Potion.damageBoost).getAmplifier();
+		}
+		if (mc.thePlayer.isPotionActive(Potion.weakness)) {
+			damage -= 2 << mc.thePlayer.getActivePotionEffect(Potion.weakness)
+					.getAmplifier();
+		}
+		float enchantDamage = 0;
+		if (entity instanceof EntityLivingBase) {
+			enchantDamage = EnchantmentHelper.getEnchantmentModifierLiving(
+					mc.thePlayer, entity);
+		}
+		damage += stoneboundDamage;
+		if (damage < 1) {
+			damage = 1;
+		}
+		if (mc.thePlayer.isSprinting()) {
+			float lunge = ThebombzenAPI.invokePrivateMethod(tool,
+					toolCoreClass, "chargeAttack", new Class<?>[] {});
+			if (lunge > 1f) {
+				damage *= lunge;
+			}
+		}
+		int modDamage = 0;
+		for (Object activeToolMod : activeModifiers) {
+			modDamage = ThebombzenAPI.invokePrivateMethod(activeToolMod,
+					activeToolModClass, "attackDamage", attackModClasses,
+					modDamage, damage, tool, tags, toolTags, stack,
+					mc.thePlayer, entity);
+		}
+		damage += modDamage;
+		if (damage > 0 || enchantDamage > 0) {
+			boolean criticalHit = mc.thePlayer.fallDistance > 0.0F
+					&& !mc.thePlayer.onGround && !mc.thePlayer.isOnLadder()
+					&& !mc.thePlayer.isInWater()
+					&& !mc.thePlayer.isPotionActive(Potion.blindness)
+					&& mc.thePlayer.ridingEntity == null;
+			for (Object activeToolMod : activeModifiers) {
+				if (ThebombzenAPI.invokePrivateMethod(activeToolMod,
+						activeToolModClass, "doesCriticalHit", new Class<?>[] {
+								toolCoreClass, NBTTagCompound.class,
+								NBTTagCompound.class, ItemStack.class,
+								EntityLivingBase.class, Entity.class }, tool,
+						tags, toolTags, stack, mc.thePlayer, entity))
+					;
+				criticalHit = true;
+			}
+			if (criticalHit) {
+				damage *= 1.5F; // This is not actually accurate. It just makes
+								// it fully objective. Also, this is how it is
+								// in vanilla now.
+			}
+			damage += enchantDamage;
+			float damageModifier = ThebombzenAPI.invokePrivateMethod(tool,
+					toolCoreClass, "getDamageModifier", new Class<?>[] {});
+			if (damageModifier != 1f) {
+				damage *= damageModifier;
+			}
+			if (broken) {
+				damage = 1;
+			}
+			return damage;
+		} else {
+			return 0;
+		}
+	}
+	
+	public static double getFullRegularItemStackDamage(ItemStack itemStack,
+			EntityLivingBase entity) {
 		fakeItemForPlayer(itemStack);
-		damage = mc.thePlayer.getEntityAttribute(SharedMonsterAttributes.attackDamage).getAttributeValue();
+		double damage = AutoSwitch.instance.getConfiguration()
+				.getCustomWeaponDamage(itemStack);
+		if (damage < 0) {
+			damage = mc.thePlayer.getEntityAttribute(
+					SharedMonsterAttributes.attackDamage).getAttributeValue();
+		}
+		double enchDamage = EnchantmentHelper.getEnchantmentModifierLiving(
+				mc.thePlayer, entity);
+
+		if (damage > 0.0D || enchDamage > 0.0D) {
+			boolean critical = mc.thePlayer.fallDistance > 0.0F
+					&& !mc.thePlayer.onGround && !mc.thePlayer.isOnLadder()
+					&& !mc.thePlayer.isInWater()
+					&& !mc.thePlayer.isPotionActive(Potion.blindness)
+					&& mc.thePlayer.ridingEntity == null;
+
+			if (critical && damage > 0) {
+
+				damage *= 1.5D;
+			}
+			damage += enchDamage;
+		}
 		unFakeItemForPlayer();
 		return damage;
+	}
+	
+	public static double getFullItemStackDamage(ItemStack itemStack, EntityLivingBase entity){
+		try {
+			if (itemStack != null && itemStack.getTagCompound() != null && Loader.isModLoaded("TConstruct")){
+				Class<?> clazz = Class.forName("tconstruct.library.tools.ToolCore");
+				if (clazz.isAssignableFrom(itemStack.getItem().getClass())){
+					return Tests.getFullTinkersConstructItemStackDamage(itemStack, entity);
+				}
+			}
+		} catch (ClassNotFoundException e){
+			AutoSwitch.instance.throwException("Error in Tinkers Construct Compatability", e, false);
+		}
+		return Tests.getFullRegularItemStackDamage(itemStack, entity);
 	}
 
 	@SuppressWarnings("unchecked")
@@ -348,7 +482,8 @@ public final class Tests {
 		if (itemstack.getItem() instanceof ItemSword){
 			return true;
 		}
-		if (GameRegistry.findUniqueIdentifierFor(itemstack.getItem()).name.toLowerCase().contains("_sword")){
+		String name = GameRegistry.findUniqueIdentifierFor(itemstack.getItem()).name.toLowerCase();
+		if (name.endsWith("sword")){
 			return true;
 		}
 		return false;

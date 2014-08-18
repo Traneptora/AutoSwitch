@@ -38,7 +38,7 @@ import cpw.mods.fml.relauncher.SideOnly;
  * @author thebombzen
  */
 @SideOnly(Side.CLIENT)
-@Mod(modid = "autoswitch", name = "AutoSwitch", version = "5.0.2", dependencies = "required-after:thebombzenapi", guiFactory = "thebombzen.mods.autoswitch.configuration.ConfigGuiFactory")
+@Mod(modid = "autoswitch", name = "AutoSwitch", version = "5.1.0", dependencies = "required-after:thebombzenapi", guiFactory = "thebombzen.mods.autoswitch.configuration.ConfigGuiFactory")
 public class AutoSwitch extends ThebombzenAPIBaseMod {
 
 	public static final int STAGE_H0 = 0;
@@ -170,7 +170,7 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 
 	@Override
 	public String getLongVersionString() {
-		return "AutoSwitch, version 5.0.2, Minecraft 1.7.2";
+		return "AutoSwitch, version 5.1.0, Minecraft 1.7.10";
 	}
 
 	@Override
@@ -490,13 +490,8 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 
 		boolean isPlayer = entityover instanceof EntityPlayer;
 
-		double oldDamage = Tests.getItemStackDamage(oldItemStack);
-		double newDamage = Tests.getItemStackDamage(newItemStack);
-
-		oldDamage += Tests.getEnchantmentModifierLiving(oldItemStack,
-				entityover);
-		newDamage += Tests.getEnchantmentModifierLiving(newItemStack,
-				entityover);
+		double oldDamage = Tests.getFullItemStackDamage(oldItemStack, entityover);
+		double newDamage = Tests.getFullItemStackDamage(newItemStack, entityover);
 
 		debug("Old damage is %f, new damage is %f.", oldDamage, newDamage);
 
