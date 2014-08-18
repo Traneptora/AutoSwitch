@@ -3,9 +3,9 @@
   "modid": "autoswitch",
   "name": "AutoSwitch",
   "description": "AutoSwitch automatically switches your tools and weapons when you dig or attack. It has a very advanced algorithm, taking into account not only dig speed, but harvestability, enchantments, damageablity, etc. You can easily configure its options with the config screen (look to the lower left).",
-  "version": "5.0.2",
+  "version": "5.1.0",
   "credits": "Thebombzen",
-  "mcversion": "1.7.2",
+  "mcversion": "1.7.10",
   "url": "http://is.gd/ThebombzensMods#AutoSwitch"
 }
 ]
