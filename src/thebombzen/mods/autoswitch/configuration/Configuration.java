@@ -70,7 +70,7 @@ public class Configuration extends ThebombzenAPIConfiguration {
 			"Use AutoSwitch when attacking mobs.");
 	public static final ConfigOption SWITCHBACK_BLOCKS = new ConfigOption(SingleMultiBoolean.ALWAYS, "SWITCHBACK_BLOCKS", "Unswitch on blocks",
 			"Switch back after digging a block.");
-	public static final ConfigOption SWITCHBACK_MOBS = new ConfigOption(SingleMultiBoolean.ALWAYS, "SWITCHBACK_MOBS", "Unswitch on weapons",
+	public static final ConfigOption SWITCHBACK_MOBS = new ConfigOption(SingleMultiBoolean.ALWAYS, "SWITCHBACK_MOBS", "Unswitch on mobs",
 			"Switch back after attacking a mob.");
 	public static final ConfigOption DEBUG = new ConfigOption(false, "DEBUG", "Debug Logging",
 			"Log debug output to",
