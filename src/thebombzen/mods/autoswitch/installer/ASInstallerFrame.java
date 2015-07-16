@@ -34,6 +34,8 @@ import javax.swing.JOptionPane;
 import javax.swing.JTextField;
 import javax.swing.WindowConstants;
 
+import thebombzen.mods.thebombzenapi.Constants;
+
 public class ASInstallerFrame extends JFrame {
 	
 	private static final long serialVersionUID = 1L;
@@ -239,7 +241,7 @@ public class ASInstallerFrame extends JFrame {
 		BufferedReader br = null;
 		try {
 			URL versionURL = new URL(
-					"https://dl.dropboxusercontent.com/u/51080973/mods/ThebombzenAPI/Latest.txt");
+					"https://dl.dropboxusercontent.com/u/51080973/mods/ThebombzenAPI/Latest-" + Constants.MC_VERSION + ".txt");
 			br = new BufferedReader(new InputStreamReader(
 					versionURL.openStream()));
 			latestVersion = br.readLine();
@@ -276,6 +278,8 @@ public class ASInstallerFrame extends JFrame {
 		
 		File modsFolder = new File(directory, "mods");
 		modsFolder.mkdir();
+		File versionFolder = new File(modsFolder, Constants.MC_VERSION);
+		versionFolder.mkdir();
 		File file = new File(ASInstallerFrame.class.getProtectionDomain().getCodeSource().getLocation().toURI());
 		JarFile jarFile = new JarFile(file);
 		if (jarFile.getEntry("thebombzen/mods/autoswitch/installer/ASInstallerFrame.class") == null){
@@ -285,12 +289,18 @@ public class ASInstallerFrame extends JFrame {
 		jarFile.close();
 		installThebombzenAPI(directory);
 		File[] mods = modsFolder.listFiles();
+		File[] modsVersion = versionFolder.listFiles();
 		for (File testMod : mods){
 			if (testMod.getName().matches("^AutoSwitch(Mod)?-v\\d\\.\\d(\\.\\d)?-mc(beta)?\\d\\.\\d(\\.\\d)?\\.(jar|zip)$")){
 				testMod.delete();
 			}
 		}
-		copyFile(file, new File(modsFolder, file.getName()));
+		for (File testMod : modsVersion){
+			if (testMod.getName().matches("^AutoSwitch(Mod)?-v\\d\\.\\d(\\.\\d)?-mc(beta)?\\d\\.\\d(\\.\\d)?\\.(jar|zip)$")){
+				testMod.delete();
+			}
+		}
+		copyFile(file, new File(versionFolder, file.getName()));
 		dialog.dispose();
 		JOptionPane.showMessageDialog(this, "Successfully installed AutoSwitch!", "Success!", JOptionPane.INFORMATION_MESSAGE);
 	}
@@ -302,12 +312,13 @@ public class ASInstallerFrame extends JFrame {
 		String fileName = scanner.next();
 		String url = scanner.next();
 		scanner.close();
+		
 		File modsFolder = new File(directory, "mods");
-		if (!modsFolder.exists()) {
-			modsFolder.mkdir();
-		}
-
-		File thebombzenAPI = new File(modsFolder, fileName);
+		modsFolder.mkdir();
+		File versionFolder = new File(modsFolder, Constants.MC_VERSION);
+		versionFolder.mkdir();
+		
+		File thebombzenAPI = new File(versionFolder, fileName);
 		
 		if (thebombzenAPI.exists()) {
 			return;
@@ -316,7 +327,15 @@ public class ASInstallerFrame extends JFrame {
 		URL downloadURL = new URL(url);
 
 		File[] subFiles = modsFolder.listFiles();
+		File[] versionSubFiles = versionFolder.listFiles();
 		for (File file : subFiles) {
+			if (file.getName()
+					.matches(
+							"^ThebombzenAPI-v\\d+\\.\\d+(\\.\\d+)?-mc\\d+\\.\\d+(\\.\\d+)?\\.(zip|jar)$")) {
+				file.delete();
+			}
+		}
+		for (File file : versionSubFiles) {
 			if (file.getName()
 					.matches(
 							"^ThebombzenAPI-v\\d+\\.\\d+(\\.\\d+)?-mc\\d+\\.\\d+(\\.\\d+)?\\.(zip|jar)$")) {
