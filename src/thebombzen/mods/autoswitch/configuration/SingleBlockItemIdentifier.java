@@ -6,11 +6,14 @@ import java.util.List;
 import java.util.Scanner;
 
 import net.minecraft.block.Block;
+import net.minecraft.block.state.IBlockState;
 import net.minecraft.item.Item;
+import net.minecraft.item.ItemStack;
+import net.minecraftforge.fml.common.registry.GameData;
+import net.minecraftforge.fml.common.registry.GameRegistry;
 import thebombzen.mods.thebombzenapi.ThebombzenAPI;
 import thebombzen.mods.thebombzenapi.configuration.BooleanTester;
 import thebombzen.mods.thebombzenapi.configuration.ConfigFormatException;
-import cpw.mods.fml.common.registry.GameRegistry;
 
 /**
  * Represents a block or item with the given String namespace, name, and damage values.
@@ -175,8 +178,11 @@ public class SingleBlockItemIdentifier implements BooleanTester<SingleValueIdent
 			}
 			break;
 		case CLASS:
-			Block block = identifier.getBlock();
-			if (block != null && getBlock() != null){
+			if (isBlock()){
+				IBlockState state = identifier.getBlockState();
+				if (state == null){
+					break;
+				}
 				Class<?> clazz = getBlock().getClass();
 				for (int i = 0; i < superNum; i++){
 					if (clazz.getSuperclass() != null){
@@ -185,13 +191,16 @@ public class SingleBlockItemIdentifier implements BooleanTester<SingleValueIdent
 						break;
 					}
 				}
-				if (!clazz.isAssignableFrom(block.getClass())){
+				if (!clazz.isAssignableFrom(state.getBlock().getClass())){
 					return false;
 				}
 				break;
 			}
-			Item item = identifier.getItem();
-			if (item != null && getItem() != null){
+			if (isItem()){
+				ItemStack stack = identifier.getItemStack();
+				if (stack == null){
+					break;
+				}
 				Class<?> clazz = getItem().getClass();
 				for (int i = 0; i < superNum; i++){
 					if (clazz.getSuperclass() != null){
@@ -200,7 +209,7 @@ public class SingleBlockItemIdentifier implements BooleanTester<SingleValueIdent
 						break;
 					}
 				}
-				if (!clazz.isAssignableFrom(item.getClass())){
+				if (!clazz.isAssignableFrom(stack.getItem().getClass())){
 					return false;
 				}
 			} else {
@@ -208,11 +217,14 @@ public class SingleBlockItemIdentifier implements BooleanTester<SingleValueIdent
 			}
 			break;
 		case MATERIAL:
-			block = identifier.getBlock();
-			if (block == null || getBlock() == null){
+			if (getBlock() == null){
+				break;
+			}
+			IBlockState blockState = identifier.getBlockState();
+			if (blockState == null || getBlock() == null){
 				return false;
 			}
-			if (!getBlock().getMaterial().equals(block.getMaterial())){
+			if (!getBlock().getMaterial().equals(blockState.getBlock().getMaterial())){
 				return false;
 			}
 			break;
@@ -220,12 +232,15 @@ public class SingleBlockItemIdentifier implements BooleanTester<SingleValueIdent
 		for (int i = valueSets.length - 1; i >= 0; i--){
 			ValueSet set = valueSets[i];
 			SingleValueIdentifier id2 = identifier;
-			if (set.getMask() < 0){
-				if (!identifier.isItem() || identifier.getItem().getMaxDamage() < identifier.getDamageValue()){
-					continue;
+			if (identifier.isItem()){
+				if (set.getMask() < 0){
+					if (identifier.getItemStack() == null || identifier.getItemStack().getMaxDamage() < identifier.getItemStack().getItemDamage()){
+						continue;
+					}
+					ItemStack newStack = identifier.getItemStack().copy();
+					newStack.setItemDamage(newStack.getMaxDamage() - newStack.getItemDamage());
+					id2 = new SingleValueIdentifier(newStack);
 				}
-				id2 = new SingleValueIdentifier(identifier);
-				id2.setDamageValue(id2.getItem().getMaxDamage() - identifier.getDamageValue());
 			}
 			if (set.contains(id2)){
 				return !set.doesSubtract();
@@ -267,7 +282,12 @@ public class SingleBlockItemIdentifier implements BooleanTester<SingleValueIdent
 	 * null if this is not a block.
 	 */
 	public Block getBlock() {
-		return GameRegistry.findBlock(modid, name);
+		Block block = GameData.getBlockRegistry().getObject(modid + ":" + name);
+		if (GameRegistry.findUniqueIdentifierFor(block).toString().equals("minecraft:air")){
+			return null;
+		} else {
+			return block;
+		}
 	}
 
 	/**
@@ -282,7 +302,7 @@ public class SingleBlockItemIdentifier implements BooleanTester<SingleValueIdent
 	 * will return the corresponding ItemBlock.
 	 */
 	public Item getItem() {
-		return GameRegistry.findItem(modid, name);
+		return GameData.getItemRegistry().getObject(modid + ":" + name);
 	}
 	
 	/**
@@ -298,18 +318,6 @@ public class SingleBlockItemIdentifier implements BooleanTester<SingleValueIdent
 	 */
 	public String getName(){
 		return name;
-	}
-	
-	@Override
-	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + ((modid == null) ? 0 : modid.hashCode());
-		result = prime * result + ((name == null) ? 0 : name.hashCode());
-		result = prime * result + superNum;
-		result = prime * result + type;
-		result = prime * result + Arrays.hashCode(valueSets);
-		return result;
 	}
 
 	/**
@@ -331,33 +339,6 @@ public class SingleBlockItemIdentifier implements BooleanTester<SingleValueIdent
 	 */
 	public boolean isItem() {
 		return getItem() != null;
-	}
-
-	/**
-	 * Returns a String representation, as seen in the config.
-	 */
-	@Override
-	public String toString(){
-		StringBuilder builder = new StringBuilder();
-		switch (type){
-		case ALL:
-			builder.append('@');
-			break;
-		case CLASS:
-			builder.append("[").append(superNum).append("]");
-			break;
-		case MATERIAL:
-			builder.append('$');
-			break;
-		}
-		if (modid.length() != 0){
-			builder.append(modid).append(":");
-		}
-		builder.append(name);
-		for (int i = 0; i < valueSets.length; i++){
-			builder.append(valueSets[i]);
-		}
-		return builder.toString();
 	}
 
 }

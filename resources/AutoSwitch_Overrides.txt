@@ -50,7 +50,7 @@
 # ########### CONFIG VERSION NUMBER #########
 
 # If this is not found or does not match the current number, AutoSwitch will replace your config with the default one.
-R3
+R4
 
 # ===== HOW TO SPECIFY A BLOCK OR ITEM =====
 
@@ -58,9 +58,11 @@ R3
 # The same name you'd use in /give
 # For example, diamond_pickaxe
 
-# To specify a specific damage value, then use a +
-# For example, birch planks are planks+2
+# To specify a specific damage value, use a +
 # For example, an unbroken gold axe is gold_axe+0
+
+# To specify a specific block state, use +property:value
+# For example, birch planks are planks+variant:birch
 
 # For a more detailed description on how to specify blocks, see the bottom of the config file.
 
@@ -195,7 +197,8 @@ D shears < !($vine|$tallgrass|$leaves)
 # Fast Nonstandard skips the standardness calculation and you might use a faster tool that's worthless but is faster
 # (Slow Nonstandard doesn't exist because you'd always use a fist)
 
-# Sometimes you want to override the mode in the Config Screen with different behavior on specific blocks
+# The tool selection mode is set in general in the config screen
+# Sometimes you want to override the mode in the config screen with different behavior on specific blocks
 # Use M block = mode to override behavior
 # For example you can use
 # M glowstone = Fast Nonstandard
@@ -206,7 +209,7 @@ D shears < !($vine|$tallgrass|$leaves)
 # You specify a block or item using a block/item identifier
 # Any block or item that matches the block/item identifier will count
 
-# A Simple Block/Item Identifier consists of an optional prefix, and optional modid, a mandatory name, and 0 or more ValueSets.
+# A Simple Block/Item Identifier consists of an optional prefix, and optional modid, a mandatory* name, and 0 or more ValueSets.
 # The format is prefix modid:name ValueSet...
 # You can use spaces or no spaces; it doesn't matter because the parser strips all whitespace before parsing 
 # The name can be an empty string but only if the prefix is universal; see prefixes for details
@@ -231,7 +234,7 @@ D shears < !($vine|$tallgrass|$leaves)
 # If the prefix is missing then the block/item identifier will only indicate blocks or items with the same name
 # as the one given in the identifier
 
-# The prefix can be a universal prefix which is a single @ followed by an empty string in place of the modid:name
+# *The prefix can be a universal prefix which is a single @ followed by an empty string in place of the modid:name
 # Just an @ by itself means all blocks or items (which one depends on context)
 
 # A $ in front of the name indicates material similarity (only works for blocks).
@@ -242,7 +245,7 @@ D shears < !($vine|$tallgrass|$leaves)
 
 # A @ in front of the name indicates behavioral similarity.
 
-# (Programmers only: A @name indicates all blocks whose Java class is a subclass
+# (Programmer's info: A @name indicates all blocks whose Java class is a subclass
 # of the one indicated by name. So @wheat is all blocks whose class is a subclass of
 # BlockCrops.)
 
@@ -261,22 +264,27 @@ D shears < !($vine|$tallgrass|$leaves)
 # but [1]diamond_pickaxe means all main tools
 # and [2]diamond_pickaxe is all items
 
+# (Programmer's info: [N]name grabs anything whose Java class is a subclass of super^N ( name.class ).
+# AutoSwitch will take N superclasses of the name's class before making a subclass comparison. )
+
 # ################ Value Sets ##############
 
-# Value Sets filter the identifier to only indicate blocks with certain values
-# There are two types of value sets: a damage value set, and an enchantment value set
+# Value Sets filter the identifier to only indicate blocks or items with certain values
+# There are three types of value sets:
+# State value sets (blocks only), Damage value sets and Enchantment value sets (both are items only)
 
 # A damage value set restricts the damage values that the identifier identifies
-# The format is a + or - followed by a a damage value
+# The format is a + or - followed by a damage value
 # Or a + or - followed by a damage value and a mask
-# planks+2 indicates only planks with a damage value of 2.
-# planks-2 indicates all planks with a damage value that's NOT 2.
+# gold_axe+2 indicates only a golden axe with a damage value of 2.
+# gold_axe-2 indicates all golden axes with a damage value that's NOT 2.
 
 # You can also use a damage and a mask, as in damage:mask
 # AS will calculate (testvalue & mask) == damage
 # Rather than (testvalue == damage)
-# For example, log+0b10:0b11
-# This one means all birch logs because every birch log block has the value 0b10 in the two bits 0b11
+# For example, gold_axe+0b1:0b1
+# This one tests for all golden axes with an odd damage value
+# (In case you just can't even)
 
 # If the mask is negative (obtained via - or ~) and the tool has a maximum damage,
 # AS will check the tool's damage based on how far away it is from breaking rather than its damage value
@@ -296,6 +304,10 @@ D shears < !($vine|$tallgrass|$leaves)
 # As in, E32:2:4 means Efficiency, but only level 2-4
 # As usual, a + means add and a - means subtract
 
+# To do a block state value set, use property:value
+# planks+variant:birch is birch planks
+# leaves+decay:false gives leaves that won't naturally decay
+
 # One big thing about ValueSets is you can chain them together. Adding additional Value Sets that start with + will add to the list,
 # and adding additional value sets that start with a - with subtract from the list
 # For example, diamond_pickaxe+E35-0 means fortune enchanted diamond pickaxes, but not ones with a damage value of 0 (which is unbroken)
@@ -303,11 +315,11 @@ D shears < !($vine|$tallgrass|$leaves)
 # Think of it as moving along the line left-to-right and adding or subtracting from the list you already have
 # One rule to know though: If the first Value Set is a +, it starts out with just that valueset
 # If the first ValueSet is a -, then it starts out with everything but that valueset
-# Meaning, planks+0 means only oak planks, and planks-0 means all nonoak planks
+# Meaning, planks+variant:oak means only oak planks, and planks-variant:oak means all nonoak planks
 # Then, after the first one, +s add to the list and -s subtract from the list
-# So planks-0+0 is the same as all planks
-# and planks+0-0 means nothing.
-# Note than you can combine enchantment and damage sets in one chain
+# So diamond_pickaxe-0+0 is the same as all diamond pickaxes
+# and diamond_pickaxe+0-0 won't match anything
+# Note than you can combine enchantment and damage sets in one chain (but not states as those are block-only)
 
 # This finally explains our set @+0:~0b11-0, which means all tools within 4 of breaking
 # The @ signifies all blocks/items, in this case items

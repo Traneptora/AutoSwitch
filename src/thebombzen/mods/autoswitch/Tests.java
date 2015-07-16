@@ -1,5 +1,7 @@
 package thebombzen.mods.autoswitch;
 
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -8,6 +10,7 @@ import java.util.Random;
 import java.util.Set;
 
 import net.minecraft.block.Block;
+import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.enchantment.Enchantment;
 import net.minecraft.enchantment.EnchantmentHelper;
@@ -19,14 +22,18 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.item.ItemSword;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.potion.Potion;
+import net.minecraft.util.BlockPos;
 import net.minecraft.util.MathHelper;
 import net.minecraft.world.World;
+import net.minecraftforge.common.ForgeHooks;
+import net.minecraftforge.fml.common.Loader;
+import net.minecraftforge.fml.common.registry.GameRegistry;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 import thebombzen.mods.autoswitch.configuration.Configuration;
+import thebombzen.mods.thebombzenapi.ComparableTuple;
+import thebombzen.mods.thebombzenapi.FieldNotFoundException;
 import thebombzen.mods.thebombzenapi.ThebombzenAPI;
-import cpw.mods.fml.common.Loader;
-import cpw.mods.fml.common.registry.GameRegistry;
-import cpw.mods.fml.relauncher.Side;
-import cpw.mods.fml.relauncher.SideOnly;
 
 @SideOnly(Side.CLIENT)
 public final class Tests {
@@ -36,23 +43,25 @@ public final class Tests {
 	private static ItemStack prevHeldItem = null;
 	private static Random prevRandom = null;
 	
-	public static ItemStack createStackedBlock(Block block, int metadata) {
+	private static final String[] randomNames = {"rand"};
+	
+	/**
+	 * Anything strictly greater than this is considered to be "standard"
+	 */
+	public static final ComparableTuple<Integer> standardThreshold = new ComparableTuple<Integer>(0, 0, 0, 0, 0);
+	
+	public static ItemStack createStackedBlock(Block block, IBlockState state) {
 		return ThebombzenAPI.invokePrivateMethod(block, Block.class,
 				new String[] { "createStackedBlock", "func_149644_j", "j" },
-				new Class<?>[] { int.class }, metadata);
+				new Class<?>[] { IBlockState.class }, state);
 	}
 	
 
-	public static boolean doesFortuneWorkOnBlock(World world, int x, int y, int z) {
+	public static boolean doesFortuneWorkOnBlock(World world, BlockPos pos) {
 
-		Block block = world.getBlock(x, y, z);
-		int metadata = world.getBlockMetadata(x, y, z);
+		IBlockState blockState = world.getBlockState(pos);
 
-		if (block == null) {
-			return false;
-		}
-
-		int state = AutoSwitch.instance.getConfiguration().getFortuneOverrideState(block, metadata);
+		int state = AutoSwitch.instance.getConfiguration().getFortuneOverrideState(blockState);
 		if (state == Configuration.OVERRIDDEN_NO){
 			return false;
 		} else if (state == Configuration.OVERRIDDEN_YES){
@@ -68,13 +77,13 @@ public final class Tests {
 		List<ItemStack> fortuneZeroRandom;
 
 		fakeRandomForWorld(world, maxRandom);
-		defaultMaxRandom = block.getDrops(world, x, y, z, metadata, 0);
-		fortuneMaxRandom = block.getDrops(world, x, y, z, metadata, 3);
+		defaultMaxRandom = blockState.getBlock().getDrops(world, pos, blockState, 0);
+		fortuneMaxRandom = blockState.getBlock().getDrops(world, pos, blockState, 3);
 		unFakeRandomForWorld(world);
 
 		fakeRandomForWorld(world, zeroRandom);
-		defaultZeroRandom = block.getDrops(world, x, y, z, metadata, 0);
-		fortuneZeroRandom = block.getDrops(world, x, y, z, metadata, 3);
+		defaultZeroRandom = blockState.getBlock().getDrops(world, pos, blockState, 0);
+		fortuneZeroRandom = blockState.getBlock().getDrops(world, pos, blockState, 3);
 		unFakeRandomForWorld(world);
 
 		if (!ThebombzenAPI.areItemStackCollectionsEqual(defaultMaxRandom,
@@ -87,23 +96,19 @@ public final class Tests {
 		}
 	}
 	
-	public static boolean doesSilkTouchWorkOnBlock(World world, int x, int y, int z) {
+	public static boolean doesSilkTouchWorkOnBlock(World world, BlockPos pos) {
 
-		Block block = world.getBlock(x, y, z);
-		int metadata = world.getBlockMetadata(x, y, z);
+		IBlockState blockState = world.getBlockState(pos);
 
-		if (block == null) {
-			return false;
-		}
-
-		int state = AutoSwitch.instance.getConfiguration().getSilkTouchOverrideState(block, metadata);
+		int state = AutoSwitch.instance.getConfiguration().getSilkTouchOverrideState(blockState);
+		
 		if (state == Configuration.OVERRIDDEN_NO){
 			return false;
 		} else if (state == Configuration.OVERRIDDEN_YES){
 			return true;
 		}
 
-		boolean silkHarvest = block.canSilkHarvest(world, mc.thePlayer, x, y, z, metadata);
+		boolean silkHarvest = blockState.getBlock().canSilkHarvest(world, pos, blockState, mc.thePlayer);
 		if (!silkHarvest){
 			return false;
 		}
@@ -111,18 +116,18 @@ public final class Tests {
 		Random zeroRandom = new NotSoRandom(true);
 		Random maxRandom = new NotSoRandom(false);
 		
-		ItemStack stackedBlock = createStackedBlock(block, metadata);
+		ItemStack stackedBlock = createStackedBlock(blockState.getBlock(), blockState);
 		List<ItemStack> stackedBlockList = Collections.singletonList(stackedBlock);
 		
 		List<ItemStack> defaultMaxRandom;
 		List<ItemStack> defaultZeroRandom;
 		
 		fakeRandomForWorld(world, maxRandom);
-		defaultMaxRandom = block.getDrops(world, x, y, z, metadata, 0);
+		defaultMaxRandom = blockState.getBlock().getDrops(world, pos, blockState, 0);
 		unFakeRandomForWorld(world);
 
 		fakeRandomForWorld(world, zeroRandom);
-		defaultZeroRandom = block.getDrops(world, x, y, z, metadata, 0);
+		defaultZeroRandom = blockState.getBlock().getDrops(world, pos, blockState, 0);
 		unFakeRandomForWorld(world);
 		
 		if (!ThebombzenAPI.areItemStackCollectionsEqual(stackedBlockList, defaultMaxRandom) || !ThebombzenAPI.areItemStackCollectionsEqual(stackedBlockList, defaultZeroRandom)){
@@ -143,9 +148,26 @@ public final class Tests {
 		}
 	}
 
-	private static void fakeRandomForWorld(World world, Random random) {
+	private static void fakeRandomForWorld(World world, final Random random) {
 		prevRandom = world.rand;
-		world.rand = random;
+		for (String name : randomNames) {
+			try {
+				Field field = World.class.getDeclaredField(name);
+				field.setAccessible(true);
+				try {
+					Field modifiersField = Field.class.getDeclaredField("modifiers");
+				    modifiersField.setAccessible(true);
+				    modifiersField.setInt(field, field.getModifiers() & ~Modifier.FINAL);
+					field.set(world, random);
+					modifiersField.setInt(field, field.getModifiers() | Modifier.FINAL);
+					return;
+				} catch (Exception e) {
+					throw new FieldNotFoundException("Error setting field", e);
+				}
+			} catch (NoSuchFieldException nsfe) {
+				continue;
+			}
+		}
 	}
 
 	public static int getAdjustedBlockStr(double blockStr){
@@ -156,28 +178,25 @@ public final class Tests {
 		}
 	}
 	
-	public static float getBlockHardness(World world, int x, int y, int z) {
-		Block block = world.getBlock(x, y, z);
+	public static float getBlockHardness(World world, BlockPos pos) {
+		Block block = world.getChunkFromBlockCoords(pos).getBlock(pos);
 		if (block == null) {
 			return 0;
 		} else {
-			// func_149712_f == getBlockHardness
-			return block.getBlockHardness(world, x, y, z);
+			return block.getBlockHardness(world, pos);
 		}
 	}
 
-	public static float getBlockStrength(ItemStack itemstack, World world, int x,
-			int y, int z) {
-		Block block = world.getBlock(x, y, z);
+	public static float getBlockStrength(ItemStack itemstack, World world, BlockPos pos) {
+		Block block = world.getChunkFromBlockCoords(pos).getBlock(pos);
 		fakeItemForPlayer(itemstack);
-		float str = block.getPlayerRelativeBlockHardness(mc.thePlayer, world, x, y, z);
+		float str = block.getPlayerRelativeBlockHardness(mc.thePlayer, world, pos);
 		unFakeItemForPlayer();
 		return str;
 	}
 	
-	public static float getDigSpeed(ItemStack itemstack, Block block, int metadata) {
-		return itemstack == null ? 1.0F : itemstack.getItem().getDigSpeed(
-				itemstack, block, metadata);
+	public static float getDigSpeed(ItemStack itemstack, IBlockState blockState) {
+		return itemstack == null ? 1.0F : itemstack.getItem().getDigSpeed(itemstack, blockState);
 	}
 	
 	public static float getEff(float str, ItemStack itemstack) {
@@ -193,31 +212,22 @@ public final class Tests {
 		return str + effLevel * effLevel + 1;
 	}
 	
-
-	public static float getEnchantmentModifierLiving(ItemStack itemstack,
-			EntityLivingBase entityover) {
-		fakeItemForPlayer(itemstack);
-		float modifier = EnchantmentHelper.getEnchantmentModifierLiving(
-				mc.thePlayer, entityover);
-		unFakeItemForPlayer();
-		return modifier;
-	}
-	
-	public static int getHarvestLevel(ItemStack itemstack, Block block, int metadata) {
-		int state = AutoSwitch.instance.getConfiguration().getHarvestOverrideState(itemstack, block, metadata);
+	public static int getHarvestLevel(ItemStack itemstack, World world, BlockPos pos) {
+		IBlockState blockState = world.getBlockState(pos);
+		int state = AutoSwitch.instance.getConfiguration().getHarvestOverrideState(itemstack, blockState);
 		if (state == Configuration.OVERRIDDEN_NO){
 			return -2;
 		} else if (state == Configuration.OVERRIDDEN_YES){
 			return 2;
 		}
 		fakeItemForPlayer(null);
-		boolean noTool = mc.thePlayer.canHarvestBlock(block);
+		boolean noTool = mc.thePlayer.canHarvestBlock(blockState.getBlock());
 		unFakeItemForPlayer();
 		if (noTool){
 			return 0;
 		}
 		fakeItemForPlayer(itemstack);
-		boolean can = block.canHarvestBlock(mc.thePlayer, metadata);
+		boolean can = blockState.getBlock().canHarvestBlock(world, pos, mc.thePlayer);
 		unFakeItemForPlayer();
 		return can ? 1 : -1;
 	}
@@ -262,8 +272,8 @@ public final class Tests {
 		}
 		float enchantDamage = 0;
 		if (entity instanceof EntityLivingBase) {
-			enchantDamage = EnchantmentHelper.getEnchantmentModifierLiving(
-					mc.thePlayer, entity);
+			// getEnchantmentModifierDamage or getEnchantmentModifierLiving
+			enchantDamage = EnchantmentHelper.func_152377_a(stack, entity.getCreatureAttribute());
 		}
 		damage += stoneboundDamage;
 		if (damage < 1) {
@@ -329,8 +339,8 @@ public final class Tests {
 			damage = mc.thePlayer.getEntityAttribute(
 					SharedMonsterAttributes.attackDamage).getAttributeValue();
 		}
-		double enchDamage = EnchantmentHelper.getEnchantmentModifierLiving(
-				mc.thePlayer, entity);
+		// getEnchantmentModifierDamage or getEnchantmentModifierLiving
+		double enchDamage = EnchantmentHelper.func_152377_a(itemStack, entity.getCreatureAttribute());
 
 		if (damage > 0.0D || enchDamage > 0.0D) {
 			boolean critical = mc.thePlayer.fallDistance > 0.0F
@@ -380,6 +390,7 @@ public final class Tests {
 
 		Iterator<Integer> bothItemsEnchantmentsIterator = bothItemsEnchantments
 				.iterator();
+		
 		while (bothItemsEnchantmentsIterator.hasNext()) {
 			Integer effectId = bothItemsEnchantmentsIterator.next();
 
@@ -390,56 +401,62 @@ public final class Tests {
 					|| effectId == Enchantment.looting.effectId
 					|| effectId == Enchantment.knockback.effectId
 					|| effectId == Enchantment.fireAspect.effectId
-					|| effectId == Enchantment.field_151369_A.effectId
-					|| effectId == Enchantment.field_151370_z.effectId) {
+					|| effectId == Enchantment.luckOfTheSea.effectId
+					|| effectId == Enchantment.lure.effectId) {
 				continue;
 			}
 
-			if (Enchantment.enchantmentsList[effectId].getName().startsWith(
+			if (Enchantment.getEnchantmentById(effectId).getName().startsWith(
 					"enchantment.damage.")) {
 				continue;
 			}
 
-			ret.add(Enchantment.enchantmentsList[effectId]);
+			ret.add(Enchantment.getEnchantmentById(effectId));
 
 		}
 
 		return ret;
 	}
 	
-	public static int getStrongToolStandardness(ItemStack itemstack, World world, int x,
-			int y, int z) {
-		Block block = world.getBlock(x, y, z);
-		int metadata = world.getBlockMetadata(x, y, z);
-		int state = AutoSwitch.instance.getConfiguration().getStandardToolOverrideState(itemstack, block, metadata);
+	private static int getToolOverrideStandardness(ItemStack itemstack, World world, BlockPos pos) {
+		IBlockState blockState = world.getBlockState(pos);
+		int state = AutoSwitch.instance.getConfiguration().getStandardToolOverrideState(itemstack, blockState);
 		if (state == Configuration.OVERRIDDEN_NO){
 			return -3;
 		} else if (state == Configuration.OVERRIDDEN_YES){
 			return 3;
 		}
-		return Tests.getHarvestLevel(itemstack, block, metadata);
+		return 0;
 	}
 	
-	public static int getToolStandardness(ItemStack itemstack, World world, int x, int y, int z){
-		return Tests.getStrongToolStandardness(itemstack, world, x, y, z) * 3 + Tests.getWeakToolStandardness(itemstack, world, x, y, z);
+	public static ComparableTuple<Integer> getToolStandardness(ItemStack itemstack, World world, BlockPos pos){
+		
+		int override = getToolOverrideStandardness(itemstack, world, pos);
+		int harvest = getHarvestLevel(itemstack, world, pos);
+		int weakStrength = getWeakToolStandardness(itemstack, world, pos);
+		int forgeStandard = (itemstack != null && ForgeHooks.isToolEffective(world, pos, itemstack)) ? 1 : 0;
+		int damageable = Tests.isItemStackDamageableOnBlock(itemstack, world, pos) ? -1 : 0;
+		
+		return new ComparableTuple<Integer>(override, harvest, weakStrength, forgeStandard, damageable);
 	}
 
-	public static int getWeakToolStandardness(ItemStack itemstack, World world, int x, int y, int z){
-		Block block = world.getBlock(x, y, z);
-		int metadata = world.getBlockMetadata(x, y, z);
-		float hardness = Tests.getBlockHardness(world, x, y, z);
+	public static int getWeakToolStandardness(ItemStack itemstack, World world, BlockPos pos){
+		IBlockState blockState = world.getBlockState(pos);
+		
+		float hardness = Tests.getBlockHardness(world, pos);
+		
 		if (hardness <= 0F){
 			return 0;
 		}
 		
-		float blockStrForNull = Tests.getBlockStrength(null, world, x, y, z);
+		float blockStrForNull = Tests.getBlockStrength(null, world, pos);
 		fakeItemForPlayer(null);
-		boolean harvestable = mc.thePlayer.canHarvestBlock(block);
+		boolean harvestable = blockState.getBlock().canHarvestBlock(world, pos, mc.thePlayer);
 		unFakeItemForPlayer();
 		
-		float blockStr = Tests.getBlockStrength(itemstack, world, x, y, z);
+		float blockStr = Tests.getBlockStrength(itemstack, world, pos);
 		fakeItemForPlayer(itemstack);
-		boolean harvest = block.canHarvestBlock(mc.thePlayer, metadata);
+		boolean harvest = blockState.getBlock().canHarvestBlock(world, pos, mc.thePlayer);
 		unFakeItemForPlayer();
 		
 		if (harvest && !harvestable){
@@ -448,8 +465,6 @@ public final class Tests {
 		
 		if (blockStr > blockStrForNull * 1.5F){
 			return 1;
-		} else if (Tests.isItemStackDamageableOnBlock(itemstack, world, x, y, z)) {
-			return -1;
 		} else {
 			return 0;
 		}
@@ -460,10 +475,9 @@ public final class Tests {
 	}
 
 	public static boolean isItemStackDamageableOnBlock(ItemStack itemstack,
-			World world, int x, int y, int z) {
-		Block block = world.getBlock(x, y, z);
-		int metadata = world.getBlockMetadata(x, y, z);
-		int state = AutoSwitch.instance.getConfiguration().getDamageableOverrideState(itemstack, block, metadata);
+			World world, BlockPos pos) {
+		IBlockState blockState = world.getBlockState(pos);
+		int state = AutoSwitch.instance.getConfiguration().getDamageableOverrideState(itemstack, blockState);
 		if (state == Configuration.OVERRIDDEN_NO){
 			return false;
 		} else if (state == Configuration.OVERRIDDEN_YES){
@@ -472,7 +486,7 @@ public final class Tests {
 		if (!isItemStackDamageable(itemstack)) {
 			return false;
 		}
-		return getBlockHardness(world, x, y, z) != 0.0F;
+		return getBlockHardness(world, pos) != 0.0F;
 	}
 
 	public static boolean isSword(ItemStack itemstack) {
@@ -503,7 +517,24 @@ public final class Tests {
 	}
 	
 	private static void unFakeRandomForWorld(World world) {
-		world.rand = prevRandom;
+		for (String name : randomNames) {
+			try {
+				Field field = World.class.getDeclaredField(name);
+				field.setAccessible(true);
+				try {
+					Field modifiersField = Field.class.getDeclaredField("modifiers");
+				    modifiersField.setAccessible(true);
+				    modifiersField.setInt(field, field.getModifiers() & ~Modifier.FINAL);
+					field.set(world, prevRandom);
+					modifiersField.setInt(field, field.getModifiers() | Modifier.FINAL);
+					return;
+				} catch (Exception e) {
+					throw new FieldNotFoundException("Error setting field", e);
+				}
+			} catch (NoSuchFieldException nsfe) {
+				continue;
+			}
+		}
 		prevRandom = null;
 	}
 	

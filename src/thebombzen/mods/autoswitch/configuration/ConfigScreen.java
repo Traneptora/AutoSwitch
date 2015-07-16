@@ -5,10 +5,10 @@ import java.io.IOException;
 
 import net.minecraft.client.gui.GuiButton;
 import net.minecraft.client.gui.GuiScreen;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 import thebombzen.mods.autoswitch.AutoSwitch;
 import thebombzen.mods.thebombzenapi.client.ThebombzenAPIConfigScreen;
-import cpw.mods.fml.relauncher.Side;
-import cpw.mods.fml.relauncher.SideOnly;
 
 @SideOnly(Side.CLIENT)
 public class ConfigScreen extends ThebombzenAPIConfigScreen {

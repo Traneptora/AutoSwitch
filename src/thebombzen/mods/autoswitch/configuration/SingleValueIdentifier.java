@@ -1,32 +1,86 @@
 package thebombzen.mods.autoswitch.configuration;
 
-import net.minecraft.block.Block;
-import net.minecraft.item.Item;
+import net.minecraft.block.state.IBlockState;
 import net.minecraft.item.ItemStack;
-import cpw.mods.fml.common.registry.GameRegistry;
-import cpw.mods.fml.common.registry.GameRegistry.UniqueIdentifier;
+import net.minecraftforge.fml.common.registry.GameRegistry;
+import net.minecraftforge.fml.common.registry.GameRegistry.UniqueIdentifier;
+import thebombzen.mods.autoswitch.AutoSwitch;
 
 public class SingleValueIdentifier {
 	private ItemStack itemStack = null;
-	private Block block = null;
-	private int metadata = 0;
+	private IBlockState block = null;
 	private boolean isItem;
-	public SingleValueIdentifier(Block block, int metadata){
+	public SingleValueIdentifier(IBlockState block){
 		this.block = block;
-		this.metadata = metadata;
 		isItem = false;
 	}
 	public SingleValueIdentifier(ItemStack stack){
-		itemStack = stack.copy();
+		itemStack = stack == null ? null : stack.copy();
 		isItem = true;
 	}
 	public SingleValueIdentifier(SingleValueIdentifier id){
 		isItem = id.isItem;
 		itemStack = id.itemStack == null ? null : id.itemStack.copy();
 		block = id.block;
-		metadata = id.metadata;
 	}
 	
+	public ItemStack getItemStack(){
+		if (!isItem){
+			AutoSwitch.instance.throwException("Getting ItemStack of block SVI", new UnsupportedOperationException(), false);
+			return null;
+		} else {
+			return itemStack;
+		}
+	}
+	
+	
+	public IBlockState getBlockState(){
+		if (isItem){
+			AutoSwitch.instance.throwException("Getting IBlockState of item SVI", new UnsupportedOperationException(), false);
+			return null;
+		} else {
+			return block;
+		}
+	}
+	
+	public String getModId(){
+		if (isItem && itemStack == null){
+			return null;
+		}
+		return getUniqueIdentifier().modId;
+	}
+	
+	public String getName(){
+		if (isItem && itemStack == null){
+			return null;
+		}
+		return getUniqueIdentifier().name;
+	}
+	
+	public UniqueIdentifier getUniqueIdentifier(){
+		if (isItem){
+			if (itemStack == null){
+				return null;
+			}
+			return GameRegistry.findUniqueIdentifierFor(itemStack.getItem());
+		} else {
+			return GameRegistry.findUniqueIdentifierFor(block.getBlock());
+		}
+	}
+	
+	public boolean isItem(){
+		return isItem;
+	}
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((block == null) ? 0 : block.hashCode());
+		result = prime * result + (isItem ? 1231 : 1237);
+		result = prime * result
+				+ ((itemStack == null) ? 0 : itemStack.hashCode());
+		return result;
+	}
 	@Override
 	public boolean equals(Object obj) {
 		if (this == obj)
@@ -48,70 +102,11 @@ public class SingleValueIdentifier {
 				return false;
 		} else if (!itemStack.equals(other.itemStack))
 			return false;
-		if (metadata != other.metadata)
-			return false;
 		return true;
 	}
-	
-	public Block getBlock(){
-		return GameRegistry.findBlock(getModId(), getName());
-	}
-	
-	public int getDamageValue(){
-		if (isItem){
-			return itemStack.getItemDamage();
-		} else {
-			return metadata;
-		}
-	}
-	
-	public Item getItem(){
-		return GameRegistry.findItem(getModId(), getName());
-	}
-	
-	public ItemStack getItemStack(){
-		if (!isItem){
-			return null;
-		} else {
-			return itemStack;
-		}
-	}
-	
-	public String getModId(){
-		return getUniqueIdentifier().modId;
-	}
-	
-	public String getName(){
-		return getUniqueIdentifier().name;
-	}
-	
-	public UniqueIdentifier getUniqueIdentifier(){
-		if (isItem){
-			return GameRegistry.findUniqueIdentifierFor(itemStack.getItem());
-		} else {
-			return GameRegistry.findUniqueIdentifierFor(block);
-		}
-	}
-	
 	@Override
-	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + ((block == null) ? 0 : block.hashCode());
-		result = prime * result + (isItem ? 1231 : 1237);
-		result = prime * result
-				+ ((itemStack == null) ? 0 : itemStack.hashCode());
-		result = prime * result + metadata;
-		return result;
+	public String toString() {
+		return "SingleValueIdentifier [itemStack=" + itemStack + ", block="
+				+ block + ", isItem=" + isItem + "]";
 	}
-	public boolean isItem(){
-		return isItem;
-	}
-	public void setDamageValue(int damage){
-		if (isItem){
-			itemStack.setItemDamage(damage);
-		} else {
-			metadata = damage;
-		}
-	}	
 }

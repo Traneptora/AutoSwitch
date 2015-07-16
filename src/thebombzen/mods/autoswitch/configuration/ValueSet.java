@@ -1,13 +1,19 @@
 package thebombzen.mods.autoswitch.configuration;
 
+import java.util.Iterator;
 import java.util.Scanner;
 
+import net.minecraft.block.properties.IProperty;
+import net.minecraft.block.state.IBlockState;
 import net.minecraft.enchantment.Enchantment;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagList;
+import thebombzen.mods.autoswitch.AutoSwitch;
 import thebombzen.mods.thebombzenapi.ThebombzenAPI;
 import thebombzen.mods.thebombzenapi.configuration.BooleanTester;
 import thebombzen.mods.thebombzenapi.configuration.ConfigFormatException;
+
+import com.google.common.collect.ImmutableMap;
 
 
 /**
@@ -18,9 +24,11 @@ import thebombzen.mods.thebombzenapi.configuration.ConfigFormatException;
 public class ValueSet implements BooleanTester<SingleValueIdentifier> {
 	
 	public static ValueSet parseValueSet(String s) throws ConfigFormatException {
-		int first;
-		int second;
-		int third;
+		String firsts = null;
+		int firstn = 0;
+		String seconds = null;
+		int secondn = 0;
+		int thirdn = 0;
 		boolean subtract;
 		
 		switch (s.charAt(0)){
@@ -38,6 +46,7 @@ public class ValueSet implements BooleanTester<SingleValueIdentifier> {
 		scanner.useDelimiter(":");
 		
 		boolean enchant = false;
+		boolean block = false;
 		
 		if (scanner.hasNext()){
 			String num = scanner.next();
@@ -46,34 +55,45 @@ public class ValueSet implements BooleanTester<SingleValueIdentifier> {
 				enchant = true;
 			}
 			try {
-				first = ThebombzenAPI.parseInteger(num);
+				firstn = ThebombzenAPI.parseInteger(num);
 			} catch (NumberFormatException nfe){
-				scanner.close();
-				throw new ConfigFormatException("Invalid number: " + num);
+				block = true;
+				if (enchant){
+					num = 'E' + num;
+					enchant = false;
+				}
+				firsts = num;
 			}
-			if (enchant && (first < 0 || first >= Enchantment.enchantmentsList.length || Enchantment.enchantmentsList[first] == null)){
+			if (enchant && Enchantment.getEnchantmentById(firstn) == null){
 				scanner.close();
-				throw new ConfigFormatException("Invalid Enchantment ID: " + first);
+				throw new ConfigFormatException("Invalid Enchantment ID: " + firstn);
 			}
 		} else {
 			scanner.close();
-			return new ValueSet(0, 0, subtract);
+			return new ValueSet();
 		}
 		
 		if (scanner.hasNext()){
 			String num = scanner.next();
-			try {
-				second = ThebombzenAPI.parseInteger(num);
-			} catch (NumberFormatException nfe){
-				scanner.close();
-				throw new ConfigFormatException("Invalid number: " + num);
+			if (block){
+				seconds = num;
+			} else {
+				try {
+					secondn = ThebombzenAPI.parseInteger(num);
+				} catch (NumberFormatException nfe){
+					scanner.close();
+					throw new ConfigFormatException("Invalid number: " + num);
+				}
 			}
 		} else {
 			scanner.close();
+			if (block){
+				throw new ConfigFormatException("No value for property: " + firsts);
+			}
 			if (enchant){
-				return new ValueSet(Enchantment.enchantmentsList[first], 1, Integer.MAX_VALUE, subtract);
+				return new ValueSet(Enchantment.getEnchantmentById(firstn), 1, Integer.MAX_VALUE, subtract);
 			} else {
-				return new ValueSet(first, Integer.MAX_VALUE, subtract);
+				return new ValueSet(firstn, Integer.MAX_VALUE, subtract);
 			}
 		}
 		
@@ -82,45 +102,81 @@ public class ValueSet implements BooleanTester<SingleValueIdentifier> {
 				String num = scanner.next();
 				scanner.close();
 				try {
-					third = ThebombzenAPI.parseInteger(num);
+					thirdn = ThebombzenAPI.parseInteger(num);
 				} catch (NumberFormatException e){
 					throw new ConfigFormatException("Invalid number: " + num);
 				}
-				return new ValueSet(Enchantment.enchantmentsList[first], second, third, subtract);
+				return new ValueSet(Enchantment.getEnchantmentById(firstn), secondn, thirdn, subtract);
 			} else {
 				scanner.close();
-				return new ValueSet(Enchantment.enchantmentsList[first], second, Integer.MAX_VALUE, subtract);
+				return new ValueSet(Enchantment.getEnchantmentById(firstn), secondn, Integer.MAX_VALUE, subtract);
 			}
 		} else {
 			scanner.close();
-			return new ValueSet(first, second, subtract);
+			if (block){
+				return new ValueSet(firsts, seconds, subtract);
+			} else {
+				return new ValueSet(firstn, secondn, subtract);
+			}
 		}
 	}
-	
-	private int data;
-	private int mask;
 	
 	/**
 	 * If true, this is meant to subtract rather than add.
 	 */
-	private boolean subtract;
+	private final boolean subtract;
+	private final int type;
 	
-	private int min;
-	private int max;
-	private Enchantment enchantment;
+	private int data = -1;
+	private int mask = -1;
+	
+	private String state = null;
+	private String value = null;
+	
+	
+	private int min = -1;
+	private int max = -1;
+	private Enchantment enchantment = null;
+	
+	public static final int UNIVERSAL = 0;
+	public static final int ITEM_DAMAGE = 1;
+	public static final int ITEM_ENCHANTMENT = 2;
+	public static final int BLOCK_STATE = 3;
 	
 	/**
 	 * Construct a universal set
 	 */
 	public ValueSet(){
-		this(0, 0, false);
+		this.type = ValueSet.UNIVERSAL;
+		this.subtract = false;
 	}
 	
+	/**
+	 * Construct a set using enchantments
+	 * @param enchantment The enchantment for which to check
+	 * @param min The minimum accepted power of the enchantment
+	 * @param max The maximum accepted power of the enchantment
+	 * @param subtract whether to subtract (true) or add (false) the value.
+	 */
 	public ValueSet(Enchantment enchantment, int min, int max, boolean subtract){
+		this.type = ValueSet.ITEM_ENCHANTMENT;
 		this.subtract = subtract;
 		this.min = min;
 		this.max = max;
 		this.enchantment = enchantment;
+	}
+	
+	/**
+	 * Construct a set using block states
+	 * @param state The name of the block state, e.g. axis (for axis:x)
+	 * @param value The value of the block state, e.g. x (for axis:x)
+	 * @param subtract whether to subtract (true) or add (false) the value.
+	 */
+	public ValueSet(String state, String value, boolean subtract){
+		this.type = ValueSet.BLOCK_STATE;
+		this.subtract = subtract;
+		this.state = state;
+		this.value = value;
 	}
 	
 	/**
@@ -130,14 +186,27 @@ public class ValueSet implements BooleanTester<SingleValueIdentifier> {
 	 * @param subtract whether to subtract (true) or add (false) the value.
 	 */
 	public ValueSet(int data, int mask, boolean subtract){
+		this.type = ValueSet.ITEM_DAMAGE;
 		this.data = data;
 		this.mask = mask;
 		this.subtract = subtract;
-		this.enchantment = null;
 	}
 	
-	private boolean contains(int value){
-		return (value & mask) == data;
+	private boolean contains(IBlockState state){
+		if (state == null){
+			return false;
+		}
+		@SuppressWarnings("unchecked")
+		ImmutableMap<IProperty, ?> properties = state.getProperties();
+		Iterator<IProperty> iterator = properties.keySet().iterator();
+		while (iterator.hasNext()){
+			IProperty prop = iterator.next();
+			if (prop.getName().equalsIgnoreCase(this.state) && properties.get(prop).toString().equalsIgnoreCase(this.value)){
+				return true;
+			}
+			
+		}
+		return false;
 	}
 	
 	/**
@@ -148,7 +217,7 @@ public class ValueSet implements BooleanTester<SingleValueIdentifier> {
 		if (stack == null){
 			return false;
 		}
-		if (enchantment != null){
+		if (type == ValueSet.ITEM_ENCHANTMENT){
 			NBTTagList list = stack.getEnchantmentTagList();
 			if (list == null){
 				return false;
@@ -174,10 +243,21 @@ public class ValueSet implements BooleanTester<SingleValueIdentifier> {
 	
 	@Override
 	public boolean contains(SingleValueIdentifier id){
+		if (type == ValueSet.UNIVERSAL){
+			return true;
+		}
 		if (id.isItem()){
+			if (type == ValueSet.BLOCK_STATE){
+				AutoSwitch.instance.throwException("Trying to check the block state of an item!", new UnsupportedOperationException(), false);
+				return false;
+			}
 			return contains(id.getItemStack());
 		} else {
-			return contains(id.getDamageValue());
+			if (type != ValueSet.BLOCK_STATE){
+				AutoSwitch.instance.throwException("Trying to check the item state of a block!", new UnsupportedOperationException(), false);
+				return false;
+			}
+			return contains(id.getBlockState());
 		}
 	}
 
@@ -186,6 +266,54 @@ public class ValueSet implements BooleanTester<SingleValueIdentifier> {
 	 */
 	public boolean doesSubtract(){
 		return subtract;
+	}
+
+	public int getData() {
+		return data;
+	}
+	
+	public int getMask() {
+		return mask;
+	}
+
+	/**
+	 * Returns a String representation, as seen in the config.
+	 */
+	@Override
+	public String toString() {
+		StringBuilder b = new StringBuilder(subtract ? '-' : '+');
+		switch (type){
+		case UNIVERSAL:
+			b.append('U');
+			break;
+		case ITEM_ENCHANTMENT:
+			b.append('E').append("0x").append(Integer.toHexString(enchantment.effectId)).append(":0x").append(Integer.toHexString(min)).append(":0x").append(Integer.toHexString(max));
+			break;
+		case ITEM_DAMAGE:
+			b.append("0x").append(Integer.toHexString(data)).append(":0x").append(Integer.toHexString(mask));
+			break;
+		case BLOCK_STATE:
+			b.append(state).append(':').append(value);
+			break;
+		}
+		return b.toString();
+	}
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + data;
+		result = prime * result
+				+ ((enchantment == null) ? 0 : enchantment.hashCode());
+		result = prime * result + mask;
+		result = prime * result + max;
+		result = prime * result + min;
+		result = prime * result + ((state == null) ? 0 : state.hashCode());
+		result = prime * result + (subtract ? 1231 : 1237);
+		result = prime * result + type;
+		result = prime * result + ((value == null) ? 0 : value.hashCode());
+		return result;
 	}
 
 	@Override
@@ -210,45 +338,21 @@ public class ValueSet implements BooleanTester<SingleValueIdentifier> {
 			return false;
 		if (min != other.min)
 			return false;
+		if (state == null) {
+			if (other.state != null)
+				return false;
+		} else if (!state.equals(other.state))
+			return false;
 		if (subtract != other.subtract)
 			return false;
+		if (type != other.type)
+			return false;
+		if (value == null) {
+			if (other.value != null)
+				return false;
+		} else if (!value.equals(other.value))
+			return false;
 		return true;
-	}
-
-	public int getData() {
-		return data;
-	}
-	
-	public int getMask() {
-		return mask;
-	}
-
-	@Override
-	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + data;
-		result = prime * result
-				+ ((enchantment == null) ? 0 : enchantment.hashCode());
-		result = prime * result + mask;
-		result = prime * result + max;
-		result = prime * result + min;
-		result = prime * result + (subtract ? 1231 : 1237);
-		return result;
-	}
-
-	/**
-	 * Returns a String representation, as seen in the config.
-	 */
-	@Override
-	public String toString() {
-		StringBuilder b = new StringBuilder(subtract ? '-' : '+');
-		if (enchantment != null){
-			b.append('E').append("0x").append(Integer.toHexString(enchantment.effectId)).append(":0x").append(Integer.toHexString(min)).append(":0x").append(Integer.toHexString(max));
-		} else {
-			b.append("0x").append(Integer.toHexString(data)).append(":0x").append(Integer.toHexString(mask));
-		}
-		return b.toString();
 	}
 	
 }

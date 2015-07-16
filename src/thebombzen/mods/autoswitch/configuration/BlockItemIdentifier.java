@@ -1,6 +1,6 @@
 package thebombzen.mods.autoswitch.configuration;
 
-import net.minecraft.block.Block;
+import net.minecraft.block.state.IBlockState;
 import net.minecraft.item.ItemStack;
 import thebombzen.mods.thebombzenapi.ThebombzenAPI;
 import thebombzen.mods.thebombzenapi.configuration.CompoundExpression;
@@ -84,8 +84,8 @@ public class BlockItemIdentifier extends CompoundExpression<SingleValueIdentifie
 		super(singleID);
 	}
 
-	public boolean contains(Block block, int metadata){
-		return contains(new SingleValueIdentifier(block, metadata));
+	public boolean contains(IBlockState state){
+		return contains(new SingleValueIdentifier(state));
 	}
 	
 	public boolean contains(ItemStack itemStack){

@@ -4,33 +4,37 @@ import java.util.Arrays;
 import java.util.Set;
 
 import net.minecraft.block.Block;
+import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.enchantment.Enchantment;
 import net.minecraft.enchantment.EnchantmentHelper;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
+import net.minecraft.util.BlockPos;
 import net.minecraft.util.MathHelper;
 import net.minecraft.util.MovingObjectPosition.MovingObjectType;
 import net.minecraft.world.World;
 import net.minecraftforge.client.event.ClientChatReceivedEvent;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.entity.player.AttackEntityEvent;
+import net.minecraftforge.fml.common.FMLCommonHandler;
+import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.fml.common.Mod.Instance;
+import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
+import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
+import net.minecraftforge.fml.common.gameevent.TickEvent.ClientTickEvent;
+import net.minecraftforge.fml.common.gameevent.TickEvent.Phase;
+import net.minecraftforge.fml.common.registry.GameData;
+import net.minecraftforge.fml.common.registry.GameRegistry.UniqueIdentifier;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 import thebombzen.mods.autoswitch.configuration.Configuration;
 import thebombzen.mods.autoswitch.configuration.ToolSelectionMode;
+import thebombzen.mods.thebombzenapi.ComparableTuple;
 import thebombzen.mods.thebombzenapi.ThebombzenAPI;
 import thebombzen.mods.thebombzenapi.ThebombzenAPIBaseMod;
-import cpw.mods.fml.common.FMLCommonHandler;
-import cpw.mods.fml.common.Mod;
-import cpw.mods.fml.common.Mod.Instance;
-import cpw.mods.fml.common.event.FMLPreInitializationEvent;
-import cpw.mods.fml.common.eventhandler.SubscribeEvent;
-import cpw.mods.fml.common.gameevent.TickEvent.ClientTickEvent;
-import cpw.mods.fml.common.gameevent.TickEvent.Phase;
-import cpw.mods.fml.common.registry.GameRegistry;
-import cpw.mods.fml.common.registry.GameRegistry.UniqueIdentifier;
-import cpw.mods.fml.relauncher.Side;
-import cpw.mods.fml.relauncher.SideOnly;
 
 /**
  * The main AutoSwitch mod
@@ -38,7 +42,7 @@ import cpw.mods.fml.relauncher.SideOnly;
  * @author thebombzen
  */
 @SideOnly(Side.CLIENT)
-@Mod(modid = "autoswitch", name = "AutoSwitch", version = "5.1.0", dependencies = "required-after:thebombzenapi", guiFactory = "thebombzen.mods.autoswitch.configuration.ConfigGuiFactory")
+@Mod(modid = "autoswitch", name = "AutoSwitch", version = "5.2.0", dependencies = "required-after:thebombzenapi", guiFactory = "thebombzen.mods.autoswitch.configuration.ConfigGuiFactory")
 public class AutoSwitch extends ThebombzenAPIBaseMod {
 
 	public static final int STAGE_H0 = 0;
@@ -124,8 +128,8 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 		if (mouseDown) {
 			if (mc.objectMouseOver != null
 					&& mc.objectMouseOver.typeOfHit == MovingObjectType.BLOCK) {
-				potentiallySwitchTools(mc.theWorld, mc.objectMouseOver.blockX,
-						mc.objectMouseOver.blockY, mc.objectMouseOver.blockZ);
+				
+				potentiallySwitchTools(mc.theWorld, mc.objectMouseOver.getBlockPos());
 			} else if (mc.objectMouseOver != null
 					&& mc.objectMouseOver.typeOfHit == MovingObjectType.ENTITY
 					&& mc.objectMouseOver.entityHit instanceof EntityLivingBase) {
@@ -170,7 +174,7 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 
 	@Override
 	public String getLongVersionString() {
-		return "AutoSwitch, version 5.1.0, Minecraft 1.7.10";
+		return "AutoSwitch, version 5.2.0, Minecraft 1.8";
 	}
 
 	@Override
@@ -206,78 +210,57 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 	}
 
 	public boolean isToolBetter(ItemStack newItemStack, ItemStack oldItemStack,
-			World world, int x, int y, int z) {
+			World world, BlockPos pos) {
 
-		Block block = world.getBlock(x, y, z);
-
-		if (block == null || block.isAir(world, x, y, z)) {
+		IBlockState blockState = world.getBlockState(pos);
+		
+		if (blockState.getBlock().isAir(world, pos)){
+			debug("Not switching because air.");
 			return false;
 		}
 
-		int metadata = world.getBlockMetadata(x, y, z);
+		int newAdjustedBlockStr = Tests.getAdjustedBlockStr(Tests.getBlockStrength(newItemStack, world, pos));
+		int oldAdjustedBlockStr = Tests.getAdjustedBlockStr(Tests.getBlockStrength(oldItemStack, world, pos));
 
-		// int newItemID = newItemStack == null ? 0 : newItemStack.itemID;
-		// int olditemID = oldItemStack == null ? 0 : oldItemStack.itemID;
-
-		// long time1 = System.nanoTime();
-
-		float newStr = Tests.getDigSpeed(newItemStack, block, metadata);
-		float oldStr = Tests.getDigSpeed(oldItemStack, block, metadata);
-		float newBlockStr = Tests
-				.getBlockStrength(newItemStack, world, x, y, z);
-		float oldBlockStr = Tests
-				.getBlockStrength(oldItemStack, world, x, y, z);
-		int newAdjustedBlockStr = Tests.getAdjustedBlockStr(newBlockStr);
-		int oldAdjustedBlockStr = Tests.getAdjustedBlockStr(oldBlockStr);
-
-		if (newBlockStr <= 0F && oldBlockStr <= 0F) {
+		if (newAdjustedBlockStr == Integer.MIN_VALUE && oldAdjustedBlockStr == Integer.MIN_VALUE) {
 			debug("Not switching because block is unbreakable by either item.");
 			return false;
 		}
-
-		int newHarvest = Tests.getHarvestLevel(newItemStack, block,
-				metadata);
-		int oldHarvest = Tests.getHarvestLevel(oldItemStack, block,
-				metadata);
 		
-		debug("newBlockStr: %.10f, oldBlockStr %.10f", newBlockStr, oldBlockStr);
-		debug("newHarvest: %d, oldHarvest: %d", newHarvest, oldHarvest);
-		debug("newStrength: %f, oldStrength: %f", newStr, oldStr);
+		float newBlockStr = Tests.getBlockStrength(newItemStack, world, pos);
+		float oldBlockStr = Tests.getBlockStrength(oldItemStack, world, pos);
+
 		debug("newAdjustedBlockStr: %d, oldAdjustedBlockStr: %d", newAdjustedBlockStr, oldAdjustedBlockStr);
-
-		float newEff = Tests.getEff(newStr, newItemStack);
-		float oldEff = Tests.getEff(oldStr, oldItemStack);
-		debug("newEff: %f, oldEff: %f", newEff, oldEff);
 		
-		ToolSelectionMode toolSelectionMode = configuration.getToolSelectionMode(block, metadata);
+		ToolSelectionMode toolSelectionMode = configuration.getToolSelectionMode(blockState);
+		
 		debug("Tool Selection Mode: %s", toolSelectionMode.toString());
 		
-		int newStandard = Tests.getToolStandardness(newItemStack, world,
-					x, y, z);
-		int oldStandard = Tests.getToolStandardness(oldItemStack, world,
-					x, y, z);
+		ComparableTuple<Integer> newStandard = Tests.getToolStandardness(newItemStack, world, pos);
+		ComparableTuple<Integer> oldStandard = Tests.getToolStandardness(oldItemStack, world, pos);
 		
-		debug("newStandard: %d, oldStandard: %d", newStandard, oldStandard);
+		debug("newStandard: %s, oldStandard: %s", newStandard.toString(), oldStandard.toString());
 
 		boolean newDamageable = Tests.isItemStackDamageableOnBlock(
-				newItemStack, world, x, y, z);
+				newItemStack, world, pos);
 		boolean oldDamageable = Tests.isItemStackDamageableOnBlock(
-				oldItemStack, world, x, y, z);
-		debug("newDamageable: %b, oldDamageable: %b", newDamageable,
-				oldDamageable);
+				oldItemStack, world, pos);
 		
 		int adjustedBlockStrComparison = new Integer(newAdjustedBlockStr).compareTo(oldAdjustedBlockStr);
 		int blockStrComparison = Float.compare(newBlockStr, oldBlockStr);
+		int standardComparison = newStandard.compareTo(oldStandard);
+		boolean isNewStandard = newStandard.compareTo(Tests.standardThreshold) > 0;
+		boolean isOldStandard = oldStandard.compareTo(Tests.standardThreshold) > 0;
 		
-		if (toolSelectionMode.isStandard() || configuration.getStandardToolOverrideState(newItemStack, block, metadata) != configuration.getStandardToolOverrideState(oldItemStack, block, metadata)) {
-			if (newStandard > oldStandard) {
+		if (toolSelectionMode.isStandard() || configuration.getStandardToolOverrideState(newItemStack, blockState) != configuration.getStandardToolOverrideState(oldItemStack, blockState)) {
+			if (standardComparison > 0) {
 				debug("Switching because new item is more standard than old.");
 				return true;
-			} else if (oldStandard > newStandard) {
+			} else if (standardComparison < 0) {
 				debug("Not switching because old item is more standard than new.");
 				return false;
 			} else {
-				if (newStandard <= 0 && oldStandard <= 0) {
+				if (!isNewStandard && !isOldStandard) {
 					if (newDamageable && !oldDamageable) {
 						debug("Not switching because new tool is damageable and old isn't, and neither are standard.");
 						return false;
@@ -296,24 +279,25 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 					debug("Not switching because old tool is stronger.");
 					return false;
 				}
-			} else { // This should never happen
+			} else { // This should never happen. Slow nonstandard isn't a thing.
+				debug("Something went wrong. It appears Slow Nonstandard is on.");
 				if (adjustedBlockStrComparison < 0) {
-					debug("Switching because new item is worse than old item and SLOW STANDARD is on.");
+					debug("Switching because new item is worse than old.");
 					return true;
 				} else if (adjustedBlockStrComparison > 0) {
-					debug("Not switching because new item is better than old item and SLOW STANDARD is on.");
+					debug("Not switching because new item is better than old.");
 					return false;
 				}
 			}
 		}
 
-		boolean silkWorks = Tests.doesSilkTouchWorkOnBlock(world, x, y, z);
+		boolean silkWorks = Tests.doesSilkTouchWorkOnBlock(world, pos);
 		boolean newHasSilk = EnchantmentHelper.getEnchantmentLevel(
 				Enchantment.silkTouch.effectId, newItemStack) > 0;
 		boolean oldHasSilk = EnchantmentHelper.getEnchantmentLevel(
 				Enchantment.silkTouch.effectId, oldItemStack) > 0;
 		
-		if (configuration.shouldIgnoreSilkTouch(block, metadata)){
+		if (configuration.shouldIgnoreSilkTouch(blockState)){
 			debug("Ignoring Silk Touch.");
 		} else {
 			debug("silkWorks: %b, newHasSilk: %b, oldHasSilk: %b", silkWorks,
@@ -323,10 +307,10 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 					debug("Switching because new has silk touch and old doesn't, and new works.");
 					return true;
 				} else {
-					if (oldStandard > 0) {
+					if (isOldStandard) {
 						debug("Not switching because new has silk touch and old doesn't, and old replaces new.");
 						return false;
-					} else if (newStandard <= 0) {
+					} else if (!isNewStandard) {
 						debug("Not switching because new has silk touch and old doesn't, and new is weak.");
 						return false;
 					}
@@ -336,10 +320,10 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 					debug("Not switching because old has silk touch and new doesn't, and old works.");
 					return false;
 				} else {
-					if (newStandard > 0) {
+					if (isNewStandard) {
 						debug("Switching because old has silk touch and new doesn't, and new replaces old.");
 						return true;
-					} else if (oldStandard <= 0) {
+					} else if (!isOldStandard) {
 						debug("Switching because old has silk touch and new doesn't, and old is weak.");
 						return true;
 					}
@@ -348,14 +332,14 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 		}
 	
 
-		boolean fortuneWorks = Tests.doesFortuneWorkOnBlock(world, x, y, z);
+		boolean fortuneWorks = Tests.doesFortuneWorkOnBlock(world, pos);
 		int newFortuneLevel = EnchantmentHelper.getEnchantmentLevel(
 				Enchantment.fortune.effectId, newItemStack);
 		int oldFortuneLevel = EnchantmentHelper.getEnchantmentLevel(
 				Enchantment.fortune.effectId, oldItemStack);
 
 
-		if (configuration.shouldIgnoreFortune(block, metadata)){
+		if (configuration.shouldIgnoreFortune(blockState)){
 			debug("Ignoring Fortune.");
 		} else {
 			debug("fortuneWorks: %b, newFortuneLevel: %d, oldFortuneLevel: %d",
@@ -365,10 +349,10 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 					debug("Switching because new fortune is more than old, and new works.");
 					return true;
 				} else {
-					if (oldStandard > 0) {
+					if (isOldStandard) {
 						debug("Not switching because new fortune is more than old, and old replaces new.");
 						return false;
-					} else if (newStandard <= 0) {
+					} else if (!isNewStandard) {
 						debug("Not switching because new fortune is more than old, and new is weak.");
 						return false;
 					}
@@ -378,10 +362,10 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 					debug("Not switching because old fortune is more than new, and old works.");
 					return false;
 				} else {
-					if (newStandard > 0) {
+					if (isNewStandard) {
 						debug("Switching because old fortune is more than new, and new replaces old.");
 						return true;
-					} else if (oldStandard <= 0) {
+					} else if (!isOldStandard) {
 						debug("Switching because old fortune is more than new, and old is weak.");
 						return true;
 					}
@@ -675,7 +659,7 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 		}
 	}
 
-	public boolean potentiallySwitchTools(World world, int x, int y, int z) {
+	public boolean potentiallySwitchTools(World world, BlockPos pos) {
 		if (pulseOn == isToggleEnabled(Configuration.DEFAULT_ENABLED.getDefaultToggleIndex())
 				|| mc.playerController.isInCreativeMode()
 				&& !configuration
@@ -686,7 +670,7 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 		debug("====START====");
 		debug(getLongVersionString());
 		try {
-			switchToBestTool(mc.theWorld, x, y, z);
+			switchToBestTool(mc.theWorld, pos);
 			return true;
 		} catch (Throwable e) {
 			throwException("Error switching tools", e, false);
@@ -728,11 +712,19 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 			debug("Switching tools back to %d", prevtool);
 		}
 	}
+	
+	public static UniqueIdentifier findUniqueIdentifierFor(Item item){
+		return new UniqueIdentifier(GameData.getItemRegistry().getNameForObject(item));
+	}
+	
+	public static UniqueIdentifier findUniqueIdentifierFor(Block block){
+		return new UniqueIdentifier(GameData.getBlockRegistry().getNameForObject(block));
+	}
 
-	private void switchToBestTool(World world, int x, int y, int z) {
+	private void switchToBestTool(World world, BlockPos pos) {
 
-		Block block = world.getBlock(x, y, z);
-		UniqueIdentifier id = GameRegistry.findUniqueIdentifierFor(block);
+		Block block = world.getBlockState(pos).getBlock();
+		UniqueIdentifier id = findUniqueIdentifierFor(block);
 
 		String name = String.format("%s:%s", id.modId, id.name);
 
@@ -742,9 +734,7 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 			if (mc.thePlayer.inventory.mainInventory[i] == null) {
 				names[i] = "null";
 			} else {
-				UniqueIdentifier itemID = GameRegistry
-						.findUniqueIdentifierFor(mc.thePlayer.inventory.mainInventory[i]
-								.getItem());
+				UniqueIdentifier itemID = findUniqueIdentifierFor(mc.thePlayer.inventory.mainInventory[i].getItem());
 				names[i] = String.format("%s:%s", itemID.modId, itemID.name);
 			}
 			debug("Hotbar slot %d contains item %s", i, names[i]);
@@ -752,7 +742,7 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 
 		int currentBest = prevtool;
 
-		debug("Block hardness is %f", Tests.getBlockHardness(world, x, y, z));
+		debug("Block hardness is %f", Tests.getBlockHardness(world, pos));
 
 		for (int i = 0; i < 9; i++) {
 
@@ -764,7 +754,7 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 					i, names[i], currentBest, names[currentBest]);
 			if (isToolBetter(mc.thePlayer.inventory.mainInventory[i],
 					mc.thePlayer.inventory.mainInventory[currentBest], world,
-					x, y, z)) {
+					pos)) {
 				debug("Changing possible best tool.");
 				currentBest = i;
 			}
@@ -789,8 +779,7 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 			if (mc.thePlayer.inventory.mainInventory[i] == null) {
 				names[i] = "null";
 			} else {
-				UniqueIdentifier itemID = GameRegistry
-						.findUniqueIdentifierFor(mc.thePlayer.inventory.mainInventory[i]
+				UniqueIdentifier itemID = findUniqueIdentifierFor(mc.thePlayer.inventory.mainInventory[i]
 								.getItem());
 				names[i] = String.format("%s:%s", itemID.modId, itemID.name);
 			}
@@ -826,8 +815,7 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 		if (entityplayer.inventory.mainInventory[n] == null) {
 			name = "Nothing";
 		} else {
-			UniqueIdentifier id = GameRegistry
-					.findUniqueIdentifierFor(entityplayer.inventory.mainInventory[n]
+			UniqueIdentifier id = findUniqueIdentifierFor(entityplayer.inventory.mainInventory[n]
 							.getItem());
 			name = id.modId + ":" + id.name;
 		}
