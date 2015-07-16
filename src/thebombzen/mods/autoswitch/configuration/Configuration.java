@@ -13,6 +13,7 @@ import java.util.Scanner;
 import java.util.Set;
 
 import net.minecraft.block.state.IBlockState;
+import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.item.ItemStack;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
@@ -128,6 +129,16 @@ public class Configuration extends ThebombzenAPIConfiguration {
 		return false;
 	}
 	
+	private static boolean doesSetContainEntityAndWeapon(Set<? extends EntityWeaponPair> set, ItemStack weapon, EntityLivingBase entity){
+		for (EntityWeaponPair pair : set){
+			//AutoSwitch.instance.debug(pair.toString());
+			if (pair.getEntity().contains(entity) && pair.getWeapon().contains(weapon)){
+				return true;
+			}
+		}
+		return false;
+	}
+	
 	private static int doesYesNoSetContainBlock(Set<? extends BlockItemIdentifier> no, Set<? extends BlockItemIdentifier> yes, IBlockState state){
 		if (doesSetContainBlock(no, state)){
 			return OVERRIDDEN_NO;
@@ -148,7 +159,16 @@ public class Configuration extends ThebombzenAPIConfiguration {
 		}
 	}
 	
-	private Map<BlockItemIdentifier, Integer> customWeapons = new HashMap<BlockItemIdentifier, Integer>();
+	private static int doesYesNoSetContainEntityAndWeapon(Set<? extends EntityWeaponPair> no, Set<? extends EntityWeaponPair> yes, ItemStack weapon, EntityLivingBase entity){
+		if (doesSetContainEntityAndWeapon(no, weapon, entity)){
+			return OVERRIDDEN_NO;
+		} else if (doesSetContainEntityAndWeapon(yes, weapon, entity)){
+			return OVERRIDDEN_YES;
+		} else {
+			return NOT_OVERRIDDEN;
+		}
+	}
+	
 	private final String defaultConfig;
 
 	private File extraConfigFile;
@@ -168,6 +188,9 @@ public class Configuration extends ThebombzenAPIConfiguration {
 	private Set<BlockToolPair> harvestNoWorks = new HashSet<BlockToolPair>();
 	private Set<BlockToolPair> damageableYes = new HashSet<BlockToolPair>();
 	private Set<BlockToolPair> damageableNo = new HashSet<BlockToolPair>();
+	private Set<EntityWeaponPair> standardWeapons = new HashSet<EntityWeaponPair>();
+	private Set<EntityWeaponPair> nonStandardWeapons = new HashSet<EntityWeaponPair>();
+	private Map<EntityWeaponPair, Integer> damageOverrides = new HashMap<EntityWeaponPair, Integer>();
 
 	public Configuration(AutoSwitch autoSwitch) {
 		super(autoSwitch);
@@ -196,15 +219,15 @@ public class Configuration extends ThebombzenAPIConfiguration {
 		return new ConfigOption[]{TOGGLE_KEY, PULSE_KEY, DEFAULT_ENABLED, TOOL_SELECTION_MODE, BLOCKS, MOBS, SWITCHBACK_BLOCKS, SWITCHBACK_MOBS, DEBUG, USE_IN_CREATIVE, TREEFELLER_COMPAT, TREEFELLER_READY_AXE, TREEFELLER_READY_OTHER, TREEFELLER_LOWER_AXE, TREEFELLER_WORNOFF, TREEFELLER_AXE_SPLINTER, TREEFELLER_TOO_TIRED, TREEFELLER_SKULL_SPLITTER};
 	}
 
-	public int getCustomWeaponDamage(ItemStack itemstack) {
+	public int getCustomWeaponDamage(ItemStack itemstack, EntityLivingBase entityOver) {
 		
 		if (itemstack == null) {
 			return -1;
 		}
 		
-		for (BlockItemIdentifier itemID : customWeapons.keySet()){
-			if (itemID.contains(itemstack)){
-				return customWeapons.get(itemID);
+		for (EntityWeaponPair pair : damageOverrides.keySet()){
+			if (pair.getWeapon().contains(itemstack) && pair.getEntity().contains(entityOver)){
+				return damageOverrides.get(pair);
 			}
 		}
 		
@@ -242,6 +265,10 @@ public class Configuration extends ThebombzenAPIConfiguration {
 	
 	public int getStandardToolOverrideState(ItemStack tool, IBlockState state){
 		return doesYesNoSetContainToolAndBlock(notStandardBlocksAndTools, standardBlocksAndTools, tool, state);
+	}
+	
+	public int getWeaponOverrideState(ItemStack weapon, EntityLivingBase entity){
+		return doesYesNoSetContainEntityAndWeapon(nonStandardWeapons, standardWeapons, weapon, entity);
 	}
 	
 	public ToolSelectionMode getToolSelectionMode(IBlockState state) {
@@ -294,6 +321,7 @@ public class Configuration extends ThebombzenAPIConfiguration {
 		extraConfigLastModified = getExtraConfigFile().lastModified();
 	}
 	
+	
 	private void parseBlockToolPairOverride(String line, Set<BlockToolPair> no, Set<BlockToolPair> yes){
 		int indexGreaterThan = line.indexOf('>');
 		int indexLessThan = line.indexOf('<');
@@ -323,6 +351,36 @@ public class Configuration extends ThebombzenAPIConfiguration {
 			AutoSwitch.instance.debugException(e);
 		}
 	}
+	
+	private void parseEntityWeaponPairOverride(String line, Set<EntityWeaponPair> no, Set<EntityWeaponPair> yes){
+		int indexGreaterThan = line.indexOf('>');
+		int indexLessThan = line.indexOf('<');
+		String weaponSub = "";
+		String entitySub = "";
+		boolean plus = false;
+		if (indexGreaterThan > 0 && indexLessThan < 0) {
+			weaponSub = line.substring(1, indexGreaterThan);
+			entitySub = line.substring(indexGreaterThan + 1);
+			plus = true;
+		} else if (indexLessThan > 0 && indexGreaterThan < 0) {
+			weaponSub = line.substring(1, indexLessThan);
+			entitySub = line.substring(indexLessThan + 1);
+			plus = false;
+		} else {
+			AutoSwitch.instance.forceDebug("Error on line: %s", line);
+			AutoSwitch.instance.forceDebug("Error caused by: Expected > or < but not both.");
+			return;
+		}
+		try {
+			EntityIdentifier entity = EntityIdentifier.parseEntityIdentifier(entitySub);
+			BlockItemIdentifier weapon = BlockItemIdentifier.parseBlockItemIdentifier(weaponSub);
+			(plus ? yes : no).add(new EntityWeaponPair(entity, weapon));
+		} catch (ConfigFormatException e){
+			AutoSwitch.instance.forceDebug("Error on line: %s", line);
+			AutoSwitch.instance.forceDebug("Error caused by: %s", e.toString());
+			AutoSwitch.instance.debugException(e);
+		}
+	}
 
 	protected void parseConfig(String config) {
 		fortuneNoWorks.clear();
@@ -331,7 +389,9 @@ public class Configuration extends ThebombzenAPIConfiguration {
 		standardBlocksAndTools.clear();
 		silkTouchNoWorks.clear();
 		silkTouchWorks.clear();
-		customWeapons.clear();
+		damageOverrides.clear();
+		standardWeapons.clear();
+		nonStandardWeapons.clear();
 		ignoreFortune.clear();
 		ignoreSilkTouch.clear();
 		fastStandardOverrides.clear();
@@ -493,28 +553,62 @@ public class Configuration extends ThebombzenAPIConfiguration {
 			case 'W':
 			case 'w':
 				indexE = line.lastIndexOf('=');
-				if (indexE < 0 || indexE >= line.length() - 1) {
+				int indexE1 = line.indexOf('=');
+				int indexP = line.indexOf('>');
+				int indexM = line.indexOf('<');
+				boolean foundE = !(indexE < 0 || indexE >= line.length() - 1);
+				boolean foundP = !(indexP < 0 || indexP >= line.length() - 1);
+				boolean foundM = !(indexM < 0 || indexM >= line.length() - 1);
+				if (!foundE && !foundP && !foundM) {
 					AutoSwitch.instance.forceDebug("Error on line: %s", line);
-					AutoSwitch.instance.forceDebug("Error caused by: Expected = in middle of line.");
+					AutoSwitch.instance.forceDebug("Error caused by: Expected =, >, or < in middle of line.");
+					continue;
+				} else if (foundP && foundM || foundE && foundM || foundE && foundP) {
+					AutoSwitch.instance.forceDebug("Error on line: %s", line);
+					AutoSwitch.instance.forceDebug("Error caused by: Found two symbols among =, >, and < on line.");
 					continue;
 				}
-				sub = line.substring(1, indexE);
-				String damageString = line.substring(indexE + 1);
-				Integer damage = null;
-				try {
-					damage = ThebombzenAPI.parseInteger(damageString);
-				} catch (NumberFormatException nfe) {
-					AutoSwitch.instance.forceDebug("Error on line: %s", line);
-					AutoSwitch.instance.forceDebug("Error caused by: Invalid Number: %s", nfe.toString());
-					continue;
-				}
-				try {
-					BlockItemIdentifier tool = BlockItemIdentifier.parseBlockItemIdentifier(sub);
-					customWeapons.put(tool, damage);
-				} catch (ConfigFormatException e){
-					AutoSwitch.instance.forceDebug("Error on line: %s", line);
-					AutoSwitch.instance.forceDebug("Error caused by: %s", e.toString());
-					AutoSwitch.instance.debugException(e);
+				EntityIdentifier id = null;
+				String damageString;
+				if (foundE){
+					if (indexE1 != indexE){
+						sub = line.substring(1, indexE1);
+						try {
+							id = EntityIdentifier.parseEntityIdentifier(line.substring(indexE1 + 1, indexE));
+						} catch (ConfigFormatException e){
+							AutoSwitch.instance.forceDebug("Error on line: %s", line);
+							AutoSwitch.instance.forceDebug("Error caused by: %s", e.toString());
+							AutoSwitch.instance.debugException(e);
+							continue;
+						}
+						damageString = line.substring(indexE + 1);
+					} else {
+						sub = line.substring(indexE);
+						try {
+							id = EntityIdentifier.parseEntityIdentifier("@");
+						} catch (ConfigFormatException e) {
+							AutoSwitch.instance.throwException("Fatal error: parsing.", e, true);
+						}
+						damageString = line.substring(indexE + 1);
+					}
+					Integer damage = null;
+					try {
+						damage = ThebombzenAPI.parseInteger(damageString);
+					} catch (NumberFormatException nfe) {
+						AutoSwitch.instance.forceDebug("Error on line: %s", line);
+						AutoSwitch.instance.forceDebug("Error caused by: Invalid Number: %s", nfe.toString());
+						continue;
+					}
+					try {
+						BlockItemIdentifier weapon = BlockItemIdentifier.parseBlockItemIdentifier(sub);
+						damageOverrides.put(new EntityWeaponPair(id, weapon), damage);
+					} catch (ConfigFormatException e){
+						AutoSwitch.instance.forceDebug("Error on line: %s", line);
+						AutoSwitch.instance.forceDebug("Error caused by: %s", e.toString());
+						AutoSwitch.instance.debugException(e);
+					}
+				} else {
+					parseEntityWeaponPairOverride(line, nonStandardWeapons, standardWeapons);
 				}
 				break;
 			default:

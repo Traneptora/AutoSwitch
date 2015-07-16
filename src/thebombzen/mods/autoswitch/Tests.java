@@ -334,7 +334,7 @@ public final class Tests {
 			EntityLivingBase entity) {
 		fakeItemForPlayer(itemStack);
 		double damage = AutoSwitch.instance.getConfiguration()
-				.getCustomWeaponDamage(itemStack);
+				.getCustomWeaponDamage(itemStack, entity);
 		if (damage < 0) {
 			damage = mc.thePlayer.getEntityAttribute(
 					SharedMonsterAttributes.attackDamage).getAttributeValue();

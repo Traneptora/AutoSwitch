@@ -472,8 +472,25 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 	public boolean isWeaponBetter(ItemStack newItemStack,
 			ItemStack oldItemStack, EntityLivingBase entityover) {
 
+		int oldState = configuration.getWeaponOverrideState(oldItemStack, entityover);
+		int newState = configuration.getWeaponOverrideState(newItemStack, entityover);
+		
+		if (newState == Configuration.OVERRIDDEN_NO && oldState != Configuration.OVERRIDDEN_NO){
+			debug("Not switching because new is overridden no.");
+			return false;
+		} else if (newState != Configuration.OVERRIDDEN_NO && oldState == Configuration.OVERRIDDEN_NO){
+			debug("Switching because old is overridden no.");
+			return true;
+		}
+		if (newState == Configuration.OVERRIDDEN_YES && oldState != Configuration.OVERRIDDEN_YES){
+			debug("Switching because new is ovverridden yes.");
+			return true;
+		} else if (oldState == Configuration.OVERRIDDEN_YES && newState != Configuration.OVERRIDDEN_YES){
+			debug("Not switching because old is overridden yes.");
+			return false;
+		}
+		
 		boolean isPlayer = entityover instanceof EntityPlayer;
-
 		double oldDamage = Tests.getFullItemStackDamage(oldItemStack, entityover);
 		double newDamage = Tests.getFullItemStackDamage(newItemStack, entityover);
 

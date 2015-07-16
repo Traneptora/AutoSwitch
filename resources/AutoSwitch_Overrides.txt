@@ -183,11 +183,29 @@ D shears < !($vine|$tallgrass|$leaves)
 # ======== WEAPON OVERRIDES =========
 
 # AutoSwitch normally calculates how much damage a weapon does
-# You can override this
-# To override this add W item = damage
+# You can override this for specific mobs or in general
+
+# To override this in general add W item = damage
 # For example if your server plugin makes feathers do 10 damage then add
 # W feather = 10
-# in order to make AutoSwitch switch correctly
+# To override this for specific mobs use network IDs
+# That is, W item = networkID = damage
+# To say that a diamond sword does only one damage against a pig use
+# W diamond_sword = 90 = 1
+# (This is not true, but AS will think it is, provided you override it)
+
+# To create a "standardness" override
+# that is to always use a particular weapon against a particular mob
+# Use W item > networkID to override a weapon as "standard"
+# Use W item < networkID to override a weapon as "nonstandard"
+# For example, to avoid using a diamond sword on a pig, use
+# W diamond_sword < 90
+
+# You can also combine network IDs with (), &, |, ^, and ! the same way you can for blocks and items
+# You can also use @ to mean all entities
+
+# Use gold swords on Mo' Creatures Werewolves
+W gold_sword > 7274 
 
 # ========== TOOL SELECTION MODES ===========
 
