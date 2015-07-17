@@ -472,9 +472,6 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 	public boolean isWeaponBetter(ItemStack newItemStack,
 			ItemStack oldItemStack, EntityLivingBase entityover) {
 		
-		//debug("%s", configuration.standardWeapons.toString());
-		//debug("%s", configuration.nonStandardWeapons.toString());
-
 		int oldState = configuration.getWeaponOverrideState(oldItemStack, entityover);
 		int newState = configuration.getWeaponOverrideState(newItemStack, entityover);
 		
