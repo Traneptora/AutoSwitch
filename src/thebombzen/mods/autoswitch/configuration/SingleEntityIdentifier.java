@@ -3,6 +3,7 @@ package thebombzen.mods.autoswitch.configuration;
 import net.minecraft.entity.EntityList;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.util.StatCollector;
+import thebombzen.mods.thebombzenapi.ThebombzenAPI;
 import thebombzen.mods.thebombzenapi.configuration.BooleanTester;
 import thebombzen.mods.thebombzenapi.configuration.ConfigFormatException;
 
@@ -31,7 +32,7 @@ public class SingleEntityIdentifier implements BooleanTester<EntityLivingBase> {
 		}
 		int id;
 		try {
-			id = Integer.parseInt(info);
+			id = ThebombzenAPI.parseInteger(info);
 			return new SingleEntityIdentifier(id);
 		} catch (NumberFormatException nfe){
 			
