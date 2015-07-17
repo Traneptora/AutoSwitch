@@ -471,6 +471,9 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 
 	public boolean isWeaponBetter(ItemStack newItemStack,
 			ItemStack oldItemStack, EntityLivingBase entityover) {
+		
+		//debug("%s", configuration.standardWeapons.toString());
+		//debug("%s", configuration.nonStandardWeapons.toString());
 
 		int oldState = configuration.getWeaponOverrideState(oldItemStack, entityover);
 		int newState = configuration.getWeaponOverrideState(newItemStack, entityover);
@@ -698,7 +701,6 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 	}
 
 	public boolean potentiallySwitchWeapons(EntityLivingBase entity) {
-		// System.out.println("Here!");
 		if (pulseOn == isToggleEnabled(Configuration.DEFAULT_ENABLED.getDefaultToggleIndex())
 				|| mc.playerController.isInCreativeMode()
 				&& !configuration

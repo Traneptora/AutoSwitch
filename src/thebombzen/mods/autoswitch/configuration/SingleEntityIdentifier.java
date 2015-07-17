@@ -2,6 +2,7 @@ package thebombzen.mods.autoswitch.configuration;
 
 import net.minecraft.entity.EntityList;
 import net.minecraft.entity.EntityLivingBase;
+import net.minecraft.util.StatCollector;
 import thebombzen.mods.thebombzenapi.configuration.BooleanTester;
 import thebombzen.mods.thebombzenapi.configuration.ConfigFormatException;
 
@@ -35,7 +36,7 @@ public class SingleEntityIdentifier implements BooleanTester<EntityLivingBase> {
 		} catch (NumberFormatException nfe){
 			
 		}
-		if (info.matches("^\\w+$")){
+		if (info.matches("^(\\w|-|\\.)+$")){
 			return new SingleEntityIdentifier(info);
 		}
 		throw new ConfigFormatException("Illegal SingleEntityIdentifier: " + info);
@@ -47,7 +48,14 @@ public class SingleEntityIdentifier implements BooleanTester<EntityLivingBase> {
 			if (name == null){
 				return true;
 			} else {
-				return EntityList.getEntityString(c).toLowerCase().equals(name);
+				String listName =  EntityList.getEntityString(c);
+				if (listName.toLowerCase().equals(name)){
+					return true;
+				} else if (StatCollector.translateToLocal("entity."+listName+".name").toLowerCase().equals(name)){
+					return true;
+				} else {
+					return false;
+				}
 			}
 		} else {
 			return EntityList.getEntityID(c) == id;

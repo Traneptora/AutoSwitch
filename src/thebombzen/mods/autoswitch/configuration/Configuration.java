@@ -188,8 +188,8 @@ public class Configuration extends ThebombzenAPIConfiguration {
 	private Set<BlockToolPair> harvestNoWorks = new HashSet<BlockToolPair>();
 	private Set<BlockToolPair> damageableYes = new HashSet<BlockToolPair>();
 	private Set<BlockToolPair> damageableNo = new HashSet<BlockToolPair>();
-	private Set<EntityWeaponPair> standardWeapons = new HashSet<EntityWeaponPair>();
-	private Set<EntityWeaponPair> nonStandardWeapons = new HashSet<EntityWeaponPair>();
+	public Set<EntityWeaponPair> standardWeapons = new HashSet<EntityWeaponPair>();
+	public Set<EntityWeaponPair> nonStandardWeapons = new HashSet<EntityWeaponPair>();
 	private Map<EntityWeaponPair, Integer> damageOverrides = new HashMap<EntityWeaponPair, Integer>();
 
 	public Configuration(AutoSwitch autoSwitch) {
@@ -527,7 +527,6 @@ public class Configuration extends ThebombzenAPIConfiguration {
 				}
 				String blockSub = line.substring(1, indexE);
 				String typeSub = line.substring(indexE + 1).toLowerCase();
-				//System.out.println(blockSub + "=" + typeSub);
 				try {
 					BlockItemIdentifier block = BlockItemIdentifier.parseBlockItemIdentifier(blockSub);
 					Set<BlockItemIdentifier> setToAdd;
@@ -626,7 +625,6 @@ public class Configuration extends ThebombzenAPIConfiguration {
 			}
 		}
 		s.close();
-		//System.out.println(notStandardBlocksAndTools.toString());
 	}
 
 	@Override
