@@ -21,7 +21,7 @@ public class SingleEntityIdentifier implements BooleanTester<EntityLivingBase> {
 	
 	public SingleEntityIdentifier(String name){
 		this.id = -1;
-		this.name = name;
+		this.name = name.toLowerCase();
 	}
 	
 	public static SingleEntityIdentifier parseSingleEntityIdentifier(String info) throws ConfigFormatException {
@@ -47,7 +47,7 @@ public class SingleEntityIdentifier implements BooleanTester<EntityLivingBase> {
 			if (name == null){
 				return true;
 			} else {
-				return EntityList.getEntityString(c).equals(name);
+				return EntityList.getEntityString(c).toLowerCase().equals(name);
 			}
 		} else {
 			return EntityList.getEntityID(c) == id;

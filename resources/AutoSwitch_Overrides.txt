@@ -205,7 +205,7 @@ D shears < !($vine|$tallgrass|$leaves)
 # You can also use @ to mean all entities
 
 # Use gold swords on Mo' Creatures Werewolves
-W gold_sword > 7274 
+W gold_sword > Werewolf
 
 # ========== TOOL SELECTION MODES ===========
 
