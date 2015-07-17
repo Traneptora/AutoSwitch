@@ -71,7 +71,7 @@ public class EntityIdentifier extends CompoundExpression<EntityLivingBase> {
 			return EntityIdentifier.parseEntityIdentifier(info.substring(1, info.length() - 1));
 		}
 		
-		throw new ConfigFormatException("Malformed block/item identifier: " + info);
+		throw new ConfigFormatException("Malformed entity identifier: " + info);
 		
 	}
 	
