@@ -43,7 +43,8 @@ public final class Tests {
 	private static ItemStack prevHeldItem = null;
 	private static Random prevRandom = null;
 	
-	private static final String[] randomNames = {"rand"};
+	private static final String[] randomNames = {"rand", "s"};
+	private static final String[] createStackedBlockNames = {"createStackedBlock", "i"};
 	
 	/**
 	 * Anything strictly greater than this is considered to be "standard"
@@ -51,8 +52,7 @@ public final class Tests {
 	public static final ComparableTuple<Integer> standardThreshold = new ComparableTuple<Integer>(0, 0, 0, 0, 0);
 	
 	public static ItemStack createStackedBlock(Block block, IBlockState state) {
-		return ThebombzenAPI.invokePrivateMethod(block, Block.class,
-				new String[] { "createStackedBlock", "func_149644_j", "j" },
+		return ThebombzenAPI.invokePrivateMethod(block, Block.class, createStackedBlockNames,
 				new Class<?>[] { IBlockState.class }, state);
 	}
 	
