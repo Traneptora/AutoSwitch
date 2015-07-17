@@ -88,7 +88,15 @@ public class ASInstallerFrame extends JFrame {
 		}
 	}
 	
-	public static void main(String[] args) throws IOException {
+	public static void main(String[] args) throws Exception {
+		if (args.length > 0){
+			if (args[0].equals("--no-gui") || args[0].equals("-n")){
+				installNoGui(getMinecraftClientDirectory());
+				return;
+			} else {
+				System.err.println("Run with --no-gui or -n to install without a gui.");
+			}
+		}
 		new ASInstallerFrame().setVisible(true);
 	}
 	
@@ -236,7 +244,7 @@ public class ASInstallerFrame extends JFrame {
 		dialog.setLocation(this.getX() + (this.getWidth() - dialog.getWidth()) / 2, this.getY() + (this.getHeight() - dialog.getHeight()) / 2);
 	}
 	
-	public String getThebombzenAPILatestVersion() throws IOException {
+	public static String getThebombzenAPILatestVersion() throws IOException {
 		String latestVersion = null;
 		BufferedReader br = null;
 		try {
@@ -266,16 +274,13 @@ public class ASInstallerFrame extends JFrame {
 		}
 		System.exit(0);
 	}
-
-	private void install(String directory) throws Exception {
+	
+	private static void installNoGui(String directory) throws Exception {
 		File dir = new File(directory);
 		if (!dir.isDirectory()){
-			JOptionPane.showMessageDialog(this, "Something's wrong with the given folder. Check spelling and try again.", "Hmmm...", JOptionPane.ERROR_MESSAGE);
+			System.err.println("Invalid directory: " + directory);
 			return;
 		}
-		
-		dialog.setVisible(true);
-		
 		File modsFolder = new File(directory, "mods");
 		modsFolder.mkdir();
 		File versionFolder = new File(modsFolder, Constants.MC_VERSION);
@@ -301,11 +306,22 @@ public class ASInstallerFrame extends JFrame {
 			}
 		}
 		copyFile(file, new File(versionFolder, file.getName()));
+	}
+
+	private void install(String directory) throws Exception {
+		File dir = new File(directory);
+		if (!dir.isDirectory()){
+			JOptionPane.showMessageDialog(this, "Something's wrong with the given folder. Check spelling and try again.", "Hmmm...", JOptionPane.ERROR_MESSAGE);
+			return;
+		}
+		
+		dialog.setVisible(true);
+		installNoGui(directory);
 		dialog.dispose();
 		JOptionPane.showMessageDialog(this, "Successfully installed AutoSwitch!", "Success!", JOptionPane.INFORMATION_MESSAGE);
 	}
 	
-	public void installThebombzenAPI(String directory) throws Exception {	
+	public static void installThebombzenAPI(String directory) throws Exception {	
 		String latest = getThebombzenAPILatestVersion();
 		Scanner scanner = new Scanner(latest);
 		scanner.useDelimiter(String.format("%n"));
