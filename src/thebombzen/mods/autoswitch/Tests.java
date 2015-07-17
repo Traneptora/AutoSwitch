@@ -43,8 +43,8 @@ public final class Tests {
 	private static ItemStack prevHeldItem = null;
 	private static Random prevRandom = null;
 	
-	private static final String[] randomNames = {"rand", "s"};
-	private static final String[] createStackedBlockNames = {"createStackedBlock", "i"};
+	private static final String[] randomNames = {"rand", "field_73012_v", "v"};
+	private static final String[] createStackedBlockNames = {"createStackedBlock", "i", "func_180643_i"};
 	
 	/**
 	 * Anything strictly greater than this is considered to be "standard"
