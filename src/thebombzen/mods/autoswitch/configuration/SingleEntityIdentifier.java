@@ -5,20 +5,20 @@ import net.minecraft.entity.EntityLivingBase;
 import thebombzen.mods.thebombzenapi.configuration.BooleanTester;
 import thebombzen.mods.thebombzenapi.configuration.ConfigFormatException;
 
-public class EntityValueSet implements BooleanTester<EntityLivingBase> {
+public class SingleEntityIdentifier implements BooleanTester<EntityLivingBase> {
 	private int id;
-	public EntityValueSet(int id){
+	public SingleEntityIdentifier(int id){
 		this.id = id;
 	}
 	
-	public static EntityValueSet parseEntityValueSet(String info) throws ConfigFormatException {
+	public static SingleEntityIdentifier parseSingleEntityIdentifier(String info) throws ConfigFormatException {
 		if (info.equals("@")){
-			return new EntityValueSet(-1);
+			return new SingleEntityIdentifier(-1);
 		}
 		int id;
 		try {
 			id = Integer.parseInt(info);
-			return new EntityValueSet(id);
+			return new SingleEntityIdentifier(id);
 		} catch (NumberFormatException nfe){
 			throw new ConfigFormatException("Invalid number: " + info, nfe);
 		}
@@ -43,7 +43,7 @@ public class EntityValueSet implements BooleanTester<EntityLivingBase> {
 			return false;
 		if (getClass() != obj.getClass())
 			return false;
-		EntityValueSet other = (EntityValueSet) obj;
+		SingleEntityIdentifier other = (SingleEntityIdentifier) obj;
 		if (id != other.id)
 			return false;
 		return true;

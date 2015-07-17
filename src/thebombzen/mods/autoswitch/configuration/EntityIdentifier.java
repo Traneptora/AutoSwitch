@@ -17,7 +17,7 @@ public class EntityIdentifier extends CompoundExpression<EntityLivingBase> {
 			if (info.startsWith("(") && info.endsWith(")")){
 				return parseEntityIdentifier(info.substring(1, info.length() - 1));
 			} else {
-				return new EntityIdentifier(EntityValueSet.parseEntityValueSet(info));
+				return new EntityIdentifier(SingleEntityIdentifier.parseSingleEntityIdentifier(info));
 			}
 		}
 		
@@ -79,7 +79,7 @@ public class EntityIdentifier extends CompoundExpression<EntityLivingBase> {
 		super(type, first, second);
 	}
 
-	public EntityIdentifier(EntityValueSet singleID){
+	public EntityIdentifier(SingleEntityIdentifier singleID){
 		super(singleID);
 	}
 
