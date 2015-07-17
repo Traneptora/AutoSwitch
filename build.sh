@@ -5,7 +5,7 @@ MC_VERS=1.8
 
 cd $(dirname $0)
 ARCH=AutoSwitch-v$VERS-mc$MC_VERS.jar
-./gradlew build
+./gradlew build || exit 1
 cp build/libs/autoswitch-$VERS.jar $ARCH
 mkdir -p META-INF
 
