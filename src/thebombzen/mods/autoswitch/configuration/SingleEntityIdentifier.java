@@ -2,6 +2,7 @@ package thebombzen.mods.autoswitch.configuration;
 
 import net.minecraft.entity.EntityList;
 import net.minecraft.entity.EntityLivingBase;
+import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.util.StatCollector;
 import thebombzen.mods.thebombzenapi.ThebombzenAPI;
 import thebombzen.mods.thebombzenapi.configuration.BooleanTester;
@@ -45,6 +46,9 @@ public class SingleEntityIdentifier implements BooleanTester<EntityLivingBase> {
 	
 	@Override
 	public boolean contains(EntityLivingBase c) {
+		if (c instanceof EntityPlayer){
+			return id == 0 || (id == -1 && name.equals("player"));
+		}
 		if (id == -1){
 			if (name == null){
 				return true;
