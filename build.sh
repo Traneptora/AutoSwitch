@@ -1,6 +1,6 @@
 #!/bin/sh
 
-VERS=5.2.0
+VERS=5.2.1
 MC_VERS=1.8
 
 cd $(dirname $0)
