@@ -49,7 +49,7 @@ public final class Tests {
 	/**
 	 * Anything strictly greater than this is considered to be "standard"
 	 */
-	public static final ComparableTuple<Integer> standardThreshold = new ComparableTuple<Integer>(0, 0, 0, 0, 0);
+	public static final ComparableTuple<Integer> standardThreshold = new ComparableTuple<Integer>(0, 0);
 	
 	public static ItemStack createStackedBlock(Block block, IBlockState state) {
 		return ThebombzenAPI.invokePrivateMethod(block, Block.class, createStackedBlockNames,
@@ -179,18 +179,18 @@ public final class Tests {
 	}
 	
 	public static float getBlockHardness(World world, BlockPos pos) {
-		Block block = world.getChunkFromBlockCoords(pos).getBlock(pos);
-		if (block == null) {
+		IBlockState blockState = world.getBlockState(pos);
+		if (blockState == null) {
 			return 0;
 		} else {
-			return block.getBlockHardness(world, pos);
+			return blockState.getBlock().getBlockHardness(world, pos);
 		}
 	}
 
 	public static float getBlockStrength(ItemStack itemstack, World world, BlockPos pos) {
-		Block block = world.getChunkFromBlockCoords(pos).getBlock(pos);
+		IBlockState blockState = world.getBlockState(pos);
 		fakeItemForPlayer(itemstack);
-		float str = block.getPlayerRelativeBlockHardness(mc.thePlayer, world, pos);
+		float str = blockState.getBlock().getPlayerRelativeBlockHardness(mc.thePlayer, world, pos);
 		unFakeItemForPlayer();
 		return str;
 	}
@@ -430,21 +430,25 @@ public final class Tests {
 	}
 	
 	public static ComparableTuple<Integer> getToolStandardness(ItemStack itemstack, World world, BlockPos pos){
-		
 		int override = getToolOverrideStandardness(itemstack, world, pos);
 		int harvest = getHarvestLevel(itemstack, world, pos);
-		int weakStrength = getWeakToolStandardness(itemstack, world, pos);
-		int forgeStandard = (itemstack != null && ForgeHooks.isToolEffective(world, pos, itemstack)) ? 1 : 0;
-		int damageable = Tests.isItemStackDamageableOnBlock(itemstack, world, pos) ? -1 : 0;
-		
-		return new ComparableTuple<Integer>(override, harvest, weakStrength, forgeStandard, damageable);
+		return new ComparableTuple<Integer>(override, harvest);
 	}
-
-	public static int getWeakToolStandardness(ItemStack itemstack, World world, BlockPos pos){
+	
+	public static ComparableTuple<Integer> getToolEffectiveness(ItemStack itemStack, World world, BlockPos pos){
+		int weakStrength = getToolSpeedEffectiveness(itemStack, world, pos);
+		int forgeStandard = (itemStack != null && ForgeHooks.isToolEffective(world, pos, itemStack)) ? 1 : 0;
+		return new ComparableTuple<Integer>(weakStrength, forgeStandard);
+	}
+	
+	public static ComparableTuple<Integer> getToolDamageability(ItemStack itemStack, World world, BlockPos pos){
+		int damageable = Tests.isItemStackDamageableOnBlock(itemStack, world, pos) ? -1 : 0;
+		return new ComparableTuple<Integer>(damageable);
+	}
+	
+	public static int getToolSpeedEffectiveness(ItemStack itemstack, World world, BlockPos pos){
 		IBlockState blockState = world.getBlockState(pos);
-		
 		float hardness = Tests.getBlockHardness(world, pos);
-		
 		if (hardness <= 0F){
 			return 0;
 		}

@@ -238,6 +238,8 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 		
 		ComparableTuple<Integer> newStandard = Tests.getToolStandardness(newItemStack, world, pos);
 		ComparableTuple<Integer> oldStandard = Tests.getToolStandardness(oldItemStack, world, pos);
+		ComparableTuple<Integer> newEffectiveness = Tests.getToolEffectiveness(newItemStack, world, pos);
+		ComparableTuple<Integer> oldEffectiveness = Tests.getToolEffectiveness(oldItemStack, world, pos);
 		
 		debug("newStandard: %s, oldStandard: %s", newStandard.toString(), oldStandard.toString());
 
@@ -249,6 +251,7 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 		int adjustedBlockStrComparison = new Integer(newAdjustedBlockStr).compareTo(oldAdjustedBlockStr);
 		int blockStrComparison = Float.compare(newBlockStr, oldBlockStr);
 		int standardComparison = newStandard.compareTo(oldStandard);
+		int effectivenessComparison = newEffectiveness.compareTo(oldEffectiveness);
 		boolean isNewStandard = newStandard.compareTo(Tests.standardThreshold) > 0;
 		boolean isOldStandard = oldStandard.compareTo(Tests.standardThreshold) > 0;
 		
@@ -259,16 +262,6 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 			} else if (standardComparison < 0) {
 				debug("Not switching because old item is more standard than new.");
 				return false;
-			} else {
-				if (!isNewStandard && !isOldStandard) {
-					if (newDamageable && !oldDamageable) {
-						debug("Not switching because new tool is damageable and old isn't, and neither are standard.");
-						return false;
-					} else if (oldDamageable && !newDamageable) {
-						debug("Switching because old tool is damageable and new isn't, and neither are standard.");
-						return true;
-					}
-				}
 			}
 		} else {
 			if (toolSelectionMode.isFast()) {
@@ -281,13 +274,6 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 				}
 			} else { // This should never happen. Slow nonstandard isn't a thing.
 				debug("Something went wrong. It appears Slow Nonstandard is on.");
-				if (adjustedBlockStrComparison < 0) {
-					debug("Switching because new item is worse than old.");
-					return true;
-				} else if (adjustedBlockStrComparison > 0) {
-					debug("Not switching because new item is better than old.");
-					return false;
-				}
 			}
 		}
 
@@ -338,7 +324,6 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 		int oldFortuneLevel = EnchantmentHelper.getEnchantmentLevel(
 				Enchantment.fortune.effectId, oldItemStack);
 
-
 		if (configuration.shouldIgnoreFortune(blockState)){
 			debug("Ignoring Fortune.");
 		} else {
@@ -372,7 +357,17 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 				}
 			}
 		}
-
+		
+		if (toolSelectionMode.isStandard()) {
+			if (effectivenessComparison > 0) {
+				debug("Switching because new item is more effective than old.");
+				return true;
+			} else if (effectivenessComparison < 0) {
+				debug("Not switching because old item is more effective than new.");
+				return false;
+			}
+		}
+		
 		if (toolSelectionMode.isFast()) {
 			if (adjustedBlockStrComparison > 0) {
 				debug("Switching because new tool is stronger.");
@@ -383,10 +378,10 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 			}
 		} else {
 			if (adjustedBlockStrComparison < 0) {
-				debug("Switching because new item is worse than old item and SLOW STANDARD is on.");
+				debug("Switching because new tool is weaker.");
 				return true;
 			} else if (adjustedBlockStrComparison > 0) {
-				debug("Not switching because new item is better than old item and SLOW STANDARD is on.");
+				debug("Not switching because old tool is weaker.");
 				return false;
 			}
 		}
@@ -452,10 +447,10 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 			}
 		} else {
 			if (blockStrComparison < 0) {
-				debug("Switching because new item is worse than old item and SLOW STANDARD is on.");
+				debug("Switching because new item is worse than old item and Slow Standard is on.");
 				return true;
 			} else if (blockStrComparison > 0) {
-				debug("Not switching because new item is better than old item and SLOW STANDARD is on.");
+				debug("Not switching because new item is better than old item and Slow Standard is on.");
 				return false;
 			}
 		}
