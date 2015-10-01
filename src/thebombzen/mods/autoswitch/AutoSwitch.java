@@ -45,32 +45,80 @@ import thebombzen.mods.thebombzenapi.ThebombzenAPIBaseMod;
 @Mod(modid = "autoswitch", name = "AutoSwitch", version = Constants.VERSION, dependencies = "required-after:thebombzenapi", guiFactory = "thebombzen.mods.autoswitch.configuration.ConfigGuiFactory", clientSideOnly = true)
 public class AutoSwitch extends ThebombzenAPIBaseMod {
 
+	/**
+	 * This is the default stage for TDAI. Used under normal conditions.
+	 */
 	public static final int STAGE_H0 = 0;
+	/**
+	 * This is the TDAI stage after AS has switched but before the event has been canceled.
+	 */
 	public static final int STAGE_SWITCHED = 1;
+	/**
+	 * This is the TDAI stage after AS has canceled the attack event.
+	 */
 	public static final int STAGE_CANCELED = 2;
+	
+	/**
+	 * A convenience field storing the current Minecraft object
+	 */
 	public static final Minecraft mc = Minecraft.getMinecraft();
 
+	/**
+	 * The current TDAI attack stage
+	 */
 	private int entityAttackStage = STAGE_H0;
 
+	/**
+	 * The current TDAI entity we're tracking
+	 */
 	private EntityLivingBase entitySwitchedOn = null;
 
+	/**
+	 * The ThebombzenAPIConfiguration for AS
+	 */
 	private Configuration configuration;
 
+	/**
+	 * Was the mouse down last tick?
+	 */
 	private boolean prevMouseDown = false;
+	
+	/**
+	 * Was the pulse key down last tick?
+	 */
 	private boolean prevPulse = false;
+	
+	/**
+	 * This slot index contained the previous tool before switching
+	 */
 	private int prevtool = 0;
+	
+	/**
+	 * Is the pulse key down?
+	 */
 	private boolean pulseOn = false;
+	
+	/**
+	 * Should we switch back after switching?
+	 */
 	private boolean switchback = false;
+	
+	/**
+	 * Is mcMMO treefeller currently being readied?
+	 */
 	private boolean treefellerOn = false;
 
-	@Instance(value = "autoswitch")
+	/**
+	 * The instance field for AS
+	 */
+	@Instance("autoswitch")
 	public static AutoSwitch instance;
 	
-	/*@SubscribeEvent
-	public void getPlayerBreakSpeed(PlayerEvent.BreakSpeed event){
-		System.err.println(event.originalSpeed);
-	}*/
-	
+	/**
+	 * Used to detect if treefeller has been readied.
+	 * If treefeller is activated and DETECT_TREEFELLER is on, then AS will switch to Slow Standard in the meantime.
+	 * @param event The event containing the content of the chat message
+	 */
 	@SubscribeEvent
 	public void clientChat(ClientChatReceivedEvent event){
 		String text = event.message.getUnformattedText();
@@ -89,12 +137,13 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 		} else if (text.equals(configuration.getStringProperty(Configuration.TREEFELLER_SKULL_SPLITTER))){
 			treefellerOn = false;
 		}
-		//debug("treefellerOn: %b", treefellerOn);
 	}
 	
+	/**
+	 * This is our main client tick loop, used to run most AS functions, such as switching.
+	 */
 	@SubscribeEvent
 	public void clientTick(ClientTickEvent event) {
-
 		if (!event.phase.equals(Phase.START)) {
 			return;
 		}
@@ -107,6 +156,7 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 			treefellerOn = false;
 		}
 
+		// If we canceled the attack last tick, then go ahead and attack now.
 		if (entityAttackStage == STAGE_CANCELED) {
 			mc.thePlayer.swingItem();
 			mc.playerController.attackEntity(mc.thePlayer, entitySwitchedOn);
@@ -116,7 +166,6 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 		}
 
 		pulseOn = ThebombzenAPI.isExtendedKeyDown(configuration.getKeyCodeProperty(Configuration.PULSE_KEY));
-		// func_151463_i() == getKeyCode()
 		int keyCode = mc.gameSettings.keyBindAttack.getKeyCode();
 		boolean mouseDown = ThebombzenAPI.isExtendedKeyDown(keyCode);
 		if (!mouseDown && prevMouseDown || mouseDown && pulseOn ^ prevPulse) {
@@ -140,16 +189,31 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 		prevPulse = pulseOn;
 	}
 	
+	/**
+	 * Send a string to the debug logger, but only if debugging is enabled.
+	 * @param string The debug message to send
+	 */
 	public void debug(String string) {
 		debug("%s", string);
 	}
 	
+	/**
+	 * Send a string to the debug logger, but only if debugging is enabled.
+	 * Uses the same notation as String.format() or PrintStream.format()
+	 * @param format A printf-style format string
+	 * @param args The arguments for the format string
+	 */
 	public void debug(String format, Object... args) {
 		if (configuration.getBooleanProperty(Configuration.DEBUG)) {
 			forceDebug(format, args);
 		}
 	}
 	
+	/**
+	 * Print an exception to the debug logger, but only if debugging is enabled.
+	 * Prints a short info message, as well as the stack trace.
+	 * @param exception the Throwable to print
+	 */
 	public void debugException(Throwable exception){
 		if (configuration.getBooleanProperty(Configuration.DEBUG)){
 			forceDebugException(exception);
