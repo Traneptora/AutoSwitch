@@ -273,6 +273,14 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 		FMLCommonHandler.instance().findContainerFor(this).getMetadata().authorList = Arrays.asList("Thebombzen");
 	}
 
+	/**
+	 * Compares two tools using the AS Algorithm
+	 * @param newItemStack The ItemStack containing the new tool
+	 * @param oldItemStack The ItemStack containing the old tool
+	 * @param world The relevant World object
+	 * @param pos The position of the block to test inside the World object
+	 * @return true if the new tool is better than the old one, false otherwise or if they are equal
+	 */
 	public boolean isToolBetter(ItemStack newItemStack, ItemStack oldItemStack,
 			World world, BlockPos pos) {
 
@@ -524,10 +532,21 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 
 	}
 
+	/**
+	 * Returns the current treefeller detection state.
+	 * @return true if AS has detected that treefeller is on, false otherwise
+	 */
 	public boolean isTreefellerOn(){
 		return treefellerOn;
 	}
 
+	/**
+	 * Compares two weapons using the AS Algorithm
+	 * @param newItemStack The ItemStack containing the new weapon
+	 * @param oldItemStack The ItemStack containing the old weapon
+	 * @param entityover The entity against which to test the weaposn
+	 * @return true if the new weapon is better, false otherwise or if they are equal
+	 */
 	public boolean isWeaponBetter(ItemStack newItemStack,
 			ItemStack oldItemStack, EntityLivingBase entityover) {
 		
@@ -720,6 +739,12 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 		return false;
 	}
 
+	/**
+	 * Initiates TDAI, or Tick-Delay Attack Interception.
+	 * Because of bug MC-28289, AutoSwitch will intercept any attack and then switch weapons.
+	 * It will cancel the attack and then wait exactly one tick to execute it.
+	 * This allows the new weapon's damage to register.
+	 */
 	@SubscribeEvent
 	public void onEntityAttack(AttackEntityEvent event) {
 		if (!event.entity.worldObj.isRemote) {
@@ -735,6 +760,13 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 		}
 	}
 
+	/**
+	 * Switch tools as long as all criteria hold.
+	 * Criteria include various levels of enabled.
+	 * @param world The relevant World object
+	 * @param pos The position of the block within the World
+	 * @return true if switching actually happened error-free, false otherwise
+	 */
 	public boolean potentiallySwitchTools(World world, BlockPos pos) {
 		if (pulseOn == isToggleEnabled(Configuration.DEFAULT_ENABLED.getDefaultToggleIndex())
 				|| mc.playerController.isInCreativeMode()
@@ -756,6 +788,13 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 		}
 	}
 
+	/**
+	 * Switch weapons as long as all criteria hold.
+	 * Criteria include various levels of enabled.
+	 * Also changes the state of the TDAI.
+	 * @param entity The EntityLivingBase against which we're switching
+	 * @return true if switching actually happened error-free, false otherwise
+	 */
 	public boolean potentiallySwitchWeapons(EntityLivingBase entity) {
 		if (pulseOn == isToggleEnabled(Configuration.DEFAULT_ENABLED.getDefaultToggleIndex())
 				|| mc.playerController.isInCreativeMode()
@@ -780,6 +819,9 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 		}
 	}
 
+	/**
+	 * Switch items back to the previous item, the one from before switching
+	 */
 	private void switchBack() {
 		if (switchback) {
 			mc.thePlayer.inventory.currentItem = prevtool;
@@ -788,14 +830,25 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 		}
 	}
 	
+	/**
+	 * Returns a UniqueIdentifier for a particular item, accordinate to GameData
+	 */
 	public static UniqueIdentifier findUniqueIdentifierFor(Item item){
 		return new UniqueIdentifier(GameData.getItemRegistry().getNameForObject(item));
 	}
 	
+	/**
+	 * Returns a UniqueIdentifier for a particular block, according to GameData
+	 */
 	public static UniqueIdentifier findUniqueIdentifierFor(Block block){
 		return new UniqueIdentifier(GameData.getBlockRegistry().getNameForObject(block));
 	}
 
+	/**
+	 * If switching actually happens, go ahead and switch to the best tool.
+	 * @param world The relevant World object
+	 * @param pos The location of the block against which we're switching
+	 */
 	private void switchToBestTool(World world, BlockPos pos) {
 
 		Block block = world.getBlockState(pos).getBlock();
@@ -844,6 +897,10 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 		}
 	}
 
+	/**
+	 * If switching actually happens, go ahead and switch to the best weapon.
+	 * @param entity The entity against which we're switching
+	 */
 	private void switchToBestWeapon(EntityPlayer entityplayer,
 			EntityLivingBase entityover) {
 
@@ -883,6 +940,10 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 		}
 	}
 
+	/**
+	 * Actually switch tools to a given slot, and do the necessary storage and debug routines
+	 * @param n The slot to which we must switch
+	 */
 	private void switchToolsToN(int n) {
 		EntityPlayer entityplayer = mc.thePlayer;
 		entityplayer.inventory.currentItem = n;
