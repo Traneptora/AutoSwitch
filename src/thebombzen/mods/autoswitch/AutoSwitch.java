@@ -42,7 +42,7 @@ import thebombzen.mods.thebombzenapi.ThebombzenAPIBaseMod;
  * @author thebombzen
  */
 @SideOnly(Side.CLIENT)
-@Mod(modid = "autoswitch", name = "AutoSwitch", version = Constants.VERSION, dependencies = "required-after:thebombzenapi", guiFactory = "thebombzen.mods.autoswitch.configuration.ConfigGuiFactory", clientSideOnly = true)
+@Mod(modid = "autoswitch", name = "AutoSwitch", version = Constants.VERSION, dependencies = "required-after:thebombzenapi", guiFactory = "thebombzen.mods.autoswitch.configuration.ConfigGuiFactory", clientSideOnly = true, acceptedMinecraftVersions = "[1.8, 1.9)")
 public class AutoSwitch extends ThebombzenAPIBaseMod {
 
 	/**
