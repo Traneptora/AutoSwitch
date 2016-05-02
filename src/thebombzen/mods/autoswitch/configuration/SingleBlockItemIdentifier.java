@@ -9,6 +9,7 @@ import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
+import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.fml.common.registry.GameData;
 import net.minecraftforge.fml.common.registry.GameRegistry;
 import thebombzen.mods.thebombzenapi.ThebombzenAPI;
@@ -282,7 +283,7 @@ public class SingleBlockItemIdentifier implements BooleanTester<SingleValueIdent
 	 * null if this is not a block.
 	 */
 	public Block getBlock() {
-		Block block = GameData.getBlockRegistry().getObject(modid + ":" + name);
+		Block block = GameData.getBlockRegistry().getObject(new ResourceLocation(modid + ":" + name));
 		if (GameRegistry.findUniqueIdentifierFor(block).toString().equals("minecraft:air")){
 			return null;
 		} else {
@@ -302,7 +303,7 @@ public class SingleBlockItemIdentifier implements BooleanTester<SingleValueIdent
 	 * will return the corresponding ItemBlock.
 	 */
 	public Item getItem() {
-		return GameData.getItemRegistry().getObject(modid + ":" + name);
+		return GameData.getItemRegistry().getObject(new ResourceLocation(modid + ":" + name));
 	}
 	
 	/**
