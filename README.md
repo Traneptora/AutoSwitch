@@ -1,7 +1,4 @@
-AutoSwitch
-==========
-
-#### AutoSwitch Minecraft Mod ####
+# AutoSwitch Minecraft Mod #
 
 AutoSwitch is a very advanced mod that automatically switches your tools and weapons.
 
