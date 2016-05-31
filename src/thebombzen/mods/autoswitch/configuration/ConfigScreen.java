@@ -34,7 +34,6 @@ public class ConfigScreen extends ThebombzenAPIConfigScreen {
 		}
 	}
 
-	@SuppressWarnings("unchecked")
 	@Override
 	public void initGui() {
 		super.initGui();

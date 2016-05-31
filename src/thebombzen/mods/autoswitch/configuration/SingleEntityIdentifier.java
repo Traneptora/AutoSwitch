@@ -3,7 +3,7 @@ package thebombzen.mods.autoswitch.configuration;
 import net.minecraft.entity.EntityList;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.util.StatCollector;
+import net.minecraft.util.text.translation.I18n;
 import thebombzen.mods.thebombzenapi.ThebombzenAPI;
 import thebombzen.mods.thebombzenapi.configuration.BooleanTester;
 import thebombzen.mods.thebombzenapi.configuration.ConfigFormatException;
@@ -56,7 +56,7 @@ public class SingleEntityIdentifier implements BooleanTester<EntityLivingBase> {
 				String listName =  EntityList.getEntityString(c);
 				if (listName.toLowerCase().equals(name)){
 					return true;
-				} else if (StatCollector.translateToLocal("entity."+listName+".name").toLowerCase().equals(name)){
+				} else if (I18n.translateToLocal("entity."+listName+".name").toLowerCase().equals(name)){
 					return true;
 				} else {
 					return false;

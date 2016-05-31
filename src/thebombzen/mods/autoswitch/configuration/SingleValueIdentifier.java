@@ -1,9 +1,10 @@
 package thebombzen.mods.autoswitch.configuration;
 
+import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
+import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
-import net.minecraftforge.fml.common.registry.GameRegistry;
-import net.minecraftforge.fml.common.registry.GameRegistry.UniqueIdentifier;
+import net.minecraft.util.ResourceLocation;
 import thebombzen.mods.autoswitch.AutoSwitch;
 
 public class SingleValueIdentifier {
@@ -47,24 +48,24 @@ public class SingleValueIdentifier {
 		if (isItem && itemStack == null){
 			return null;
 		}
-		return getUniqueIdentifier().modId;
+		return getUniqueIdentifier().getResourceDomain();
 	}
 	
 	public String getName(){
 		if (isItem && itemStack == null){
 			return null;
 		}
-		return getUniqueIdentifier().name;
+		return getUniqueIdentifier().getResourcePath();
 	}
 	
-	public UniqueIdentifier getUniqueIdentifier(){
+	public ResourceLocation getUniqueIdentifier(){
 		if (isItem){
 			if (itemStack == null){
 				return null;
 			}
-			return GameRegistry.findUniqueIdentifierFor(itemStack.getItem());
+			return Item.itemRegistry.getNameForObject(itemStack.getItem());
 		} else {
-			return GameRegistry.findUniqueIdentifierFor(block.getBlock());
+			return Block.blockRegistry.getNameForObject(block.getBlock());
 		}
 	}
 	

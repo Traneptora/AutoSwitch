@@ -2,9 +2,9 @@ package thebombzen.mods.autoswitch;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
 import java.util.Set;
@@ -17,17 +17,18 @@ import net.minecraft.enchantment.EnchantmentHelper;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.SharedMonsterAttributes;
+import net.minecraft.init.Enchantments;
+import net.minecraft.inventory.EntityEquipmentSlot;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.ItemSword;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.potion.Potion;
-import net.minecraft.util.BlockPos;
-import net.minecraft.util.MathHelper;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.World;
 import net.minecraftforge.common.ForgeHooks;
 import net.minecraftforge.fml.common.Loader;
-import net.minecraftforge.fml.common.registry.GameRegistry;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 import thebombzen.mods.autoswitch.configuration.Configuration;
@@ -141,10 +142,10 @@ public final class Tests {
 		prevHeldItem = mc.thePlayer.inventory.mainInventory[mc.thePlayer.inventory.currentItem];
 		mc.thePlayer.inventory.mainInventory[mc.thePlayer.inventory.currentItem] = itemstack;
 		if (prevHeldItem != null) {
-			mc.thePlayer.getAttributeMap().removeAttributeModifiers(prevHeldItem.getAttributeModifiers());
+			mc.thePlayer.getAttributeMap().removeAttributeModifiers(prevHeldItem.getAttributeModifiers(EntityEquipmentSlot.MAINHAND));
 		}
 		if (itemstack != null) {
-			mc.thePlayer.getAttributeMap().applyAttributeModifiers(itemstack.getAttributeModifiers());
+			mc.thePlayer.getAttributeMap().applyAttributeModifiers(itemstack.getAttributeModifiers(EntityEquipmentSlot.MAINHAND));
 		}
 	}
 
@@ -183,20 +184,16 @@ public final class Tests {
 		if (blockState == null) {
 			return 0;
 		} else {
-			return blockState.getBlock().getBlockHardness(world, pos);
+			return blockState.getBlock().getBlockHardness(blockState, world, pos);
 		}
 	}
 
 	public static float getBlockStrength(ItemStack itemstack, World world, BlockPos pos) {
 		IBlockState blockState = world.getBlockState(pos);
 		fakeItemForPlayer(itemstack);
-		float str = blockState.getBlock().getPlayerRelativeBlockHardness(mc.thePlayer, world, pos);
+		float str = blockState.getBlock().getPlayerRelativeBlockHardness(blockState, mc.thePlayer, world, pos);
 		unFakeItemForPlayer();
 		return str;
-	}
-	
-	public static float getDigSpeed(ItemStack itemstack, IBlockState blockState) {
-		return itemstack == null ? 1.0F : itemstack.getItem().getDigSpeed(itemstack, blockState);
 	}
 	
 	public static float getEff(float str, ItemStack itemstack) {
@@ -221,7 +218,7 @@ public final class Tests {
 			return 2;
 		}
 		fakeItemForPlayer(null);
-		boolean noTool = mc.thePlayer.canHarvestBlock(blockState.getBlock());
+		boolean noTool = mc.thePlayer.canHarvestBlock(blockState);
 		unFakeItemForPlayer();
 		if (noTool){
 			return 0;
@@ -262,18 +259,15 @@ public final class Tests {
 					mc.thePlayer, entity);
 		}
 		damage += earlyModDamage;
-		if (mc.thePlayer.isPotionActive(Potion.damageBoost)) {
-			damage += 3 << mc.thePlayer.getActivePotionEffect(
-					Potion.damageBoost).getAmplifier();
+		if (mc.thePlayer.isPotionActive(Potion.getPotionFromResourceLocation("strength"))) {
+			damage += 3 << mc.thePlayer.getActivePotionEffect(Potion.getPotionFromResourceLocation("strength")).getAmplifier();
 		}
-		if (mc.thePlayer.isPotionActive(Potion.weakness)) {
-			damage -= 2 << mc.thePlayer.getActivePotionEffect(Potion.weakness)
-					.getAmplifier();
+		if (mc.thePlayer.isPotionActive(Potion.getPotionFromResourceLocation("weakness"))) {
+			damage -= 2 << mc.thePlayer.getActivePotionEffect(Potion.getPotionFromResourceLocation("weakness")).getAmplifier();
 		}
 		float enchantDamage = 0;
 		if (entity instanceof EntityLivingBase) {
-			// getEnchantmentModifierDamage or getEnchantmentModifierLiving
-			enchantDamage = EnchantmentHelper.func_152377_a(stack, entity.getCreatureAttribute());
+			enchantDamage = EnchantmentHelper.getModifierForCreature(stack, entity.getCreatureAttribute());
 		}
 		damage += stoneboundDamage;
 		if (damage < 1) {
@@ -298,8 +292,8 @@ public final class Tests {
 			boolean criticalHit = mc.thePlayer.fallDistance > 0.0F
 					&& !mc.thePlayer.onGround && !mc.thePlayer.isOnLadder()
 					&& !mc.thePlayer.isInWater()
-					&& !mc.thePlayer.isPotionActive(Potion.blindness)
-					&& mc.thePlayer.ridingEntity == null;
+					&& !mc.thePlayer.isPotionActive(Potion.getPotionFromResourceLocation("blindness"))
+					&& !mc.thePlayer.isRiding();
 			for (Object activeToolMod : activeModifiers) {
 				if (ThebombzenAPI.invokePrivateMethod(activeToolMod,
 						activeToolModClass, "doesCriticalHit", new Class<?>[] {
@@ -337,17 +331,17 @@ public final class Tests {
 				.getCustomWeaponDamage(itemStack, entity);
 		if (damage < 0) {
 			damage = mc.thePlayer.getEntityAttribute(
-					SharedMonsterAttributes.attackDamage).getAttributeValue();
+					SharedMonsterAttributes.ATTACK_DAMAGE).getAttributeValue();
 		}
 		// getEnchantmentModifierDamage or getEnchantmentModifierLiving
-		double enchDamage = EnchantmentHelper.func_152377_a(itemStack, entity.getCreatureAttribute());
+		double enchDamage = EnchantmentHelper.getModifierForCreature(itemStack, entity.getCreatureAttribute());
 
 		if (damage > 0.0D || enchDamage > 0.0D) {
 			boolean critical = mc.thePlayer.fallDistance > 0.0F
 					&& !mc.thePlayer.onGround && !mc.thePlayer.isOnLadder()
 					&& !mc.thePlayer.isInWater()
-					&& !mc.thePlayer.isPotionActive(Potion.blindness)
-					&& mc.thePlayer.ridingEntity == null;
+					&& !mc.thePlayer.isPotionActive(Potion.getPotionFromResourceLocation("blindness"))
+					&& !mc.thePlayer.isRiding();
 
 			if (critical && damage > 0) {
 
@@ -372,12 +366,10 @@ public final class Tests {
 		}
 		return Tests.getFullRegularItemStackDamage(itemStack, entity);
 	}
-
-	@SuppressWarnings("unchecked")
+	
 	public static Set<Enchantment> getNonstandardNondamageEnchantmentsOnBothStacks(
 			ItemStack stack1, ItemStack stack2) {
-		Set<Integer> bothItemsEnchantments = new HashSet<Integer>();
-		Set<Enchantment> ret = new HashSet<Enchantment>();
+		Set<Enchantment> bothItemsEnchantments = new HashSet<Enchantment>();
 
 		if (stack1 != null) {
 			bothItemsEnchantments.addAll(EnchantmentHelper.getEnchantments(
@@ -388,34 +380,23 @@ public final class Tests {
 					stack2).keySet());
 		}
 
-		Iterator<Integer> bothItemsEnchantmentsIterator = bothItemsEnchantments
-				.iterator();
+		List<Enchantment> standardEnchantments = new ArrayList<Enchantment>();
+		Field[] fields = Enchantments.class.getFields();
 		
-		while (bothItemsEnchantmentsIterator.hasNext()) {
-			Integer effectId = bothItemsEnchantmentsIterator.next();
-
-			if (effectId == Enchantment.efficiency.effectId
-					|| effectId == Enchantment.silkTouch.effectId
-					|| effectId == Enchantment.fortune.effectId
-					|| effectId == Enchantment.unbreaking.effectId
-					|| effectId == Enchantment.looting.effectId
-					|| effectId == Enchantment.knockback.effectId
-					|| effectId == Enchantment.fireAspect.effectId
-					|| effectId == Enchantment.luckOfTheSea.effectId
-					|| effectId == Enchantment.lure.effectId) {
-				continue;
+		for (Field field : fields){
+			if (field.getType().equals(Enchantment.class)){
+				try {
+					standardEnchantments.add((Enchantment)field.get(null));
+				} catch (IllegalAccessException e) {
+					// This should not happen.
+					throw new FieldNotFoundException(e);
+				}
 			}
-
-			if (Enchantment.getEnchantmentById(effectId).getName().startsWith(
-					"enchantment.damage.")) {
-				continue;
-			}
-
-			ret.add(Enchantment.getEnchantmentById(effectId));
-
 		}
 
-		return ret;
+		bothItemsEnchantments.removeAll(standardEnchantments);
+
+		return bothItemsEnchantments;
 	}
 	
 	private static int getToolOverrideStandardness(ItemStack itemstack, World world, BlockPos pos) {
@@ -500,7 +481,7 @@ public final class Tests {
 		if (itemstack.getItem() instanceof ItemSword){
 			return true;
 		}
-		String name = GameRegistry.findUniqueIdentifierFor(itemstack.getItem()).name.toLowerCase();
+		String name = Item.itemRegistry.getNameForObject(itemstack.getItem()).toString();
 		if (name.endsWith("sword")){
 			return true;
 		}
@@ -512,11 +493,11 @@ public final class Tests {
 		mc.thePlayer.inventory.mainInventory[mc.thePlayer.inventory.currentItem] = prevHeldItem;
 		if (fakedStack != null) {
 			mc.thePlayer.getAttributeMap().removeAttributeModifiers(
-					fakedStack.getAttributeModifiers());
+					fakedStack.getAttributeModifiers(EntityEquipmentSlot.MAINHAND));
 		}
 		if (prevHeldItem != null) {
 			mc.thePlayer.getAttributeMap().applyAttributeModifiers(
-					prevHeldItem.getAttributeModifiers());
+					prevHeldItem.getAttributeModifiers(EntityEquipmentSlot.MAINHAND));
 		}
 	}
 	

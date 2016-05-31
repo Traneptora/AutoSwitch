@@ -10,11 +10,14 @@ import net.minecraft.enchantment.Enchantment;
 import net.minecraft.enchantment.EnchantmentHelper;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.init.Enchantments;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
-import net.minecraft.util.BlockPos;
-import net.minecraft.util.MathHelper;
-import net.minecraft.util.MovingObjectPosition.MovingObjectType;
+import net.minecraft.util.EnumHand;
+import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.MathHelper;
+import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.world.World;
 import net.minecraftforge.client.event.ClientChatReceivedEvent;
 import net.minecraftforge.common.MinecraftForge;
@@ -26,8 +29,6 @@ import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent.ClientTickEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent.Phase;
-import net.minecraftforge.fml.common.registry.GameData;
-import net.minecraftforge.fml.common.registry.GameRegistry.UniqueIdentifier;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 import thebombzen.mods.autoswitch.configuration.Configuration;
@@ -42,7 +43,7 @@ import thebombzen.mods.thebombzenapi.ThebombzenAPIBaseMod;
  * @author thebombzen
  */
 @SideOnly(Side.CLIENT)
-@Mod(modid = "autoswitch", name = "AutoSwitch", version = Constants.VERSION, dependencies = "required-after:thebombzenapi", guiFactory = "thebombzen.mods.autoswitch.configuration.ConfigGuiFactory", clientSideOnly = true, acceptedMinecraftVersions = "[1.8, 1.9)")
+@Mod(modid = "autoswitch", name = "AutoSwitch", version = Constants.VERSION, dependencies = "required-after:thebombzenapi", guiFactory = "thebombzen.mods.autoswitch.configuration.ConfigGuiFactory", clientSideOnly = true, acceptedMinecraftVersions = "[1.9, 1.10)")
 public class AutoSwitch extends ThebombzenAPIBaseMod {
 
 	/**
@@ -121,7 +122,7 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 	 */
 	@SubscribeEvent
 	public void clientChat(ClientChatReceivedEvent event){
-		String text = event.message.getUnformattedText();
+		String text = event.getMessage().getUnformattedText();
 		if (text.equals(configuration.getStringProperty(Configuration.TREEFELLER_READY_AXE))){
 			treefellerOn = true;
 		} else if (text.matches(configuration.getStringProperty(Configuration.TREEFELLER_READY_OTHER))) {
@@ -158,7 +159,7 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 
 		// If we canceled the attack last tick, then go ahead and attack now.
 		if (entityAttackStage == STAGE_CANCELED) {
-			mc.thePlayer.swingItem();
+			mc.thePlayer.swingArm(EnumHand.MAIN_HAND);;
 			mc.playerController.attackEntity(mc.thePlayer, entitySwitchedOn);
 			entityAttackStage = STAGE_H0;
 			entitySwitchedOn = null;
@@ -176,11 +177,10 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 		}
 		if (mouseDown) {
 			if (mc.objectMouseOver != null
-					&& mc.objectMouseOver.typeOfHit == MovingObjectType.BLOCK) {
-				
+					&& mc.objectMouseOver.typeOfHit == RayTraceResult.Type.BLOCK) {
 				potentiallySwitchTools(mc.theWorld, mc.objectMouseOver.getBlockPos());
 			} else if (mc.objectMouseOver != null
-					&& mc.objectMouseOver.typeOfHit == MovingObjectType.ENTITY
+					&& mc.objectMouseOver.typeOfHit == RayTraceResult.Type.ENTITY
 					&& mc.objectMouseOver.entityHit instanceof EntityLivingBase) {
 				potentiallySwitchWeapons((EntityLivingBase) mc.objectMouseOver.entityHit);
 			}
@@ -267,7 +267,6 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 
 	@Override
 	public void init1(FMLPreInitializationEvent event) {
-		FMLCommonHandler.instance().bus().register(this);
 		MinecraftForge.EVENT_BUS.register(this);
 		configuration = new Configuration(this);
 		FMLCommonHandler.instance().findContainerFor(this).getMetadata().authorList = Arrays.asList("Thebombzen");
@@ -286,7 +285,7 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 
 		IBlockState blockState = world.getBlockState(pos);
 		
-		if (blockState.getBlock().isAir(world, pos)){
+		if (blockState.getBlock().isAir(blockState, world, pos)){
 			debug("Not switching because air.");
 			return false;
 		}
@@ -351,9 +350,9 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 
 		boolean silkWorks = Tests.doesSilkTouchWorkOnBlock(world, pos);
 		boolean newHasSilk = EnchantmentHelper.getEnchantmentLevel(
-				Enchantment.silkTouch.effectId, newItemStack) > 0;
+				Enchantments.silkTouch, newItemStack) > 0;
 		boolean oldHasSilk = EnchantmentHelper.getEnchantmentLevel(
-				Enchantment.silkTouch.effectId, oldItemStack) > 0;
+				Enchantments.silkTouch, oldItemStack) > 0;
 		
 		if (configuration.shouldIgnoreSilkTouch(blockState)){
 			debug("Ignoring Silk Touch.");
@@ -392,9 +391,9 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 
 		boolean fortuneWorks = Tests.doesFortuneWorkOnBlock(world, pos);
 		int newFortuneLevel = EnchantmentHelper.getEnchantmentLevel(
-				Enchantment.fortune.effectId, newItemStack);
+				Enchantments.fortune, newItemStack);
 		int oldFortuneLevel = EnchantmentHelper.getEnchantmentLevel(
-				Enchantment.fortune.effectId, oldItemStack);
+				Enchantments.fortune, oldItemStack);
 
 		if (configuration.shouldIgnoreFortune(blockState)){
 			debug("Ignoring Fortune.");
@@ -464,9 +463,9 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 
 		for (Enchantment enchantment : bothItemsEnchantments) {
 			int oldLevel = EnchantmentHelper.getEnchantmentLevel(
-					enchantment.effectId, oldItemStack);
+					enchantment, oldItemStack);
 			int newLevel = EnchantmentHelper.getEnchantmentLevel(
-					enchantment.effectId, newItemStack);
+					enchantment, newItemStack);
 			if (newLevel > oldLevel) {
 				debug("Switching because new %s level, %d, is more than old, %d.",
 						enchantment.getName(), newLevel, oldLevel);
@@ -496,9 +495,9 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 			}
 
 			int newUnbreakingLevel = EnchantmentHelper.getEnchantmentLevel(
-					Enchantment.unbreaking.effectId, newItemStack);
+					Enchantments.unbreaking, newItemStack);
 			int oldUnbreakingLevel = EnchantmentHelper.getEnchantmentLevel(
-					Enchantment.unbreaking.effectId, oldItemStack);
+					Enchantments.unbreaking, oldItemStack);
 
 			if (newUnbreakingLevel > oldUnbreakingLevel) {
 				debug("Switching because new unbreaking is more than old unbreaking.");
@@ -614,22 +613,22 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 		}
 
 		int newLootingLevel = EnchantmentHelper.getEnchantmentLevel(
-				Enchantment.looting.effectId, newItemStack);
+				Enchantments.looting, newItemStack);
 		int newFireAspectLevel = EnchantmentHelper.getEnchantmentLevel(
-				Enchantment.fireAspect.effectId, newItemStack);
+				Enchantments.fireAspect, newItemStack);
 		int newKnockbackLevel = EnchantmentHelper.getEnchantmentLevel(
-				Enchantment.knockback.effectId, newItemStack);
+				Enchantments.knockback, newItemStack);
 		int newUnbreakingLevel = EnchantmentHelper.getEnchantmentLevel(
-				Enchantment.unbreaking.effectId, newItemStack);
+				Enchantments.unbreaking, newItemStack);
 
 		int oldLootingLevel = EnchantmentHelper.getEnchantmentLevel(
-				Enchantment.looting.effectId, oldItemStack);
+				Enchantments.looting, oldItemStack);
 		int oldFireAspectLevel = EnchantmentHelper.getEnchantmentLevel(
-				Enchantment.fireAspect.effectId, oldItemStack);
+				Enchantments.fireAspect, oldItemStack);
 		int oldKnockbackLevel = EnchantmentHelper.getEnchantmentLevel(
-				Enchantment.knockback.effectId, oldItemStack);
+				Enchantments.knockback, oldItemStack);
 		int oldUnbreakingLevel = EnchantmentHelper.getEnchantmentLevel(
-				Enchantment.unbreaking.effectId, oldItemStack);
+				Enchantments.unbreaking, oldItemStack);
 
 		if (!isPlayer) {
 			if (newLootingLevel > oldLootingLevel) {
@@ -669,9 +668,9 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 
 		for (Enchantment enchantment : bothItemsEnchantments) {
 			int oldLevel = EnchantmentHelper.getEnchantmentLevel(
-					enchantment.effectId, oldItemStack);
+					enchantment, oldItemStack);
 			int newLevel = EnchantmentHelper.getEnchantmentLevel(
-					enchantment.effectId, newItemStack);
+					enchantment, newItemStack);
 			if (newLevel > oldLevel) {
 				debug("Switching because new %s level, %d, is more than old, %d.",
 						enchantment.getName(), newLevel, oldLevel);
@@ -747,11 +746,11 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 	 */
 	@SubscribeEvent
 	public void onEntityAttack(AttackEntityEvent event) {
-		if (!event.entity.worldObj.isRemote) {
+		if (!event.getEntity().worldObj.isRemote) {
 			return;
 		}
 		if (entityAttackStage == STAGE_SWITCHED
-				&& entitySwitchedOn == event.target) {
+				&& entitySwitchedOn == event.getTarget()) {
 			entityAttackStage = STAGE_CANCELED;
 			event.setCanceled(true);
 		} else if (entityAttackStage != STAGE_CANCELED) {
@@ -833,15 +832,15 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 	/**
 	 * Returns a UniqueIdentifier for a particular item, accordinate to GameData
 	 */
-	public static UniqueIdentifier findUniqueIdentifierFor(Item item){
-		return new UniqueIdentifier(GameData.getItemRegistry().getNameForObject(item));
+	public static ResourceLocation findUniqueIdentifierFor(Item item){
+		return Item.itemRegistry.getNameForObject(item);
 	}
 	
 	/**
 	 * Returns a UniqueIdentifier for a particular block, according to GameData
 	 */
-	public static UniqueIdentifier findUniqueIdentifierFor(Block block){
-		return new UniqueIdentifier(GameData.getBlockRegistry().getNameForObject(block));
+	public static ResourceLocation findUniqueIdentifierFor(Block block){
+		return Block.blockRegistry.getNameForObject(block);
 	}
 
 	/**
@@ -852,9 +851,9 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 	private void switchToBestTool(World world, BlockPos pos) {
 
 		Block block = world.getBlockState(pos).getBlock();
-		UniqueIdentifier id = findUniqueIdentifierFor(block);
+		ResourceLocation location = findUniqueIdentifierFor(block);
 
-		String name = String.format("%s:%s", id.modId, id.name);
+		String name = location.toString();
 
 		debug("Testing vs block %s", name);
 		String[] names = new String[9];
@@ -862,8 +861,8 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 			if (mc.thePlayer.inventory.mainInventory[i] == null) {
 				names[i] = "null";
 			} else {
-				UniqueIdentifier itemID = findUniqueIdentifierFor(mc.thePlayer.inventory.mainInventory[i].getItem());
-				names[i] = String.format("%s:%s", itemID.modId, itemID.name);
+				ResourceLocation itemLocation = findUniqueIdentifierFor(mc.thePlayer.inventory.mainInventory[i].getItem());
+				names[i] = itemLocation.toString();
 			}
 			debug("Hotbar slot %d contains item %s", i, names[i]);
 		}
@@ -911,9 +910,9 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 			if (mc.thePlayer.inventory.mainInventory[i] == null) {
 				names[i] = "null";
 			} else {
-				UniqueIdentifier itemID = findUniqueIdentifierFor(mc.thePlayer.inventory.mainInventory[i]
+				ResourceLocation itemLocation = findUniqueIdentifierFor(mc.thePlayer.inventory.mainInventory[i]
 								.getItem());
-				names[i] = String.format("%s:%s", itemID.modId, itemID.name);
+				names[i] = itemLocation.toString();
 			}
 			debug("Hotbar slot %d contains item %s", i, names[i]);
 		}
@@ -951,9 +950,9 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 		if (entityplayer.inventory.mainInventory[n] == null) {
 			name = "Nothing";
 		} else {
-			UniqueIdentifier id = findUniqueIdentifierFor(entityplayer.inventory.mainInventory[n]
+			ResourceLocation itemLocation = findUniqueIdentifierFor(entityplayer.inventory.mainInventory[n]
 							.getItem());
-			name = id.modId + ":" + id.name;
+			name = itemLocation.toString();
 		}
 		debug("Switching tools to %d, which is %s", n, name);
 	}

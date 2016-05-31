@@ -1,17 +1,15 @@
 package thebombzen.mods.autoswitch.configuration;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Scanner;
 
 import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
+import net.minecraft.init.Blocks;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.ResourceLocation;
-import net.minecraftforge.fml.common.registry.GameData;
-import net.minecraftforge.fml.common.registry.GameRegistry;
 import thebombzen.mods.thebombzenapi.ThebombzenAPI;
 import thebombzen.mods.thebombzenapi.configuration.BooleanTester;
 import thebombzen.mods.thebombzenapi.configuration.ConfigFormatException;
@@ -112,8 +110,7 @@ public class SingleBlockItemIdentifier implements BooleanTester<SingleValueIdent
 			return new SingleBlockItemIdentifier(SingleBlockItemIdentifier.NAME, modid, name, 0, sets);
 		}
 	}
-	private String modid;
-	private String name;
+	private ResourceLocation resourceLocation;
 	private ValueSet[] valueSets;
 
 	private int type;
@@ -142,8 +139,7 @@ public class SingleBlockItemIdentifier implements BooleanTester<SingleValueIdent
 		}
 		this.superNum = superNum;
 		this.type = type;
-		this.modid = namespace;
-		this.name = name;
+		this.resourceLocation = new ResourceLocation(namespace + ":" + name);
 		if (damageValues.length == 0 || damageValues.length > 0 && damageValues[0].doesSubtract()){
 			ValueSet[] temp = new ValueSet[damageValues.length + 1];
 			System.arraycopy(damageValues, 0, temp, 1, damageValues.length);
@@ -225,7 +221,7 @@ public class SingleBlockItemIdentifier implements BooleanTester<SingleValueIdent
 			if (blockState == null || getBlock() == null){
 				return false;
 			}
-			if (!getBlock().getMaterial().equals(blockState.getBlock().getMaterial())){
+			if (!getBlock().getMaterial(blockState).equals(blockState.getBlock().getMaterial(blockState))){
 				return false;
 			}
 			break;
@@ -249,42 +245,14 @@ public class SingleBlockItemIdentifier implements BooleanTester<SingleValueIdent
 		}
 		return false;
 	}
-	
-	@Override
-	public boolean equals(Object obj) {
-		if (this == obj)
-			return true;
-		if (obj == null)
-			return false;
-		if (getClass() != obj.getClass())
-			return false;
-		SingleBlockItemIdentifier other = (SingleBlockItemIdentifier) obj;
-		if (modid == null) {
-			if (other.modid != null)
-				return false;
-		} else if (!modid.equals(other.modid))
-			return false;
-		if (name == null) {
-			if (other.name != null)
-				return false;
-		} else if (!name.equals(other.name))
-			return false;
-		if (superNum != other.superNum)
-			return false;
-		if (type != other.type)
-			return false;
-		if (!Arrays.equals(valueSets, other.valueSets))
-			return false;
-		return true;
-	}
 
 	/**
 	 * Gets the block associated with this identifier.
 	 * null if this is not a block.
 	 */
 	public Block getBlock() {
-		Block block = GameData.getBlockRegistry().getObject(new ResourceLocation(modid + ":" + name));
-		if (GameRegistry.findUniqueIdentifierFor(block).toString().equals("minecraft:air")){
+		Block block = Block.getBlockFromName(resourceLocation.toString());
+		if (Block.isEqualTo(block, Blocks.air)){
 			return null;
 		} else {
 			return block;
@@ -303,7 +271,7 @@ public class SingleBlockItemIdentifier implements BooleanTester<SingleValueIdent
 	 * will return the corresponding ItemBlock.
 	 */
 	public Item getItem() {
-		return GameData.getItemRegistry().getObject(new ResourceLocation(modid + ":" + name));
+		return Item.getByNameOrId(resourceLocation.toString());
 	}
 	
 	/**
@@ -311,14 +279,14 @@ public class SingleBlockItemIdentifier implements BooleanTester<SingleValueIdent
 	 * @return
 	 */
 	public String getModId(){
-		return modid;
+		return resourceLocation.getResourceDomain();
 	}
 	
 	/**
 	 * Gets the String name of this item/block
 	 */
 	public String getName(){
-		return name;
+		return resourceLocation.getResourcePath();
 	}
 
 	/**

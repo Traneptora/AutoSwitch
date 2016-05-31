@@ -3,6 +3,8 @@ package thebombzen.mods.autoswitch.configuration;
 import java.util.Iterator;
 import java.util.Scanner;
 
+import com.google.common.collect.ImmutableMap;
+
 import net.minecraft.block.properties.IProperty;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.enchantment.Enchantment;
@@ -12,8 +14,6 @@ import thebombzen.mods.autoswitch.AutoSwitch;
 import thebombzen.mods.thebombzenapi.ThebombzenAPI;
 import thebombzen.mods.thebombzenapi.configuration.BooleanTester;
 import thebombzen.mods.thebombzenapi.configuration.ConfigFormatException;
-
-import com.google.common.collect.ImmutableMap;
 
 
 /**
@@ -64,7 +64,7 @@ public class ValueSet implements BooleanTester<SingleValueIdentifier> {
 				}
 				firsts = num;
 			}
-			if (enchant && Enchantment.getEnchantmentById(firstn) == null){
+			if (enchant && Enchantment.getEnchantmentByID(firstn) == null){
 				scanner.close();
 				throw new ConfigFormatException("Invalid Enchantment ID: " + firstn);
 			}
@@ -91,7 +91,7 @@ public class ValueSet implements BooleanTester<SingleValueIdentifier> {
 				throw new ConfigFormatException("No value for property: " + firsts);
 			}
 			if (enchant){
-				return new ValueSet(Enchantment.getEnchantmentById(firstn), 1, Integer.MAX_VALUE, subtract);
+				return new ValueSet(Enchantment.getEnchantmentByID(firstn), 1, Integer.MAX_VALUE, subtract);
 			} else {
 				return new ValueSet(firstn, Integer.MAX_VALUE, subtract);
 			}
@@ -106,10 +106,10 @@ public class ValueSet implements BooleanTester<SingleValueIdentifier> {
 				} catch (NumberFormatException e){
 					throw new ConfigFormatException("Invalid number: " + num);
 				}
-				return new ValueSet(Enchantment.getEnchantmentById(firstn), secondn, thirdn, subtract);
+				return new ValueSet(Enchantment.getEnchantmentByID(firstn), secondn, thirdn, subtract);
 			} else {
 				scanner.close();
-				return new ValueSet(Enchantment.getEnchantmentById(firstn), secondn, Integer.MAX_VALUE, subtract);
+				return new ValueSet(Enchantment.getEnchantmentByID(firstn), secondn, Integer.MAX_VALUE, subtract);
 			}
 		} else {
 			scanner.close();
@@ -196,11 +196,10 @@ public class ValueSet implements BooleanTester<SingleValueIdentifier> {
 		if (state == null){
 			return false;
 		}
-		@SuppressWarnings("unchecked")
-		ImmutableMap<IProperty, ?> properties = state.getProperties();
-		Iterator<IProperty> iterator = properties.keySet().iterator();
+		ImmutableMap<IProperty<?>, Comparable<?>> properties = state.getProperties();
+		Iterator<IProperty<?>> iterator = properties.keySet().iterator();
 		while (iterator.hasNext()){
-			IProperty prop = iterator.next();
+			IProperty<?> prop = iterator.next();
 			if (prop.getName().equalsIgnoreCase(this.state) && properties.get(prop).toString().equalsIgnoreCase(this.value)){
 				return true;
 			}
@@ -225,7 +224,7 @@ public class ValueSet implements BooleanTester<SingleValueIdentifier> {
 			for (int i = 0; i < list.tagCount(); i++){
 				short id = list.getCompoundTagAt(i).getShort("id");
 				short lvl = list.getCompoundTagAt(i).getShort("lvl");
-				if (id == enchantment.effectId){
+				if (id == Enchantment.getEnchantmentID(enchantment)){
 					if (lvl >= min && lvl <= max){
 						return true;
 					} else {
@@ -287,7 +286,7 @@ public class ValueSet implements BooleanTester<SingleValueIdentifier> {
 			b.append('U');
 			break;
 		case ITEM_ENCHANTMENT:
-			b.append('E').append("0x").append(Integer.toHexString(enchantment.effectId)).append(":0x").append(Integer.toHexString(min)).append(":0x").append(Integer.toHexString(max));
+			b.append('E').append("0x").append(Integer.toHexString(Enchantment.getEnchantmentID(enchantment))).append(":0x").append(Integer.toHexString(min)).append(":0x").append(Integer.toHexString(max));
 			break;
 		case ITEM_DAMAGE:
 			b.append("0x").append(Integer.toHexString(data)).append(":0x").append(Integer.toHexString(mask));
