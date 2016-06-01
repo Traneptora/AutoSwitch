@@ -9,10 +9,20 @@ ARCHIVE=AutoSwitch-v$VERS-mc$MC_VERS.jar
 CURRDIR="$PWD"
 
 cd "$(dirname $0)"
+
 mkdir -p build
 cd build
 
 if [ ! -e gradlew ] ; then
+	cd ..
+	TMP=AutoSwitch
+	if [ -e AutoSwitch ] ; then
+		TMP=$(mktemp)
+		rm -f $TMP
+		mv AutoSwitch $TMP
+	fi
+	mv build AutoSwitch
+	cd AutoSwitch
 	wget http://files.minecraftforge.net/maven/net/minecraftforge/forge/$MDK/forge-$MDK-mdk.zip
 	unzip forge-$MDK-mdk.zip
 	./gradlew setupDecompWorkspace
@@ -25,6 +35,10 @@ if [ ! -e gradlew ] ; then
 	cd ../..
 	rm build.gradle
 	ln -s ../build.gradle
+	cd ..
+	mv AutoSwitch build
+	mv $TMP AutoSwitch 2>/dev/null || true
+	cd build
 fi
 
 ./gradlew build
