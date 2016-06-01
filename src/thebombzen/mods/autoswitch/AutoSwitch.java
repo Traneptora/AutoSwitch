@@ -349,9 +349,9 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 
 		boolean silkWorks = Tests.doesSilkTouchWorkOnBlock(world, pos);
 		boolean newHasSilk = EnchantmentHelper.getEnchantmentLevel(
-				Enchantments.silkTouch, newItemStack) > 0;
+				Enchantments.SILK_TOUCH, newItemStack) > 0;
 		boolean oldHasSilk = EnchantmentHelper.getEnchantmentLevel(
-				Enchantments.silkTouch, oldItemStack) > 0;
+				Enchantments.SILK_TOUCH, oldItemStack) > 0;
 		
 		if (configuration.shouldIgnoreSilkTouch(blockState)){
 			debug("Ignoring Silk Touch.");
@@ -390,9 +390,9 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 
 		boolean fortuneWorks = Tests.doesFortuneWorkOnBlock(world, pos);
 		int newFortuneLevel = EnchantmentHelper.getEnchantmentLevel(
-				Enchantments.fortune, newItemStack);
+				Enchantments.FORTUNE, newItemStack);
 		int oldFortuneLevel = EnchantmentHelper.getEnchantmentLevel(
-				Enchantments.fortune, oldItemStack);
+				Enchantments.FORTUNE, oldItemStack);
 
 		if (configuration.shouldIgnoreFortune(blockState)){
 			debug("Ignoring Fortune.");
@@ -494,9 +494,9 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 			}
 
 			int newUnbreakingLevel = EnchantmentHelper.getEnchantmentLevel(
-					Enchantments.unbreaking, newItemStack);
+					Enchantments.UNBREAKING, newItemStack);
 			int oldUnbreakingLevel = EnchantmentHelper.getEnchantmentLevel(
-					Enchantments.unbreaking, oldItemStack);
+					Enchantments.UNBREAKING, oldItemStack);
 
 			if (newUnbreakingLevel > oldUnbreakingLevel) {
 				debug("Switching because new unbreaking is more than old unbreaking.");
@@ -612,22 +612,22 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 		}
 
 		int newLootingLevel = EnchantmentHelper.getEnchantmentLevel(
-				Enchantments.looting, newItemStack);
+				Enchantments.LOOTING, newItemStack);
 		int newFireAspectLevel = EnchantmentHelper.getEnchantmentLevel(
-				Enchantments.fireAspect, newItemStack);
+				Enchantments.FIRE_ASPECT, newItemStack);
 		int newKnockbackLevel = EnchantmentHelper.getEnchantmentLevel(
-				Enchantments.knockback, newItemStack);
+				Enchantments.KNOCKBACK, newItemStack);
 		int newUnbreakingLevel = EnchantmentHelper.getEnchantmentLevel(
-				Enchantments.unbreaking, newItemStack);
+				Enchantments.UNBREAKING, newItemStack);
 
 		int oldLootingLevel = EnchantmentHelper.getEnchantmentLevel(
-				Enchantments.looting, oldItemStack);
+				Enchantments.LOOTING, oldItemStack);
 		int oldFireAspectLevel = EnchantmentHelper.getEnchantmentLevel(
-				Enchantments.fireAspect, oldItemStack);
+				Enchantments.FIRE_ASPECT, oldItemStack);
 		int oldKnockbackLevel = EnchantmentHelper.getEnchantmentLevel(
-				Enchantments.knockback, oldItemStack);
+				Enchantments.KNOCKBACK, oldItemStack);
 		int oldUnbreakingLevel = EnchantmentHelper.getEnchantmentLevel(
-				Enchantments.unbreaking, oldItemStack);
+				Enchantments.UNBREAKING, oldItemStack);
 
 		if (!isPlayer) {
 			if (newLootingLevel > oldLootingLevel) {
@@ -832,14 +832,14 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 	 * Returns a UniqueIdentifier for a particular item, accordinate to GameData
 	 */
 	public static ResourceLocation findUniqueIdentifierFor(Item item){
-		return Item.itemRegistry.getNameForObject(item);
+		return Item.REGISTRY.getNameForObject(item);
 	}
 	
 	/**
 	 * Returns a UniqueIdentifier for a particular block, according to GameData
 	 */
 	public static ResourceLocation findUniqueIdentifierFor(Block block){
-		return Block.blockRegistry.getNameForObject(block);
+		return Block.REGISTRY.getNameForObject(block);
 	}
 
 	/**
