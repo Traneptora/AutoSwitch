@@ -166,8 +166,7 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 		}
 
 		pulseOn = ThebombzenAPI.isExtendedKeyDown(configuration.getKeyCodeProperty(Configuration.PULSE_KEY));
-		int keyCode = mc.gameSettings.keyBindAttack.getKeyCode();
-		boolean mouseDown = ThebombzenAPI.isExtendedKeyDown(keyCode);
+		boolean mouseDown = mc.gameSettings.keyBindAttack.isKeyDown();
 		if (!mouseDown && prevMouseDown || mouseDown && pulseOn ^ prevPulse) {
 			switchBack();
 		}
