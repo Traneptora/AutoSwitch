@@ -1,8 +1,8 @@
 #!/bin/sh
 set -e
 
-VERS=5.2.3
-MC_VERS=1.8.9
+VERS=5.3.0
+MC_VERS=1.9
 
 cd $(dirname $0)
 ARCH=AutoSwitch-v$VERS-mc$MC_VERS.jar
