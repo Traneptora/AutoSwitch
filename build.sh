@@ -14,7 +14,7 @@ cd build
 
 if [ ! -e gradlew ] ; then
 	wget http://files.minecraftforge.net/maven/net/minecraftforge/forge/$MDK/forge-$MDK-mdk.zip
-	unzip forge-1.9.4-12.17.0.1937-mdk.zip
+	unzip forge-$MDK-mdk.zip
 	./gradlew setupDecompWorkspace
 	./gradlew eclipse
 	rm forge-$MDK-mdk.zip
