@@ -184,14 +184,14 @@ public final class Tests {
 		if (blockState == null) {
 			return 0;
 		} else {
-			return blockState.getBlockHardness(world, pos);
+			return blockState.getBlock().getBlockHardness(blockState, world, pos);
 		}
 	}
 
 	public static float getBlockStrength(ItemStack itemstack, World world, BlockPos pos) {
 		IBlockState blockState = world.getBlockState(pos);
 		fakeItemForPlayer(itemstack);
-		float str = blockState.getPlayerRelativeBlockHardness(mc.thePlayer, world, pos);
+		float str = blockState.getBlock().getPlayerRelativeBlockHardness(blockState, mc.thePlayer, world, pos);
 		unFakeItemForPlayer();
 		return str;
 	}
@@ -481,7 +481,7 @@ public final class Tests {
 		if (itemstack.getItem() instanceof ItemSword){
 			return true;
 		}
-		String name = Item.REGISTRY.getNameForObject(itemstack.getItem()).toString();
+		String name = Item.itemRegistry.getNameForObject(itemstack.getItem()).toString();
 		if (name.endsWith("sword")){
 			return true;
 		}
