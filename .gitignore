@@ -1,0 +1,6 @@
+# Ignore anything built
+build
+
+# And also jarfiles
+*.jar
+
