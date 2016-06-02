@@ -1,10 +1,10 @@
 #!/bin/sh
 set -e
 
-VERS=5.3.0
-MC_VERS=1.9
+VERS=5.2.3
+MC_VERS=1.8.9
 MDK=1.8.9-11.15.1.1902-1.8.9
-ARCHIVE=AutoSwitch-v$VERS-mc$MC_VERS.jar
+ARCHIVE=AutoSwitch-v${VERS}a-mc$MC_VERS.jar
 
 CURRDIR="$PWD"
 
