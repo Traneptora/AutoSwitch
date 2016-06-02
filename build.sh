@@ -3,7 +3,7 @@ set -e
 
 VERS=5.3.0
 MC_VERS=1.9
-MDK=1.9.4-12.17.0.1937
+MDK=1.9-12.16.1.1938-1.9.0
 ARCHIVE=AutoSwitch-v$VERS-mc$MC_VERS.jar
 
 CURRDIR="$PWD"
