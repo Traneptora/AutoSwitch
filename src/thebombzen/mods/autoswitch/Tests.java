@@ -481,7 +481,7 @@ public final class Tests {
 		if (itemstack.getItem() instanceof ItemSword){
 			return true;
 		}
-		String name = Item.itemRegistry.getNameForObject(itemstack.getItem()).toString();
+		String name = Item.REGISTRY.getNameForObject(itemstack.getItem()).toString();
 		if (name.endsWith("sword")){
 			return true;
 		}

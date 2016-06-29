@@ -63,9 +63,9 @@ public class SingleValueIdentifier {
 			if (itemStack == null){
 				return null;
 			}
-			return Item.itemRegistry.getNameForObject(itemStack.getItem());
+			return Item.REGISTRY.getNameForObject(itemStack.getItem());
 		} else {
-			return Block.blockRegistry.getNameForObject(block.getBlock());
+			return Block.REGISTRY.getNameForObject(block.getBlock());
 		}
 	}
 	

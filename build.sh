@@ -35,10 +35,7 @@ if [ ! -e gradlew ] ; then
 	rm -rf java resources
 	ln -s ../../../resources
 	ln -s ../../../src java
-	cd ../..
-	rm build.gradle
-	ln -s ../build.gradle
-	cd ..
+	cd ../../..
 	mv $LONGNAME build
 	mv $TMP $LONGNAME 2>/dev/null || true
 	cd build
@@ -46,7 +43,7 @@ fi
 
 ./gradlew build
 
-cp build/libs/$LONGNAMELC-$VERS.jar $ARCHIVE
+cp build/libs/modid-1.0.jar $ARCHIVE
 mkdir -p META-INF
 
 echo "Manifest-Version: 1.0" >META-INF/MANIFEST.MF

@@ -221,7 +221,7 @@ public class SingleBlockItemIdentifier implements BooleanTester<SingleValueIdent
 			if (blockState == null || getBlock() == null){
 				return false;
 			}
-			if (!getBlock().getMaterial(blockState).equals(blockState.getBlock().getMaterial(blockState))){
+			if (!getBlock().getDefaultState().getMaterial().equals(blockState.getMaterial())){
 				return false;
 			}
 			break;
@@ -252,7 +252,7 @@ public class SingleBlockItemIdentifier implements BooleanTester<SingleValueIdent
 	 */
 	public Block getBlock() {
 		Block block = Block.getBlockFromName(resourceLocation.toString());
-		if (Block.isEqualTo(block, Blocks.air)){
+		if (Block.isEqualTo(block, Blocks.AIR)){
 			return null;
 		} else {
 			return block;
