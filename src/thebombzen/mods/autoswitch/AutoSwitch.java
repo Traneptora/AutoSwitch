@@ -167,7 +167,7 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 		}
 
 		pulseOn = ThebombzenAPI.isExtendedKeyDown(configuration.getKeyCodeProperty(Configuration.PULSE_KEY));
-		boolean mouseDown = mc.gameSettings.keyBindAttack.isKeyDown();
+		boolean mouseDown =  ThebombzenAPI.isExtendedKeyDown(mc.gameSettings.keyBindAttack.getKeyCode());
 		if (!mouseDown && prevMouseDown || mouseDown && pulseOn ^ prevPulse) {
 			switchBack();
 		}
@@ -849,8 +849,8 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 	 */
 	private void switchToBestTool(World world, BlockPos pos) {
 
-		Block block = world.getBlockState(pos).getBlock();
-		ResourceLocation location = findUniqueIdentifierFor(block);
+		IBlockState state = world.getBlockState(pos);
+		ResourceLocation location = findUniqueIdentifierFor(state.getBlock());
 
 		String name = location.toString();
 
