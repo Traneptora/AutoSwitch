@@ -34,7 +34,7 @@ import javax.swing.JOptionPane;
 import javax.swing.JTextField;
 import javax.swing.WindowConstants;
 
-import thebombzen.mods.thebombzenapi.Constants;
+import thebombzen.mods.autoswitch.Constants;
 
 public class ASInstallerFrame extends JFrame {
 
@@ -274,7 +274,9 @@ public class ASInstallerFrame extends JFrame {
 		} catch (MalformedURLException e) {
 			throw new Error();
 		} finally {
-			br.close();
+			if (br != null){
+				br.close();
+			}
 		}
 		return latestVersion;
 	}
