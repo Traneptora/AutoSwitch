@@ -1,10 +1,13 @@
 #!/bin/sh
 set -e
 
-VERS=5.3.0
-MC_VERS=1.9
-MDK=1.9-12.16.1.1938-1.9.0
-ARCHIVE=AutoSwitch-v$VERS-mc$MC_VERS.jar
+LONGNAME=AutoSwitch
+LONGNAMELC=autoswitch
+SHORTNAME=AS
+VERS=5.3.1
+MC_VERS=1.9.4
+MDK=1.9.4-12.17.0.1987
+ARCHIVE=$LONGNAME-v$VERS-mc$MC_VERS.jar
 
 CURRDIR="$PWD"
 
@@ -15,14 +18,14 @@ cd build
 
 if [ ! -e gradlew ] ; then
 	cd ..
-	TMP=AutoSwitch
-	if [ -e AutoSwitch ] ; then
+	TMP=$LONGNAME
+	if [ -e $LONGNAME ] ; then
 		TMP=$(mktemp)
 		rm -f $TMP
-		mv AutoSwitch $TMP
+		mv $LONGNAME $TMP
 	fi
-	mv build AutoSwitch
-	cd AutoSwitch
+	mv build $LONGNAME
+	cd $LONGNAME
 	wget http://files.minecraftforge.net/maven/net/minecraftforge/forge/$MDK/forge-$MDK-mdk.zip
 	unzip forge-$MDK-mdk.zip
 	./gradlew setupDecompWorkspace
@@ -36,20 +39,18 @@ if [ ! -e gradlew ] ; then
 	rm build.gradle
 	ln -s ../build.gradle
 	cd ..
-	mv AutoSwitch build
-	mv $TMP AutoSwitch 2>/dev/null || true
+	mv $LONGNAME build
+	mv $TMP $LONGNAME 2>/dev/null || true
 	cd build
 fi
 
 ./gradlew build
 
-cp build/libs/autoswitch-$VERS.jar $ARCHIVE
+cp build/libs/$LONGNAMELC-$VERS.jar $ARCHIVE
 mkdir -p META-INF
 
-cat >META-INF/MANIFEST.MF <<EOF
-Manifest-Version: 1.0
-Main-Class: thebombzen.mods.autoswitch.installer.ASInstallerFrame
-EOF
+echo "Manifest-Version: 1.0" >META-INF/MANIFEST.MF
+echo "Main-Class: thebombzen.mods.${LONGNAMELC}.installer.${SHORTNAME}InstallerFrame" >>META-INF/MANIFEST.MF
 
 zip -u $ARCHIVE META-INF/MANIFEST.MF
 zip -d $ARCHIVE thebombzen/mods/thebombzenapi\*
