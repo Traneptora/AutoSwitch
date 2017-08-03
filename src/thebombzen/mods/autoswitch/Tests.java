@@ -109,7 +109,7 @@ public final class Tests {
 			return true;
 		}
 
-		boolean silkHarvest = blockState.getBlock().canSilkHarvest(world, pos, blockState, mc.thePlayer);
+		boolean silkHarvest = blockState.getBlock().canSilkHarvest(world, pos, blockState, mc.player);
 		if (!silkHarvest){
 			return false;
 		}
@@ -139,13 +139,13 @@ public final class Tests {
 	}
 
 	private static void fakeItemForPlayer(ItemStack itemstack) {
-		prevHeldItem = mc.thePlayer.inventory.mainInventory[mc.thePlayer.inventory.currentItem];
-		mc.thePlayer.inventory.mainInventory[mc.thePlayer.inventory.currentItem] = itemstack;
+		prevHeldItem = mc.player.inventory.mainInventory[mc.player.inventory.currentItem];
+		mc.player.inventory.mainInventory[mc.player.inventory.currentItem] = itemstack;
 		if (prevHeldItem != null) {
-			mc.thePlayer.getAttributeMap().removeAttributeModifiers(prevHeldItem.getAttributeModifiers(EntityEquipmentSlot.MAINHAND));
+			mc.player.getAttributeMap().removeAttributeModifiers(prevHeldItem.getAttributeModifiers(EntityEquipmentSlot.MAINHAND));
 		}
 		if (itemstack != null) {
-			mc.thePlayer.getAttributeMap().applyAttributeModifiers(itemstack.getAttributeModifiers(EntityEquipmentSlot.MAINHAND));
+			mc.player.getAttributeMap().applyAttributeModifiers(itemstack.getAttributeModifiers(EntityEquipmentSlot.MAINHAND));
 		}
 	}
 
@@ -191,7 +191,7 @@ public final class Tests {
 	public static float getBlockStrength(ItemStack itemstack, World world, BlockPos pos) {
 		IBlockState blockState = world.getBlockState(pos);
 		fakeItemForPlayer(itemstack);
-		float str = blockState.getBlock().getPlayerRelativeBlockHardness(blockState, mc.thePlayer, world, pos);
+		float str = blockState.getBlock().getPlayerRelativeBlockHardness(blockState, mc.player, world, pos);
 		unFakeItemForPlayer();
 		return str;
 	}
@@ -201,7 +201,7 @@ public final class Tests {
 			return str;
 		}
 		fakeItemForPlayer(itemstack);
-		float effLevel = EnchantmentHelper.getEfficiencyModifier(mc.thePlayer);
+		float effLevel = EnchantmentHelper.getEfficiencyModifier(mc.player);
 		unFakeItemForPlayer();
 		if (effLevel == 0) {
 			return str;
@@ -218,13 +218,13 @@ public final class Tests {
 			return 2;
 		}
 		fakeItemForPlayer(null);
-		boolean noTool = mc.thePlayer.canHarvestBlock(blockState);
+		boolean noTool = mc.player.canHarvestBlock(blockState);
 		unFakeItemForPlayer();
 		if (noTool){
 			return 0;
 		}
 		fakeItemForPlayer(itemstack);
-		boolean can = blockState.getBlock().canHarvestBlock(world, pos, mc.thePlayer);
+		boolean can = blockState.getBlock().canHarvestBlock(world, pos, mc.player);
 		unFakeItemForPlayer();
 		return can ? 1 : -1;
 	}
@@ -256,14 +256,14 @@ public final class Tests {
 			earlyModDamage = ThebombzenAPI.invokePrivateMethod(activeToolMod,
 					activeToolModClass, "baseAttackDamage", attackModClasses,
 					earlyModDamage, damage, tool, tags, toolTags, stack,
-					mc.thePlayer, entity);
+					mc.player, entity);
 		}
 		damage += earlyModDamage;
-		if (mc.thePlayer.isPotionActive(Potion.getPotionFromResourceLocation("strength"))) {
-			damage += 3 << mc.thePlayer.getActivePotionEffect(Potion.getPotionFromResourceLocation("strength")).getAmplifier();
+		if (mc.player.isPotionActive(Potion.getPotionFromResourceLocation("strength"))) {
+			damage += 3 << mc.player.getActivePotionEffect(Potion.getPotionFromResourceLocation("strength")).getAmplifier();
 		}
-		if (mc.thePlayer.isPotionActive(Potion.getPotionFromResourceLocation("weakness"))) {
-			damage -= 2 << mc.thePlayer.getActivePotionEffect(Potion.getPotionFromResourceLocation("weakness")).getAmplifier();
+		if (mc.player.isPotionActive(Potion.getPotionFromResourceLocation("weakness"))) {
+			damage -= 2 << mc.player.getActivePotionEffect(Potion.getPotionFromResourceLocation("weakness")).getAmplifier();
 		}
 		float enchantDamage = 0;
 		if (entity instanceof EntityLivingBase) {
@@ -273,7 +273,7 @@ public final class Tests {
 		if (damage < 1) {
 			damage = 1;
 		}
-		if (mc.thePlayer.isSprinting()) {
+		if (mc.player.isSprinting()) {
 			float lunge = ThebombzenAPI.invokePrivateMethod(tool,
 					toolCoreClass, "chargeAttack", new Class<?>[] {});
 			if (lunge > 1f) {
@@ -285,22 +285,22 @@ public final class Tests {
 			modDamage = ThebombzenAPI.invokePrivateMethod(activeToolMod,
 					activeToolModClass, "attackDamage", attackModClasses,
 					modDamage, damage, tool, tags, toolTags, stack,
-					mc.thePlayer, entity);
+					mc.player, entity);
 		}
 		damage += modDamage;
 		if (damage > 0 || enchantDamage > 0) {
-			boolean criticalHit = mc.thePlayer.fallDistance > 0.0F
-					&& !mc.thePlayer.onGround && !mc.thePlayer.isOnLadder()
-					&& !mc.thePlayer.isInWater()
-					&& !mc.thePlayer.isPotionActive(Potion.getPotionFromResourceLocation("blindness"))
-					&& !mc.thePlayer.isRiding();
+			boolean criticalHit = mc.player.fallDistance > 0.0F
+					&& !mc.player.onGround && !mc.player.isOnLadder()
+					&& !mc.player.isInWater()
+					&& !mc.player.isPotionActive(Potion.getPotionFromResourceLocation("blindness"))
+					&& !mc.player.isRiding();
 			for (Object activeToolMod : activeModifiers) {
 				if (ThebombzenAPI.invokePrivateMethod(activeToolMod,
 						activeToolModClass, "doesCriticalHit", new Class<?>[] {
 								toolCoreClass, NBTTagCompound.class,
 								NBTTagCompound.class, ItemStack.class,
 								EntityLivingBase.class, Entity.class }, tool,
-						tags, toolTags, stack, mc.thePlayer, entity))
+						tags, toolTags, stack, mc.player, entity))
 					;
 				criticalHit = true;
 			}
@@ -330,18 +330,18 @@ public final class Tests {
 		double damage = AutoSwitch.instance.getConfiguration()
 				.getCustomWeaponDamage(itemStack, entity);
 		if (damage < 0) {
-			damage = mc.thePlayer.getEntityAttribute(
+			damage = mc.player.getEntityAttribute(
 					SharedMonsterAttributes.ATTACK_DAMAGE).getAttributeValue();
 		}
 		// getEnchantmentModifierDamage or getEnchantmentModifierLiving
 		double enchDamage = EnchantmentHelper.getModifierForCreature(itemStack, entity.getCreatureAttribute());
 
 		if (damage > 0.0D || enchDamage > 0.0D) {
-			boolean critical = mc.thePlayer.fallDistance > 0.0F
-					&& !mc.thePlayer.onGround && !mc.thePlayer.isOnLadder()
-					&& !mc.thePlayer.isInWater()
-					&& !mc.thePlayer.isPotionActive(Potion.getPotionFromResourceLocation("blindness"))
-					&& !mc.thePlayer.isRiding();
+			boolean critical = mc.player.fallDistance > 0.0F
+					&& !mc.player.onGround && !mc.player.isOnLadder()
+					&& !mc.player.isInWater()
+					&& !mc.player.isPotionActive(Potion.getPotionFromResourceLocation("blindness"))
+					&& !mc.player.isRiding();
 
 			if (critical && damage > 0) {
 
@@ -436,12 +436,12 @@ public final class Tests {
 		
 		float blockStrForNull = Tests.getBlockStrength(null, world, pos);
 		fakeItemForPlayer(null);
-		boolean harvestable = blockState.getBlock().canHarvestBlock(world, pos, mc.thePlayer);
+		boolean harvestable = blockState.getBlock().canHarvestBlock(world, pos, mc.player);
 		unFakeItemForPlayer();
 		
 		float blockStr = Tests.getBlockStrength(itemstack, world, pos);
 		fakeItemForPlayer(itemstack);
-		boolean harvest = blockState.getBlock().canHarvestBlock(world, pos, mc.thePlayer);
+		boolean harvest = blockState.getBlock().canHarvestBlock(world, pos, mc.player);
 		unFakeItemForPlayer();
 		
 		if (harvest && !harvestable){
@@ -489,14 +489,14 @@ public final class Tests {
 	}
 
 	private static void unFakeItemForPlayer() {
-		ItemStack fakedStack = mc.thePlayer.inventory.mainInventory[mc.thePlayer.inventory.currentItem];
-		mc.thePlayer.inventory.mainInventory[mc.thePlayer.inventory.currentItem] = prevHeldItem;
+		ItemStack fakedStack = mc.player.inventory.mainInventory[mc.player.inventory.currentItem];
+		mc.player.inventory.mainInventory[mc.player.inventory.currentItem] = prevHeldItem;
 		if (fakedStack != null) {
-			mc.thePlayer.getAttributeMap().removeAttributeModifiers(
+			mc.player.getAttributeMap().removeAttributeModifiers(
 					fakedStack.getAttributeModifiers(EntityEquipmentSlot.MAINHAND));
 		}
 		if (prevHeldItem != null) {
-			mc.thePlayer.getAttributeMap().applyAttributeModifiers(
+			mc.player.getAttributeMap().applyAttributeModifiers(
 					prevHeldItem.getAttributeModifiers(EntityEquipmentSlot.MAINHAND));
 		}
 	}

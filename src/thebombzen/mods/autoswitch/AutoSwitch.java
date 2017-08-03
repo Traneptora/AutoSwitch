@@ -149,7 +149,7 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 			return;
 		}
 		
-		if (mc.theWorld == null) {
+		if (mc.world == null) {
 			return;
 		}
 		
@@ -159,8 +159,8 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 
 		// If we canceled the attack last tick, then go ahead and attack now.
 		if (entityAttackStage == STAGE_CANCELED) {
-			mc.thePlayer.swingArm(EnumHand.MAIN_HAND);;
-			mc.playerController.attackEntity(mc.thePlayer, entitySwitchedOn);
+			mc.player.swingArm(EnumHand.MAIN_HAND);;
+			mc.playerController.attackEntity(mc.player, entitySwitchedOn);
 			entityAttackStage = STAGE_H0;
 			entitySwitchedOn = null;
 			return;
@@ -172,12 +172,12 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 			switchBack();
 		}
 		if (mouseDown && !prevMouseDown || mouseDown && pulseOn ^ prevPulse) {
-			prevtool = mc.thePlayer.inventory.currentItem;
+			prevtool = mc.player.inventory.currentItem;
 		}
 		if (mouseDown) {
 			if (mc.objectMouseOver != null
 					&& mc.objectMouseOver.typeOfHit == RayTraceResult.Type.BLOCK) {
-				potentiallySwitchTools(mc.theWorld, mc.objectMouseOver.getBlockPos());
+				potentiallySwitchTools(mc.world, mc.objectMouseOver.getBlockPos());
 			} else if (mc.objectMouseOver != null
 					&& mc.objectMouseOver.typeOfHit == RayTraceResult.Type.ENTITY
 					&& mc.objectMouseOver.entityHit instanceof EntityLivingBase) {
@@ -776,7 +776,7 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 		debug("====START====");
 		debug(getLongVersionString());
 		try {
-			switchToBestTool(mc.theWorld, pos);
+			switchToBestTool(mc.world, pos);
 			return true;
 		} catch (Throwable e) {
 			throwException("Error switching tools", e, false);
@@ -807,7 +807,7 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 		try {
 			entitySwitchedOn = entity;
 			entityAttackStage = STAGE_SWITCHED;
-			switchToBestWeapon(mc.thePlayer, entity);
+			switchToBestWeapon(mc.player, entity);
 			return true;
 		} catch (Throwable e) {
 			throwException("Error switching weapons", e, false);
@@ -822,7 +822,7 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 	 */
 	private void switchBack() {
 		if (switchback) {
-			mc.thePlayer.inventory.currentItem = prevtool;
+			mc.player.inventory.currentItem = prevtool;
 			switchback = false;
 			debug("Switching tools back to %d", prevtool);
 		}
@@ -857,10 +857,10 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 		debug("Testing vs block %s", name);
 		String[] names = new String[9];
 		for (int i = 0; i < 9; i++) {
-			if (mc.thePlayer.inventory.mainInventory[i] == null) {
+			if (mc.player.inventory.mainInventory[i] == null) {
 				names[i] = "null";
 			} else {
-				ResourceLocation itemLocation = findUniqueIdentifierFor(mc.thePlayer.inventory.mainInventory[i].getItem());
+				ResourceLocation itemLocation = findUniqueIdentifierFor(mc.player.inventory.mainInventory[i].getItem());
 				names[i] = itemLocation.toString();
 			}
 			debug("Hotbar slot %d contains item %s", i, names[i]);
@@ -878,8 +878,8 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 
 			debug("Checking if tool %d, which is %s, is better than %d, which is %s",
 					i, names[i], currentBest, names[currentBest]);
-			if (isToolBetter(mc.thePlayer.inventory.mainInventory[i],
-					mc.thePlayer.inventory.mainInventory[currentBest], world,
+			if (isToolBetter(mc.player.inventory.mainInventory[i],
+					mc.player.inventory.mainInventory[currentBest], world,
 					pos)) {
 				debug("Changing possible best tool.");
 				currentBest = i;
@@ -906,10 +906,10 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 
 		String[] names = new String[9];
 		for (int i = 0; i < 9; i++) {
-			if (mc.thePlayer.inventory.mainInventory[i] == null) {
+			if (mc.player.inventory.mainInventory[i] == null) {
 				names[i] = "null";
 			} else {
-				ResourceLocation itemLocation = findUniqueIdentifierFor(mc.thePlayer.inventory.mainInventory[i]
+				ResourceLocation itemLocation = findUniqueIdentifierFor(mc.player.inventory.mainInventory[i]
 								.getItem());
 				names[i] = itemLocation.toString();
 			}
@@ -943,7 +943,7 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 	 * @param n The slot to which we must switch
 	 */
 	private void switchToolsToN(int n) {
-		EntityPlayer entityplayer = mc.thePlayer;
+		EntityPlayer entityplayer = mc.player;
 		entityplayer.inventory.currentItem = n;
 		String name;
 		if (entityplayer.inventory.mainInventory[n] == null) {
