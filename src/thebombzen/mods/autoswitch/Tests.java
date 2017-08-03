@@ -32,9 +32,9 @@ import net.minecraftforge.fml.common.Loader;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 import thebombzen.mods.autoswitch.configuration.Configuration;
-import thebombzen.mods.thebombzenapi.ComparableTuple;
-import thebombzen.mods.thebombzenapi.FieldNotFoundException;
-import thebombzen.mods.thebombzenapi.ThebombzenAPI;
+import com.thebombzen.mods.thebombzenapi.ComparableTuple;
+import com.thebombzen.mods.thebombzenapi.FieldNotFoundException;
+import com.thebombzen.mods.thebombzenapi.ThebombzenAPI;
 
 @SideOnly(Side.CLIENT)
 public final class Tests {

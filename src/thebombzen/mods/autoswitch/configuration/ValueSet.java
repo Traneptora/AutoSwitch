@@ -11,9 +11,9 @@ import net.minecraft.enchantment.Enchantment;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagList;
 import thebombzen.mods.autoswitch.AutoSwitch;
-import thebombzen.mods.thebombzenapi.ThebombzenAPI;
-import thebombzen.mods.thebombzenapi.configuration.BooleanTester;
-import thebombzen.mods.thebombzenapi.configuration.ConfigFormatException;
+import com.thebombzen.mods.thebombzenapi.ThebombzenAPI;
+import com.thebombzen.mods.thebombzenapi.configuration.BooleanTester;
+import com.thebombzen.mods.thebombzenapi.configuration.ConfigFormatException;
 
 
 /**

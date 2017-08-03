@@ -10,9 +10,9 @@ import net.minecraft.init.Blocks;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.ResourceLocation;
-import thebombzen.mods.thebombzenapi.ThebombzenAPI;
-import thebombzen.mods.thebombzenapi.configuration.BooleanTester;
-import thebombzen.mods.thebombzenapi.configuration.ConfigFormatException;
+import com.thebombzen.mods.thebombzenapi.ThebombzenAPI;
+import com.thebombzen.mods.thebombzenapi.configuration.BooleanTester;
+import com.thebombzen.mods.thebombzenapi.configuration.ConfigFormatException;
 
 /**
  * Represents a block or item with the given String namespace, name, and damage values.

@@ -1,9 +1,9 @@
 package thebombzen.mods.autoswitch.configuration;
 
 import net.minecraft.entity.EntityLivingBase;
-import thebombzen.mods.thebombzenapi.ThebombzenAPI;
-import thebombzen.mods.thebombzenapi.configuration.CompoundExpression;
-import thebombzen.mods.thebombzenapi.configuration.ConfigFormatException;
+import com.thebombzen.mods.thebombzenapi.ThebombzenAPI;
+import com.thebombzen.mods.thebombzenapi.configuration.CompoundExpression;
+import com.thebombzen.mods.thebombzenapi.configuration.ConfigFormatException;
 
 public class EntityIdentifier extends CompoundExpression<EntityLivingBase> {
 	

@@ -21,11 +21,11 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 import org.lwjgl.input.Keyboard;
 
 import thebombzen.mods.autoswitch.AutoSwitch;
-import thebombzen.mods.thebombzenapi.ThebombzenAPI;
-import thebombzen.mods.thebombzenapi.configuration.ConfigFormatException;
-import thebombzen.mods.thebombzenapi.configuration.ConfigOption;
-import thebombzen.mods.thebombzenapi.configuration.SingleMultiBoolean;
-import thebombzen.mods.thebombzenapi.configuration.ThebombzenAPIConfiguration;
+import com.thebombzen.mods.thebombzenapi.ThebombzenAPI;
+import com.thebombzen.mods.thebombzenapi.configuration.ConfigFormatException;
+import com.thebombzen.mods.thebombzenapi.configuration.ConfigOption;
+import com.thebombzen.mods.thebombzenapi.configuration.SingleMultiBoolean;
+import com.thebombzen.mods.thebombzenapi.configuration.ThebombzenAPIConfiguration;
 
 /**
  * This class oversees the configuration of AutoSwitch

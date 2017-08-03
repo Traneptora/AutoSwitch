@@ -8,7 +8,7 @@ import net.minecraft.client.gui.GuiScreen;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 import thebombzen.mods.autoswitch.AutoSwitch;
-import thebombzen.mods.thebombzenapi.client.ThebombzenAPIConfigScreen;
+import com.thebombzen.mods.thebombzenapi.client.ThebombzenAPIConfigScreen;
 
 @SideOnly(Side.CLIENT)
 public class ConfigScreen extends ThebombzenAPIConfigScreen {

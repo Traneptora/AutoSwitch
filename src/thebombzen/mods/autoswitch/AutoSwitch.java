@@ -33,9 +33,9 @@ import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 import thebombzen.mods.autoswitch.configuration.Configuration;
 import thebombzen.mods.autoswitch.configuration.ToolSelectionMode;
-import thebombzen.mods.thebombzenapi.ComparableTuple;
-import thebombzen.mods.thebombzenapi.ThebombzenAPI;
-import thebombzen.mods.thebombzenapi.ThebombzenAPIBaseMod;
+import com.thebombzen.mods.thebombzenapi.ComparableTuple;
+import com.thebombzen.mods.thebombzenapi.ThebombzenAPI;
+import com.thebombzen.mods.thebombzenapi.ThebombzenAPIBaseMod;
 
 /**
  * The main AutoSwitch mod

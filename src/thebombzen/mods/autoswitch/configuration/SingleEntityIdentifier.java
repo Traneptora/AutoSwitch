@@ -4,9 +4,9 @@ import net.minecraft.entity.EntityList;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.util.text.translation.I18n;
-import thebombzen.mods.thebombzenapi.ThebombzenAPI;
-import thebombzen.mods.thebombzenapi.configuration.BooleanTester;
-import thebombzen.mods.thebombzenapi.configuration.ConfigFormatException;
+import com.thebombzen.mods.thebombzenapi.ThebombzenAPI;
+import com.thebombzen.mods.thebombzenapi.configuration.BooleanTester;
+import com.thebombzen.mods.thebombzenapi.configuration.ConfigFormatException;
 
 public class SingleEntityIdentifier implements BooleanTester<EntityLivingBase> {
 	private int id;
