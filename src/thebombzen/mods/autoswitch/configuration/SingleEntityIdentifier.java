@@ -63,7 +63,7 @@ public class SingleEntityIdentifier implements BooleanTester<EntityLivingBase> {
 				}
 			}
 		} else {
-			return EntityList.getEntityID(c) == id;
+			return EntityList.getID(c.getClass()) == id;
 		}
 	}
 	
