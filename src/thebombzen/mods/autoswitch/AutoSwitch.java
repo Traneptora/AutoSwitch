@@ -11,6 +11,7 @@ import net.minecraft.enchantment.EnchantmentHelper;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.Enchantments;
+import net.minecraft.init.Items;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.EnumHand;
@@ -588,14 +589,14 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 			if (oldDamage == 0) {
 				oldHits = Integer.MAX_VALUE;
 			} else {
-				oldHits = MathHelper.ceiling_double_int(entityover.getMaxHealth()
+				oldHits = MathHelper.ceil(entityover.getMaxHealth()
 						/ oldDamage);
 			}
 
 			if (newDamage == 0) {
 				newHits = Integer.MAX_VALUE;
 			} else {
-				newHits = MathHelper.ceiling_double_int(entityover.getMaxHealth()
+				newHits = MathHelper.ceil(entityover.getMaxHealth()
 						/ newDamage);
 			}
 
@@ -745,7 +746,7 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 	 */
 	@SubscribeEvent
 	public void onEntityAttack(AttackEntityEvent event) {
-		if (!event.getEntity().worldObj.isRemote) {
+		if (!event.getEntity().world.isRemote) {
 			return;
 		}
 		if (entityAttackStage == STAGE_SWITCHED
@@ -857,10 +858,10 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 		debug("Testing vs block %s", name);
 		String[] names = new String[9];
 		for (int i = 0; i < 9; i++) {
-			if (mc.player.inventory.mainInventory[i] == null) {
+			if (mc.player.inventory.mainInventory.get(i).isEmpty()) {
 				names[i] = "null";
 			} else {
-				ResourceLocation itemLocation = findUniqueIdentifierFor(mc.player.inventory.mainInventory[i].getItem());
+				ResourceLocation itemLocation = findUniqueIdentifierFor(mc.player.inventory.mainInventory.get(i).getItem());
 				names[i] = itemLocation.toString();
 			}
 			debug("Hotbar slot %d contains item %s", i, names[i]);
@@ -878,8 +879,8 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 
 			debug("Checking if tool %d, which is %s, is better than %d, which is %s",
 					i, names[i], currentBest, names[currentBest]);
-			if (isToolBetter(mc.player.inventory.mainInventory[i],
-					mc.player.inventory.mainInventory[currentBest], world,
+			if (isToolBetter(mc.player.inventory.mainInventory.get(i),
+					mc.player.inventory.mainInventory.get(currentBest), world,
 					pos)) {
 				debug("Changing possible best tool.");
 				currentBest = i;
@@ -902,14 +903,12 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 	private void switchToBestWeapon(EntityPlayer entityplayer,
 			EntityLivingBase entityover) {
 
-		ItemStack[] inventory = entityplayer.inventory.mainInventory;
-
 		String[] names = new String[9];
 		for (int i = 0; i < 9; i++) {
-			if (mc.player.inventory.mainInventory[i] == null) {
+			if (mc.player.inventory.mainInventory.get(i).isEmpty()) {
 				names[i] = "null";
 			} else {
-				ResourceLocation itemLocation = findUniqueIdentifierFor(mc.player.inventory.mainInventory[i]
+				ResourceLocation itemLocation = findUniqueIdentifierFor(mc.player.inventory.mainInventory.get(i)
 								.getItem());
 				names[i] = itemLocation.toString();
 			}
@@ -925,7 +924,7 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 		for (int i = 0; i < 9; i++) {
 			debug("Checking if weapon %d, which is %s, is better than %d, which is %s",
 					i, names[i], currentBest, names[currentBest]);
-			if (isWeaponBetter(inventory[i], inventory[currentBest], entityover)) {
+			if (isWeaponBetter(mc.player.inventory.mainInventory.get(i), mc.player.inventory.mainInventory.get(currentBest), entityover)) {
 				debug("Changing possible best weapon because weapon is better.");
 				currentBest = i;
 			}
@@ -946,10 +945,10 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 		EntityPlayer entityplayer = mc.player;
 		entityplayer.inventory.currentItem = n;
 		String name;
-		if (entityplayer.inventory.mainInventory[n] == null) {
+		if (entityplayer.inventory.mainInventory.get(n).isEmpty()) {
 			name = "Nothing";
 		} else {
-			ResourceLocation itemLocation = findUniqueIdentifierFor(entityplayer.inventory.mainInventory[n]
+			ResourceLocation itemLocation = findUniqueIdentifierFor(entityplayer.inventory.mainInventory.get(n)
 							.getItem());
 			name = itemLocation.toString();
 		}
