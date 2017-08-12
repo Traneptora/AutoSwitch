@@ -1,4 +1,4 @@
-package thebombzen.mods.autoswitch.installer;
+package com.thebombzen.mods.autoswitch.installer;
 
 import java.awt.BorderLayout;
 import java.awt.Desktop;
@@ -34,7 +34,7 @@ import javax.swing.JOptionPane;
 import javax.swing.JTextField;
 import javax.swing.WindowConstants;
 
-import thebombzen.mods.autoswitch.Constants;
+import com.thebombzen.mods.autoswitch.Constants;
 
 public class ASInstallerFrame extends JFrame {
 
@@ -308,7 +308,7 @@ public class ASInstallerFrame extends JFrame {
 				.getCodeSource().getLocation().toURI());
 		JarFile jarFile = new JarFile(file);
 		if (jarFile
-				.getEntry("thebombzen/mods/autoswitch/installer/ASInstallerFrame.class") == null) {
+				.getEntry("com/thebombzen/mods/autoswitch/installer/ASInstallerFrame.class") == null) {
 			jarFile.close();
 			throw new Exception("Unable to open jar file!");
 		}

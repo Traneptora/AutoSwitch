@@ -1,4 +1,4 @@
-package thebombzen.mods.autoswitch;
+package com.thebombzen.mods.autoswitch;
 
 public interface Constants {
 	public static final String VERSION = "5.5.0";

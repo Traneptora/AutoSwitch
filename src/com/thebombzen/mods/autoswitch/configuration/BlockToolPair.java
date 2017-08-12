@@ -1,4 +1,4 @@
-package thebombzen.mods.autoswitch.configuration;
+package com.thebombzen.mods.autoswitch.configuration;
 
 
 /**

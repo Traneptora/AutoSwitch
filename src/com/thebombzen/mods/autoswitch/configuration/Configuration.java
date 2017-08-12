@@ -1,4 +1,4 @@
-package thebombzen.mods.autoswitch.configuration;
+package com.thebombzen.mods.autoswitch.configuration;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -14,6 +14,7 @@ import java.util.Set;
 
 import org.lwjgl.input.Keyboard;
 
+import com.thebombzen.mods.autoswitch.AutoSwitch;
 import com.thebombzen.mods.thebombzenapi.ThebombzenAPI;
 import com.thebombzen.mods.thebombzenapi.configuration.ConfigFormatException;
 import com.thebombzen.mods.thebombzenapi.configuration.ConfigOption;
@@ -25,7 +26,6 @@ import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.item.ItemStack;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
-import thebombzen.mods.autoswitch.AutoSwitch;
 
 /**
  * This class oversees the configuration of AutoSwitch

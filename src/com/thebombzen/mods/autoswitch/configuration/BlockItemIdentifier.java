@@ -1,24 +1,25 @@
-package thebombzen.mods.autoswitch.configuration;
+package com.thebombzen.mods.autoswitch.configuration;
 
 import com.thebombzen.mods.thebombzenapi.ThebombzenAPI;
 import com.thebombzen.mods.thebombzenapi.configuration.CompoundExpression;
 import com.thebombzen.mods.thebombzenapi.configuration.ConfigFormatException;
 
-import net.minecraft.entity.EntityLivingBase;
+import net.minecraft.block.state.IBlockState;
+import net.minecraft.item.ItemStack;
 
-public class EntityIdentifier extends CompoundExpression<EntityLivingBase> {
-	
-	public static EntityIdentifier parseEntityIdentifier(String info) throws ConfigFormatException {
+public class BlockItemIdentifier extends CompoundExpression<SingleValueIdentifier> {
+
+	public static BlockItemIdentifier parseBlockItemIdentifier(String info) throws ConfigFormatException {
 		
 		if (info.length() == 0){
-			throw new ConfigFormatException("Empty entity identifier!");
+			throw new ConfigFormatException("Empty block/item identifier");
 		}
 		
 		if (!info.contains("&") && !info.contains("|") && !info.contains("^") && !info.contains("!")){
 			if (info.startsWith("(") && info.endsWith(")")){
-				return parseEntityIdentifier(info.substring(1, info.length() - 1));
+				return parseBlockItemIdentifier(info.substring(1, info.length() - 1));
 			} else {
-				return new EntityIdentifier(SingleEntityIdentifier.parseSingleEntityIdentifier(info));
+				return new BlockItemIdentifier(SingleBlockItemIdentifier.parseSingleBlockItemIdentifier(info));
 			}
 		}
 		
@@ -30,7 +31,7 @@ public class EntityIdentifier extends CompoundExpression<EntityLivingBase> {
 			if (ThebombzenAPI.isSeparatorAtTopLevel(info, index)){
 				String before = info.substring(0, index);
 				String after = info.substring(index + 1);
-				return new EntityIdentifier(XOR, EntityIdentifier.parseEntityIdentifier(before), EntityIdentifier.parseEntityIdentifier(after));
+				return new BlockItemIdentifier(XOR, BlockItemIdentifier.parseBlockItemIdentifier(before), BlockItemIdentifier.parseBlockItemIdentifier(after));
 			} else {
 				index = info.indexOf('^', index + 1);
 			}
@@ -44,7 +45,7 @@ public class EntityIdentifier extends CompoundExpression<EntityLivingBase> {
 			if (ThebombzenAPI.isSeparatorAtTopLevel(info, index)){
 				String before = info.substring(0, index);
 				String after = info.substring(index + 1);
-				return new EntityIdentifier(OR, EntityIdentifier.parseEntityIdentifier(before), EntityIdentifier.parseEntityIdentifier(after));
+				return new BlockItemIdentifier(OR, BlockItemIdentifier.parseBlockItemIdentifier(before), BlockItemIdentifier.parseBlockItemIdentifier(after));
 			} else {
 				index = info.indexOf('|', index + 1);
 			}
@@ -58,30 +59,41 @@ public class EntityIdentifier extends CompoundExpression<EntityLivingBase> {
 			if (ThebombzenAPI.isSeparatorAtTopLevel(info, index)){
 				String before = info.substring(0, index);
 				String after = info.substring(index + 1);
-				return new EntityIdentifier(AND, EntityIdentifier.parseEntityIdentifier(before), EntityIdentifier.parseEntityIdentifier(after));
+				return new BlockItemIdentifier(AND, BlockItemIdentifier.parseBlockItemIdentifier(before), BlockItemIdentifier.parseBlockItemIdentifier(after));
 			} else {
 				index = info.indexOf('&', index + 1);
 			}
 		}
 		
 		if (info.startsWith("!")){
-			return new EntityIdentifier(NOT, EntityIdentifier.parseEntityIdentifier(info.substring(1)), null);
+			return new BlockItemIdentifier(NOT, BlockItemIdentifier.parseBlockItemIdentifier(info.substring(1)), null);
 		}
 		
 		if (info.startsWith("(") && info.endsWith(")")){
-			return EntityIdentifier.parseEntityIdentifier(info.substring(1, info.length() - 1));
+			return BlockItemIdentifier.parseBlockItemIdentifier(info.substring(1, info.length() - 1));
 		}
 		
-		throw new ConfigFormatException("Malformed entity identifier: " + info);
+		throw new ConfigFormatException("Malformed block/item identifier: " + info);
 		
 	}
 	
-	public EntityIdentifier(int type, EntityIdentifier first, EntityIdentifier second){
+	public BlockItemIdentifier(int type, BlockItemIdentifier first, BlockItemIdentifier second){
 		super(type, first, second);
 	}
 
-	public EntityIdentifier(SingleEntityIdentifier singleID){
+	public BlockItemIdentifier(SingleBlockItemIdentifier singleID){
 		super(singleID);
 	}
 
+	public boolean contains(IBlockState state){
+		return contains(new SingleValueIdentifier(state));
+	}
+	
+	public boolean contains(ItemStack itemStack){
+		if (itemStack == null){
+			return false;
+		}
+		return contains(new SingleValueIdentifier(itemStack));
+	}
+	
 }

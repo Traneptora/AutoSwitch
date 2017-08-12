@@ -1,15 +1,15 @@
-package thebombzen.mods.autoswitch.configuration;
+package com.thebombzen.mods.autoswitch.configuration;
 
 import java.awt.Desktop;
 import java.io.IOException;
 
+import com.thebombzen.mods.autoswitch.AutoSwitch;
 import com.thebombzen.mods.thebombzenapi.client.ThebombzenAPIConfigScreen;
 
 import net.minecraft.client.gui.GuiButton;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
-import thebombzen.mods.autoswitch.AutoSwitch;
 
 @SideOnly(Side.CLIENT)
 public class ConfigScreen extends ThebombzenAPIConfigScreen {

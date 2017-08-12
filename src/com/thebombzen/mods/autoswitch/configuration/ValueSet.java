@@ -1,9 +1,10 @@
-package thebombzen.mods.autoswitch.configuration;
+package com.thebombzen.mods.autoswitch.configuration;
 
 import java.util.Iterator;
 import java.util.Scanner;
 
 import com.google.common.collect.ImmutableMap;
+import com.thebombzen.mods.autoswitch.AutoSwitch;
 import com.thebombzen.mods.thebombzenapi.ThebombzenAPI;
 import com.thebombzen.mods.thebombzenapi.configuration.BooleanTester;
 import com.thebombzen.mods.thebombzenapi.configuration.ConfigFormatException;
@@ -13,7 +14,6 @@ import net.minecraft.block.state.IBlockState;
 import net.minecraft.enchantment.Enchantment;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagList;
-import thebombzen.mods.autoswitch.AutoSwitch;
 
 
 /**

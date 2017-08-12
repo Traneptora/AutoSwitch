@@ -1,4 +1,4 @@
-package thebombzen.mods.autoswitch;
+package com.thebombzen.mods.autoswitch;
 
 import java.util.Random;
 

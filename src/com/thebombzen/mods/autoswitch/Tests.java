@@ -1,4 +1,4 @@
-package thebombzen.mods.autoswitch;
+package com.thebombzen.mods.autoswitch;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Random;
 import java.util.Set;
 
+import com.thebombzen.mods.autoswitch.configuration.Configuration;
 import com.thebombzen.mods.thebombzenapi.ComparableTuple;
 import com.thebombzen.mods.thebombzenapi.FieldNotFoundException;
 import com.thebombzen.mods.thebombzenapi.ThebombzenAPI;
@@ -35,7 +36,6 @@ import net.minecraftforge.common.ForgeHooks;
 import net.minecraftforge.fml.common.Loader;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
-import thebombzen.mods.autoswitch.configuration.Configuration;
 
 @SideOnly(Side.CLIENT)
 public final class Tests {

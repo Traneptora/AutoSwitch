@@ -1,11 +1,12 @@
-package thebombzen.mods.autoswitch.configuration;
+package com.thebombzen.mods.autoswitch.configuration;
+
+import com.thebombzen.mods.autoswitch.AutoSwitch;
 
 import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.ResourceLocation;
-import thebombzen.mods.autoswitch.AutoSwitch;
 
 public class SingleValueIdentifier {
 	private ItemStack itemStack = null;

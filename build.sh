@@ -47,7 +47,7 @@ cp build/libs/modid-1.0.jar $ARCHIVE
 mkdir -p META-INF
 
 echo "Manifest-Version: 1.0" >META-INF/MANIFEST.MF
-echo "Main-Class: thebombzen.mods.${LONGNAMELC}.installer.${SHORTNAME}InstallerFrame" >>META-INF/MANIFEST.MF
+echo "Main-Class: com.thebombzen.mods.${LONGNAMELC}.installer.${SHORTNAME}InstallerFrame" >>META-INF/MANIFEST.MF
 
 zip -u $ARCHIVE META-INF/MANIFEST.MF
 zip -d $ARCHIVE com/thebombzen/mods/thebombzenapi\*

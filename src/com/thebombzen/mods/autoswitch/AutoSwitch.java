@@ -1,8 +1,10 @@
-package thebombzen.mods.autoswitch;
+package com.thebombzen.mods.autoswitch;
 
 import java.util.Arrays;
 import java.util.Set;
 
+import com.thebombzen.mods.autoswitch.configuration.Configuration;
+import com.thebombzen.mods.autoswitch.configuration.ToolSelectionMode;
 import com.thebombzen.mods.thebombzenapi.ComparableTuple;
 import com.thebombzen.mods.thebombzenapi.ThebombzenAPI;
 import com.thebombzen.mods.thebombzenapi.ThebombzenAPIBaseMod;
@@ -35,8 +37,6 @@ import net.minecraftforge.fml.common.gameevent.TickEvent.ClientTickEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent.Phase;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
-import thebombzen.mods.autoswitch.configuration.Configuration;
-import thebombzen.mods.autoswitch.configuration.ToolSelectionMode;
 
 /**
  * The main AutoSwitch mod
@@ -44,7 +44,7 @@ import thebombzen.mods.autoswitch.configuration.ToolSelectionMode;
  * @author thebombzen
  */
 @SideOnly(Side.CLIENT)
-@Mod(modid = "autoswitch", name = "AutoSwitch", version = Constants.VERSION, dependencies = "required-after:thebombzenapi", guiFactory = "thebombzen.mods.autoswitch.configuration.ConfigGuiFactory", clientSideOnly = true, acceptedMinecraftVersions = "[1.9.4, 1.11.2]")
+@Mod(modid = "autoswitch", name = "AutoSwitch", version = Constants.VERSION, dependencies = "required-after:thebombzenapi", guiFactory = "com.thebombzen.mods.autoswitch.configuration.ConfigGuiFactory", clientSideOnly = true, acceptedMinecraftVersions = "[1.9.4, 1.11.2]")
 public class AutoSwitch extends ThebombzenAPIBaseMod {
 
 	/**
