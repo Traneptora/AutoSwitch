@@ -1,10 +1,11 @@
 package thebombzen.mods.autoswitch.configuration;
 
-import net.minecraft.block.state.IBlockState;
-import net.minecraft.item.ItemStack;
 import com.thebombzen.mods.thebombzenapi.ThebombzenAPI;
 import com.thebombzen.mods.thebombzenapi.configuration.CompoundExpression;
 import com.thebombzen.mods.thebombzenapi.configuration.ConfigFormatException;
+
+import net.minecraft.block.state.IBlockState;
+import net.minecraft.item.ItemStack;
 
 public class BlockItemIdentifier extends CompoundExpression<SingleValueIdentifier> {
 

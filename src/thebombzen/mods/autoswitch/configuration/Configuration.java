@@ -12,20 +12,20 @@ import java.util.Map;
 import java.util.Scanner;
 import java.util.Set;
 
-import net.minecraft.block.state.IBlockState;
-import net.minecraft.entity.EntityLivingBase;
-import net.minecraft.item.ItemStack;
-import net.minecraftforge.fml.relauncher.Side;
-import net.minecraftforge.fml.relauncher.SideOnly;
-
 import org.lwjgl.input.Keyboard;
 
-import thebombzen.mods.autoswitch.AutoSwitch;
 import com.thebombzen.mods.thebombzenapi.ThebombzenAPI;
 import com.thebombzen.mods.thebombzenapi.configuration.ConfigFormatException;
 import com.thebombzen.mods.thebombzenapi.configuration.ConfigOption;
 import com.thebombzen.mods.thebombzenapi.configuration.SingleMultiBoolean;
 import com.thebombzen.mods.thebombzenapi.configuration.ThebombzenAPIConfiguration;
+
+import net.minecraft.block.state.IBlockState;
+import net.minecraft.entity.EntityLivingBase;
+import net.minecraft.item.ItemStack;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
+import thebombzen.mods.autoswitch.AutoSwitch;
 
 /**
  * This class oversees the configuration of AutoSwitch

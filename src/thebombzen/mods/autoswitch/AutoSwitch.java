@@ -3,6 +3,10 @@ package thebombzen.mods.autoswitch;
 import java.util.Arrays;
 import java.util.Set;
 
+import com.thebombzen.mods.thebombzenapi.ComparableTuple;
+import com.thebombzen.mods.thebombzenapi.ThebombzenAPI;
+import com.thebombzen.mods.thebombzenapi.ThebombzenAPIBaseMod;
+
 import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
@@ -11,7 +15,6 @@ import net.minecraft.enchantment.EnchantmentHelper;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.Enchantments;
-import net.minecraft.init.Items;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.EnumHand;
@@ -34,9 +37,6 @@ import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 import thebombzen.mods.autoswitch.configuration.Configuration;
 import thebombzen.mods.autoswitch.configuration.ToolSelectionMode;
-import com.thebombzen.mods.thebombzenapi.ComparableTuple;
-import com.thebombzen.mods.thebombzenapi.ThebombzenAPI;
-import com.thebombzen.mods.thebombzenapi.ThebombzenAPIBaseMod;
 
 /**
  * The main AutoSwitch mod

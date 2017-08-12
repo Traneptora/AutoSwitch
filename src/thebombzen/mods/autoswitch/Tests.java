@@ -2,13 +2,16 @@ package thebombzen.mods.autoswitch;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
 import java.util.Set;
+
+import com.thebombzen.mods.thebombzenapi.ComparableTuple;
+import com.thebombzen.mods.thebombzenapi.FieldNotFoundException;
+import com.thebombzen.mods.thebombzenapi.ThebombzenAPI;
 
 import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
@@ -18,7 +21,6 @@ import net.minecraft.enchantment.EnchantmentHelper;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.SharedMonsterAttributes;
-import net.minecraft.init.Enchantments;
 import net.minecraft.inventory.EntityEquipmentSlot;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
@@ -34,9 +36,6 @@ import net.minecraftforge.fml.common.Loader;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 import thebombzen.mods.autoswitch.configuration.Configuration;
-import com.thebombzen.mods.thebombzenapi.ComparableTuple;
-import com.thebombzen.mods.thebombzenapi.FieldNotFoundException;
-import com.thebombzen.mods.thebombzenapi.ThebombzenAPI;
 
 @SideOnly(Side.CLIENT)
 public final class Tests {
