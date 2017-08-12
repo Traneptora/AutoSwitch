@@ -263,7 +263,7 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 
 	@Override
 	protected String getVersionFileURLString() {
-		return "https://thebombzen.com/AutoSwitch/release/AutoSwitch.txt";
+		return "https://thebombzen.com/" + this.getLongName() + "/release/" + this.getShortName() + "Version" + ( ThebombzenAPI.getCheckAllMinecraftVersions() ? "" : "-" + Constants.MC_VERSION ) + ".txt";
 	}
 
 	@Override
