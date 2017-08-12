@@ -35,7 +35,6 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 import thebombzen.mods.autoswitch.configuration.Configuration;
 import thebombzen.mods.autoswitch.configuration.ToolSelectionMode;
 import com.thebombzen.mods.thebombzenapi.ComparableTuple;
-import com.thebombzen.mods.thebombzenapi.Constants;
 import com.thebombzen.mods.thebombzenapi.ThebombzenAPI;
 import com.thebombzen.mods.thebombzenapi.ThebombzenAPIBaseMod;
 
