@@ -726,10 +726,10 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 			return false;
 		}
 
-		if (newItemStack == null && oldItemStack != null) {
+		if (newItemStack.isEmpty() && !oldItemStack.isEmpty()) {
 			debug("Switching because new tool is fist and old is useless.");
 			return true;
-		} else if (oldItemStack == null && newItemStack != null) {
+		} else if (oldItemStack.isEmpty() && !newItemStack.isEmpty()) {
 			debug("Not switching because old tool is fist and new is useless.");
 			return false;
 		}
@@ -859,7 +859,7 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 		String[] names = new String[9];
 		for (int i = 0; i < 9; i++) {
 			if (mc.player.inventory.mainInventory.get(i).isEmpty()) {
-				names[i] = "null";
+				names[i] = "Empty";
 			} else {
 				ResourceLocation itemLocation = findUniqueIdentifierFor(mc.player.inventory.mainInventory.get(i).getItem());
 				names[i] = itemLocation.toString();
@@ -906,7 +906,7 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 		String[] names = new String[9];
 		for (int i = 0; i < 9; i++) {
 			if (mc.player.inventory.mainInventory.get(i).isEmpty()) {
-				names[i] = "null";
+				names[i] = "Empty";
 			} else {
 				ResourceLocation itemLocation = findUniqueIdentifierFor(mc.player.inventory.mainInventory.get(i)
 								.getItem());

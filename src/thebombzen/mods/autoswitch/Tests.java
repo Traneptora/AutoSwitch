@@ -42,7 +42,7 @@ public final class Tests {
 	
 	private static final Minecraft mc = Minecraft.getMinecraft();
 	
-	private static ItemStack prevHeldItem = null;
+	private static ItemStack prevHeldItem = ItemStack.EMPTY;
 	private static Random prevRandom = null;
 	
 	private static final String[] randomNames = {"rand", "field_73012_v", "v"};
@@ -142,10 +142,10 @@ public final class Tests {
 	private static void fakeItemForPlayer(ItemStack itemstack) {
 		prevHeldItem = mc.player.getHeldItemMainhand();
 		mc.player.setHeldItem(EnumHand.MAIN_HAND, itemstack);
-		if (prevHeldItem != null) {
+		if (!prevHeldItem.isEmpty()) {
 			mc.player.getAttributeMap().removeAttributeModifiers(prevHeldItem.getAttributeModifiers(EntityEquipmentSlot.MAINHAND));
 		}
-		if (itemstack != null) {
+		if (!itemstack.isEmpty()) {
 			mc.player.getAttributeMap().applyAttributeModifiers(itemstack.getAttributeModifiers(EntityEquipmentSlot.MAINHAND));
 		}
 	}
@@ -218,7 +218,7 @@ public final class Tests {
 		} else if (state == Configuration.OVERRIDDEN_YES){
 			return 2;
 		}
-		fakeItemForPlayer(null);
+		fakeItemForPlayer(ItemStack.EMPTY);
 		boolean noTool = mc.player.canHarvestBlock(blockState);
 		unFakeItemForPlayer();
 		if (noTool){
@@ -356,7 +356,7 @@ public final class Tests {
 	
 	public static double getFullItemStackDamage(ItemStack itemStack, EntityLivingBase entity){
 		try {
-			if (itemStack != null && itemStack.getTagCompound() != null && Loader.isModLoaded("TConstruct")){
+			if (!itemStack.isEmpty() && itemStack.getTagCompound() != null && Loader.isModLoaded("TConstruct")){
 				Class<?> clazz = Class.forName("tconstruct.library.tools.ToolCore");
 				if (clazz.isAssignableFrom(itemStack.getItem().getClass())){
 					return Tests.getFullTinkersConstructItemStackDamage(itemStack, entity);
@@ -372,17 +372,18 @@ public final class Tests {
 			ItemStack stack1, ItemStack stack2) {
 		Set<Enchantment> bothItemsEnchantments = new HashSet<Enchantment>();
 
-		if (stack1 != null) {
+		if (!stack1.isEmpty()) {
 			bothItemsEnchantments.addAll(EnchantmentHelper.getEnchantments(
 					stack1).keySet());
 		}
-		if (stack2 != null) {
+		if (!stack2.isEmpty()) {
 			bothItemsEnchantments.addAll(EnchantmentHelper.getEnchantments(
 					stack2).keySet());
 		}
 
 		List<Enchantment> standardEnchantments = new ArrayList<Enchantment>();
 		Field[] fields = Enchantments.class.getFields();
+
 		
 		for (Field field : fields){
 			if (field.getType().equals(Enchantment.class)){
@@ -419,7 +420,7 @@ public final class Tests {
 	
 	public static ComparableTuple<Integer> getToolEffectiveness(ItemStack itemStack, World world, BlockPos pos){
 		int weakStrength = getToolSpeedEffectiveness(itemStack, world, pos);
-		int forgeStandard = (itemStack != null && ForgeHooks.isToolEffective(world, pos, itemStack)) ? 1 : 0;
+		int forgeStandard = (!itemStack.isEmpty() && ForgeHooks.isToolEffective(world, pos, itemStack)) ? 1 : 0;
 		return new ComparableTuple<Integer>(weakStrength, forgeStandard);
 	}
 	
@@ -435,8 +436,8 @@ public final class Tests {
 			return 0;
 		}
 		
-		float blockStrForNull = Tests.getBlockStrength(null, world, pos);
-		fakeItemForPlayer(null);
+		float blockStrForNull = Tests.getBlockStrength(ItemStack.EMPTY, world, pos);
+		fakeItemForPlayer(ItemStack.EMPTY);
 		boolean harvestable = blockState.getBlock().canHarvestBlock(world, pos, mc.player);
 		unFakeItemForPlayer();
 		
@@ -457,7 +458,7 @@ public final class Tests {
 	}
 
 	public static boolean isItemStackDamageable(ItemStack itemstack) {
-		return itemstack != null && itemstack.getItem().isDamageable();
+		return !itemstack.isEmpty() && itemstack.getItem().isDamageable();
 	}
 
 	public static boolean isItemStackDamageableOnBlock(ItemStack itemstack,
@@ -476,7 +477,7 @@ public final class Tests {
 	}
 
 	public static boolean isSword(ItemStack itemstack) {
-		if (itemstack == null){
+		if (itemstack.isEmpty()){
 			return false;
 		}
 		if (itemstack.getItem() instanceof ItemSword){
@@ -492,11 +493,11 @@ public final class Tests {
 	private static void unFakeItemForPlayer() {
 		ItemStack fakedStack = mc.player.getHeldItemMainhand();
 		mc.player.setHeldItem(EnumHand.MAIN_HAND, prevHeldItem);
-		if (fakedStack != null) {
+		if (!fakedStack.isEmpty()) {
 			mc.player.getAttributeMap().removeAttributeModifiers(
 					fakedStack.getAttributeModifiers(EntityEquipmentSlot.MAINHAND));
 		}
-		if (prevHeldItem != null) {
+		if (!prevHeldItem.isEmpty()) {
 			mc.player.getAttributeMap().applyAttributeModifiers(
 					prevHeldItem.getAttributeModifiers(EntityEquipmentSlot.MAINHAND));
 		}
