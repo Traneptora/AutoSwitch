@@ -5,6 +5,7 @@ import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
 import java.util.Set;
@@ -46,15 +47,15 @@ public final class Tests {
 	private static Random prevRandom = null;
 	
 	private static final String[] randomNames = {"rand", "field_73012_v", "v"};
-	private static final String[] createStackedBlockNames = {"createStackedBlock", "i", "func_180643_i"};
+	private static final String[] getSilkTouchDropNames = {"getSilkTouchDrop", "createStackedBlock", "func_180643_i", "i"};
 	
 	/**
 	 * Anything strictly greater than this is considered to be "standard"
 	 */
 	public static final ComparableTuple<Integer> standardThreshold = new ComparableTuple<Integer>(0, 0);
 	
-	public static ItemStack createStackedBlock(Block block, IBlockState state) {
-		return ThebombzenAPI.invokePrivateMethod(block, Block.class, createStackedBlockNames,
+	public static ItemStack getSilkTouchDrop(Block block, IBlockState state) {
+		return ThebombzenAPI.invokePrivateMethod(block, Block.class, getSilkTouchDropNames,
 				new Class<?>[] { IBlockState.class }, state);
 	}
 	
@@ -118,7 +119,7 @@ public final class Tests {
 		Random zeroRandom = new NotSoRandom(true);
 		Random maxRandom = new NotSoRandom(false);
 		
-		ItemStack stackedBlock = createStackedBlock(blockState.getBlock(), blockState);
+		ItemStack stackedBlock = getSilkTouchDrop(blockState.getBlock(), blockState);
 		List<ItemStack> stackedBlockList = Collections.singletonList(stackedBlock);
 		
 		List<ItemStack> defaultMaxRandom;
@@ -185,14 +186,14 @@ public final class Tests {
 		if (blockState == null) {
 			return 0;
 		} else {
-			return blockState.getBlock().getBlockHardness(blockState, world, pos);
+			return blockState.getBlockHardness(world, pos);
 		}
 	}
 
 	public static float getBlockStrength(ItemStack itemstack, World world, BlockPos pos) {
 		IBlockState blockState = world.getBlockState(pos);
 		fakeItemForPlayer(itemstack);
-		float str = blockState.getBlock().getPlayerRelativeBlockHardness(blockState, mc.player, world, pos);
+		float str = blockState.getPlayerRelativeBlockHardness(mc.player, world, pos);
 		unFakeItemForPlayer();
 		return str;
 	}
@@ -370,6 +371,7 @@ public final class Tests {
 	
 	public static Set<Enchantment> getNonstandardNondamageEnchantmentsOnBothStacks(
 			ItemStack stack1, ItemStack stack2) {
+		
 		Set<Enchantment> bothItemsEnchantments = new HashSet<Enchantment>();
 
 		if (!stack1.isEmpty()) {
@@ -381,6 +383,15 @@ public final class Tests {
 					stack2).keySet());
 		}
 
+		Iterator<Enchantment> iterator = bothItemsEnchantments.iterator();
+		while (iterator.hasNext()) {
+			Enchantment enchantment = iterator.next();
+			if (Enchantment.REGISTRY.getNameForObject(enchantment).getResourceDomain().equals("minecraft")) {
+				iterator.remove();
+			}
+		}
+		
+		/*
 		List<Enchantment> standardEnchantments = new ArrayList<Enchantment>();
 		Field[] fields = Enchantments.class.getFields();
 
@@ -397,6 +408,7 @@ public final class Tests {
 		}
 
 		bothItemsEnchantments.removeAll(standardEnchantments);
+		*/
 
 		return bothItemsEnchantments;
 	}
@@ -458,7 +470,7 @@ public final class Tests {
 	}
 
 	public static boolean isItemStackDamageable(ItemStack itemstack) {
-		return !itemstack.isEmpty() && itemstack.getItem().isDamageable();
+		return itemstack.isItemStackDamageable();
 	}
 
 	public static boolean isItemStackDamageableOnBlock(ItemStack itemstack,
