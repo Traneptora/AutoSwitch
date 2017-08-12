@@ -22,8 +22,10 @@ import net.minecraft.enchantment.EnchantmentHelper;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.SharedMonsterAttributes;
+import net.minecraft.init.Enchantments;
 import net.minecraft.inventory.EntityEquipmentSlot;
 import net.minecraft.item.Item;
+import net.minecraft.item.ItemShears;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.ItemSword;
 import net.minecraft.nbt.NBTTagCompound;
@@ -33,6 +35,7 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.World;
 import net.minecraftforge.common.ForgeHooks;
+import net.minecraftforge.common.IShearable;
 import net.minecraftforge.fml.common.Loader;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
@@ -96,6 +99,24 @@ public final class Tests {
 		} else {
 			return false;
 		}
+	}
+	
+	public static boolean doesItemStackMimicSilk(World world, BlockPos pos, ItemStack itemstack) {
+		
+		IBlockState blockState = world.getBlockState(pos);
+		
+		if (blockState.getBlock() instanceof IShearable && itemstack.getItem() instanceof ItemShears) {
+			IShearable shearable = (IShearable) blockState.getBlock();
+			if (shearable.isShearable(itemstack, world, pos)) {
+				List<ItemStack> drops = shearable.onSheared(itemstack, world, pos, 0);
+				if (ThebombzenAPI.areItemStackCollectionsEqual(drops, Collections.singletonList(Tests.getSilkTouchDrop(blockState.getBlock(), blockState)))) {
+					return true;
+				}
+			}
+		}
+
+		return false;
+		
 	}
 	
 	public static boolean doesSilkTouchWorkOnBlock(World world, BlockPos pos) {

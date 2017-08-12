@@ -349,6 +349,8 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 		}
 
 		boolean silkWorks = Tests.doesSilkTouchWorkOnBlock(world, pos);
+		boolean newMimicsSilk = Tests.doesItemStackMimicSilk(world, pos, newItemStack);
+		boolean oldMimicsSilk = Tests.doesItemStackMimicSilk(world, pos, oldItemStack);
 		boolean newHasSilk = EnchantmentHelper.getEnchantmentLevel(
 				Enchantments.SILK_TOUCH, newItemStack) > 0;
 		boolean oldHasSilk = EnchantmentHelper.getEnchantmentLevel(
@@ -360,7 +362,7 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 			debug("silkWorks: %b, newHasSilk: %b, oldHasSilk: %b", silkWorks,
 					newHasSilk, oldHasSilk);
 			if (newHasSilk && !oldHasSilk) {
-				if (silkWorks) {
+				if (silkWorks && !oldMimicsSilk) {
 					debug("Switching because new has silk touch and old doesn't, and new works.");
 					return true;
 				} else {
@@ -373,7 +375,7 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 					}
 				}
 			} else if (oldHasSilk && !newHasSilk) {
-				if (silkWorks) {
+				if (silkWorks && !newMimicsSilk) {
 					debug("Not switching because old has silk touch and new doesn't, and old works.");
 					return false;
 				} else {
