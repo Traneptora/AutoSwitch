@@ -35,6 +35,7 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 import thebombzen.mods.autoswitch.configuration.Configuration;
 import thebombzen.mods.autoswitch.configuration.ToolSelectionMode;
 import com.thebombzen.mods.thebombzenapi.ComparableTuple;
+import com.thebombzen.mods.thebombzenapi.Constants;
 import com.thebombzen.mods.thebombzenapi.ThebombzenAPI;
 import com.thebombzen.mods.thebombzenapi.ThebombzenAPIBaseMod;
 
@@ -262,7 +263,7 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 
 	@Override
 	protected String getVersionFileURLString() {
-		return "https://dl.dropboxusercontent.com/u/51080973/Mods/AutoSwitch/ASVersion.txt";
+		return "https://thebombzen.com/AutoSwitch/release/AutoSwitch.txt";
 	}
 
 	@Override

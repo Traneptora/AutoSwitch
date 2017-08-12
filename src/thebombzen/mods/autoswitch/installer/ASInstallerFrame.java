@@ -265,7 +265,7 @@ public class ASInstallerFrame extends JFrame {
 		BufferedReader br = null;
 		try {
 			URL versionURL = new URL(
-					"https://dl.dropboxusercontent.com/u/51080973/mods/ThebombzenAPI/Latest-"
+					"https://thebombzen.com/ThebombzenAPI/release/Latest-"
 							+ Constants.MC_VERSION + ".txt");
 			br = new BufferedReader(new InputStreamReader(
 					versionURL.openStream()));
