@@ -1,0 +1,2 @@
+AutoSwitch, version 5.3.1, Minecraft 1.9.4
+
