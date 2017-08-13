@@ -21,6 +21,9 @@ import java.net.URL;
 import java.nio.channels.Channels;
 import java.nio.channels.FileChannel;
 import java.nio.channels.ReadableByteChannel;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Scanner;
 import java.util.jar.JarFile;
 
@@ -314,21 +317,14 @@ public class ASInstallerFrame extends JFrame {
 		}
 		jarFile.close();
 		installThebombzenAPI(directory);
-		File[] mods = modsFolder.listFiles();
-		File[] modsVersion = versionFolder.listFiles();
-		for (File testMod : mods) {
+		List<File> testFiles = new ArrayList<File>();
+		testFiles.addAll(Arrays.asList(modsFolder.listFiles()));
+		testFiles.addAll(Arrays.asList(versionFolder.listFiles()));
+		for (File testMod : testFiles) {
 			if (testMod
 					.getName()
 					.matches(
-							"^AutoSwitch(Mod)?-v\\d\\.\\d(\\.\\d)?-mc(beta)?\\d\\.\\d(\\.\\d)?\\.(jar|zip)$")) {
-				testMod.delete();
-			}
-		}
-		for (File testMod : modsVersion) {
-			if (testMod
-					.getName()
-					.matches(
-							"^AutoSwitch(Mod)?-v\\d\\.\\d(\\.\\d)?-mc(beta)?\\d\\.\\d(\\.\\d)?\\.(jar|zip)$")) {
+							"^AutoSwitch(Mod)?-v\\d+\\.\\d+(\\.\\d+)?-mc(beta)?\\d+\\.\\d+(\\.\\d+)?\\.(jar|zip)$")) {
 				testMod.delete();
 			}
 		}
