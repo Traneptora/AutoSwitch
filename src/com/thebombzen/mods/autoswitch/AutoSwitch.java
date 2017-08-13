@@ -728,10 +728,10 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 			return false;
 		}
 
-		if (newItemStack.isEmpty() && !oldItemStack.isEmpty()) {
+		if (Tests.isItemStackEmpty(newItemStack) && !Tests.isItemStackEmpty(oldItemStack)) {
 			debug("Switching because new tool is fist and old is useless.");
 			return true;
-		} else if (oldItemStack.isEmpty() && !newItemStack.isEmpty()) {
+		} else if (Tests.isItemStackEmpty(oldItemStack) && !Tests.isItemStackEmpty(newItemStack)) {
 			debug("Not switching because old tool is fist and new is useless.");
 			return false;
 		}
@@ -860,10 +860,10 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 		debug("Testing vs block %s", name);
 		String[] names = new String[9];
 		for (int i = 0; i < 9; i++) {
-			if (mc.player.inventory.mainInventory.get(i).isEmpty()) {
+			if (Tests.isItemStackEmpty(mc.player.inventory.getStackInSlot(i))) {
 				names[i] = "Empty";
 			} else {
-				ResourceLocation itemLocation = findUniqueIdentifierFor(mc.player.inventory.mainInventory.get(i).getItem());
+				ResourceLocation itemLocation = findUniqueIdentifierFor(mc.player.inventory.getStackInSlot(i).getItem());
 				names[i] = itemLocation.toString();
 			}
 			debug("Hotbar slot %d contains item %s", i, names[i]);
@@ -881,8 +881,8 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 
 			debug("Checking if tool %d, which is %s, is better than %d, which is %s",
 					i, names[i], currentBest, names[currentBest]);
-			if (isToolBetter(mc.player.inventory.mainInventory.get(i),
-					mc.player.inventory.mainInventory.get(currentBest), world,
+			if (isToolBetter(mc.player.inventory.getStackInSlot(i),
+					mc.player.inventory.getStackInSlot(currentBest), world,
 					pos)) {
 				debug("Changing possible best tool.");
 				currentBest = i;
@@ -907,10 +907,10 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 
 		String[] names = new String[9];
 		for (int i = 0; i < 9; i++) {
-			if (mc.player.inventory.mainInventory.get(i).isEmpty()) {
+			if (Tests.isItemStackEmpty(mc.player.inventory.getStackInSlot(i))) {
 				names[i] = "Empty";
 			} else {
-				ResourceLocation itemLocation = findUniqueIdentifierFor(mc.player.inventory.mainInventory.get(i)
+				ResourceLocation itemLocation = findUniqueIdentifierFor(mc.player.inventory.getStackInSlot(i)
 								.getItem());
 				names[i] = itemLocation.toString();
 			}
@@ -926,7 +926,7 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 		for (int i = 0; i < 9; i++) {
 			debug("Checking if weapon %d, which is %s, is better than %d, which is %s",
 					i, names[i], currentBest, names[currentBest]);
-			if (isWeaponBetter(mc.player.inventory.mainInventory.get(i), mc.player.inventory.mainInventory.get(currentBest), entityover)) {
+			if (isWeaponBetter(mc.player.inventory.getStackInSlot(i), mc.player.inventory.getStackInSlot(currentBest), entityover)) {
 				debug("Changing possible best weapon because weapon is better.");
 				currentBest = i;
 			}
@@ -947,10 +947,10 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 		EntityPlayer entityplayer = mc.player;
 		entityplayer.inventory.currentItem = n;
 		String name;
-		if (entityplayer.inventory.mainInventory.get(n).isEmpty()) {
-			name = "Nothing";
+		if (Tests.isItemStackEmpty(entityplayer.inventory.getStackInSlot(n))) {
+			name = "Empty";
 		} else {
-			ResourceLocation itemLocation = findUniqueIdentifierFor(entityplayer.inventory.mainInventory.get(n)
+			ResourceLocation itemLocation = findUniqueIdentifierFor(entityplayer.inventory.getStackInSlot(n)
 							.getItem());
 			name = itemLocation.toString();
 		}

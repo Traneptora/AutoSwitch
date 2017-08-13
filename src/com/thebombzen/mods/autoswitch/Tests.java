@@ -44,7 +44,21 @@ public final class Tests {
 	
 	private static final Minecraft mc = Minecraft.getMinecraft();
 	
-	private static ItemStack prevHeldItem = ItemStack.EMPTY;
+	public static final ItemStack EMPTY_ITEMSTACK;
+	
+	private static ItemStack prevHeldItem;
+	
+	static {
+		ItemStack tempEmpty;
+		try {
+			tempEmpty = ItemStack.EMPTY;
+		} catch (NoSuchFieldError err) {
+			tempEmpty = null;
+		}
+		EMPTY_ITEMSTACK = tempEmpty;
+		prevHeldItem = EMPTY_ITEMSTACK;
+	}
+	
 	private static Random prevRandom = null;
 	
 	private static final String[] randomNames = {"rand", "field_73012_v", "v"};
@@ -104,7 +118,7 @@ public final class Tests {
 		
 		IBlockState blockState = world.getBlockState(pos);
 		
-		if (blockState.getBlock() instanceof IShearable && itemstack.getItem() instanceof ItemShears) {
+		if (blockState.getBlock() instanceof IShearable && !Tests.isItemStackEmpty(itemstack) && itemstack.getItem() instanceof ItemShears) {
 			IShearable shearable = (IShearable) blockState.getBlock();
 			if (shearable.isShearable(itemstack, world, pos)) {
 				List<ItemStack> drops = shearable.onSheared(itemstack, world, pos, 0);
@@ -162,10 +176,10 @@ public final class Tests {
 	private static void fakeItemForPlayer(ItemStack itemstack) {
 		prevHeldItem = mc.player.getHeldItemMainhand();
 		mc.player.setHeldItem(EnumHand.MAIN_HAND, itemstack);
-		if (!prevHeldItem.isEmpty()) {
+		if (!Tests.isItemStackEmpty(prevHeldItem)) {
 			mc.player.getAttributeMap().removeAttributeModifiers(prevHeldItem.getAttributeModifiers(EntityEquipmentSlot.MAINHAND));
 		}
-		if (!itemstack.isEmpty()) {
+		if (!Tests.isItemStackEmpty(itemstack)) {
 			mc.player.getAttributeMap().applyAttributeModifiers(itemstack.getAttributeModifiers(EntityEquipmentSlot.MAINHAND));
 		}
 	}
@@ -238,7 +252,7 @@ public final class Tests {
 		} else if (state == Configuration.OVERRIDDEN_YES){
 			return 2;
 		}
-		fakeItemForPlayer(ItemStack.EMPTY);
+		fakeItemForPlayer(Tests.EMPTY_ITEMSTACK);
 		boolean noTool = mc.player.canHarvestBlock(blockState);
 		unFakeItemForPlayer();
 		if (noTool){
@@ -345,6 +359,14 @@ public final class Tests {
 		}
 	}
 	
+	public static boolean isItemStackEmpty(ItemStack itemstack) {
+		if (Tests.EMPTY_ITEMSTACK == null) {
+			return itemstack == null;
+		} else {
+			return itemstack.isEmpty();
+		}
+	}
+	
 	public static double getFullRegularItemStackDamage(ItemStack itemStack,
 			EntityLivingBase entity) {
 		fakeItemForPlayer(itemStack);
@@ -376,7 +398,7 @@ public final class Tests {
 	
 	public static double getFullItemStackDamage(ItemStack itemStack, EntityLivingBase entity){
 		try {
-			if (!itemStack.isEmpty() && itemStack.getTagCompound() != null && Loader.isModLoaded("TConstruct")){
+			if (!Tests.isItemStackEmpty(itemStack) && itemStack.getTagCompound() != null && Loader.isModLoaded("TConstruct")){
 				Class<?> clazz = Class.forName("tconstruct.library.tools.ToolCore");
 				if (clazz.isAssignableFrom(itemStack.getItem().getClass())){
 					return Tests.getFullTinkersConstructItemStackDamage(itemStack, entity);
@@ -393,11 +415,11 @@ public final class Tests {
 		
 		Set<Enchantment> bothItemsEnchantments = new HashSet<Enchantment>();
 
-		if (!stack1.isEmpty()) {
+		if (!Tests.isItemStackEmpty(stack1)) {
 			bothItemsEnchantments.addAll(EnchantmentHelper.getEnchantments(
 					stack1).keySet());
 		}
-		if (!stack2.isEmpty()) {
+		if (!Tests.isItemStackEmpty(stack2)) {
 			bothItemsEnchantments.addAll(EnchantmentHelper.getEnchantments(
 					stack2).keySet());
 		}
@@ -451,7 +473,7 @@ public final class Tests {
 	
 	public static ComparableTuple<Integer> getToolEffectiveness(ItemStack itemStack, World world, BlockPos pos){
 		int weakStrength = getToolSpeedEffectiveness(itemStack, world, pos);
-		int forgeStandard = (!itemStack.isEmpty() && ForgeHooks.isToolEffective(world, pos, itemStack)) ? 1 : 0;
+		int forgeStandard = (!Tests.isItemStackEmpty(itemStack) && ForgeHooks.isToolEffective(world, pos, itemStack)) ? 1 : 0;
 		return new ComparableTuple<Integer>(weakStrength, forgeStandard);
 	}
 	
@@ -467,8 +489,8 @@ public final class Tests {
 			return 0;
 		}
 		
-		float blockStrForNull = Tests.getBlockStrength(ItemStack.EMPTY, world, pos);
-		fakeItemForPlayer(ItemStack.EMPTY);
+		float blockStrForNull = Tests.getBlockStrength(Tests.EMPTY_ITEMSTACK, world, pos);
+		fakeItemForPlayer(Tests.EMPTY_ITEMSTACK);
 		boolean harvestable = blockState.getBlock().canHarvestBlock(world, pos, mc.player);
 		unFakeItemForPlayer();
 		
@@ -489,7 +511,7 @@ public final class Tests {
 	}
 
 	public static boolean isItemStackDamageable(ItemStack itemstack) {
-		return itemstack.isItemStackDamageable();
+		return !Tests.isItemStackEmpty(itemstack) && itemstack.isItemStackDamageable();
 	}
 
 	public static boolean isItemStackDamageableOnBlock(ItemStack itemstack,
@@ -508,7 +530,7 @@ public final class Tests {
 	}
 
 	public static boolean isSword(ItemStack itemstack) {
-		if (itemstack.isEmpty()){
+		if (Tests.isItemStackEmpty(itemstack)){
 			return false;
 		}
 		if (itemstack.getItem() instanceof ItemSword){
@@ -524,11 +546,11 @@ public final class Tests {
 	private static void unFakeItemForPlayer() {
 		ItemStack fakedStack = mc.player.getHeldItemMainhand();
 		mc.player.setHeldItem(EnumHand.MAIN_HAND, prevHeldItem);
-		if (!fakedStack.isEmpty()) {
+		if (!Tests.isItemStackEmpty(fakedStack)) {
 			mc.player.getAttributeMap().removeAttributeModifiers(
 					fakedStack.getAttributeModifiers(EntityEquipmentSlot.MAINHAND));
 		}
-		if (!prevHeldItem.isEmpty()) {
+		if (!Tests.isItemStackEmpty(prevHeldItem)) {
 			mc.player.getAttributeMap().applyAttributeModifiers(
 					prevHeldItem.getAttributeModifiers(EntityEquipmentSlot.MAINHAND));
 		}
