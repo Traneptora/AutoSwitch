@@ -140,7 +140,7 @@ public final class Tests {
 			NonNullList<ItemStack> ret = NonNullList.<ItemStack>create();
 			blockState.getBlock().getDrops(ret, world, pos, blockState, fortune);
 			return ret;
-		} catch (NoClassDefFoundError error) {
+		} catch (NoClassDefFoundError | NoSuchMethodError error) {
 			return blockState.getBlock().getDrops(world, pos, blockState, fortune);
 		}
 	}
