@@ -29,7 +29,6 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.item.ItemSword;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.potion.Potion;
-import net.minecraft.util.EnumHand;
 import net.minecraft.util.NonNullList;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
@@ -187,8 +186,8 @@ public final class Tests {
 	}
 
 	private static void fakeItemForPlayer(ItemStack itemstack) {
-		prevHeldItem = mc.player.getHeldItemMainhand();
-		mc.player.setHeldItem(EnumHand.MAIN_HAND, itemstack);
+		prevHeldItem = mc.player.inventory.mainInventory.get(mc.player.inventory.currentItem);
+		mc.player.inventory.mainInventory.set(mc.player.inventory.currentItem, itemstack);
 		if (!Tests.isItemStackEmpty(prevHeldItem)) {
 			mc.player.getAttributeMap().removeAttributeModifiers(prevHeldItem.getAttributeModifiers(EntityEquipmentSlot.MAINHAND));
 		}
@@ -557,8 +556,8 @@ public final class Tests {
 	}
 
 	private static void unFakeItemForPlayer() {
-		ItemStack fakedStack = mc.player.getHeldItemMainhand();
-		mc.player.setHeldItem(EnumHand.MAIN_HAND, prevHeldItem);
+		ItemStack fakedStack = mc.player.inventory.mainInventory.get(mc.player.inventory.currentItem);
+		mc.player.inventory.mainInventory.set(mc.player.inventory.currentItem, prevHeldItem);
 		if (!Tests.isItemStackEmpty(fakedStack)) {
 			mc.player.getAttributeMap().removeAttributeModifiers(
 					fakedStack.getAttributeModifiers(EntityEquipmentSlot.MAINHAND));
