@@ -30,6 +30,7 @@ import net.minecraft.item.ItemSword;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.potion.Potion;
 import net.minecraft.util.EnumHand;
+import net.minecraft.util.NonNullList;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.World;
@@ -95,13 +96,13 @@ public final class Tests {
 		List<ItemStack> fortuneZeroRandom;
 
 		fakeRandomForWorld(world, maxRandom);
-		defaultMaxRandom = blockState.getBlock().getDrops(world, pos, blockState, 0);
-		fortuneMaxRandom = blockState.getBlock().getDrops(world, pos, blockState, 3);
+		defaultMaxRandom = getDrops(world, pos, 0);
+		fortuneMaxRandom = getDrops(world, pos, 3);
 		unFakeRandomForWorld(world);
 
 		fakeRandomForWorld(world, zeroRandom);
-		defaultZeroRandom = blockState.getBlock().getDrops(world, pos, blockState, 0);
-		fortuneZeroRandom = blockState.getBlock().getDrops(world, pos, blockState, 3);
+		defaultZeroRandom = getDrops(world, pos, 0);
+		fortuneZeroRandom = getDrops(world, pos, 3);
 		unFakeRandomForWorld(world);
 
 		if (!ThebombzenAPI.areItemStackCollectionsEqual(defaultMaxRandom,
@@ -131,7 +132,19 @@ public final class Tests {
 		return false;
 		
 	}
-	
+
+	@SuppressWarnings("deprecation")
+	public static List<ItemStack> getDrops(World world, BlockPos pos, int fortune){
+		IBlockState blockState = world.getBlockState(pos);
+		try {
+			NonNullList<ItemStack> ret = NonNullList.<ItemStack>create();
+			blockState.getBlock().getDrops(ret, world, pos, blockState, fortune);
+			return ret;
+		} catch (NoClassDefFoundError error) {
+			return blockState.getBlock().getDrops(world, pos, blockState, fortune);
+		}
+	}
+
 	public static boolean doesSilkTouchWorkOnBlock(World world, BlockPos pos) {
 
 		IBlockState blockState = world.getBlockState(pos);
@@ -159,11 +172,11 @@ public final class Tests {
 		List<ItemStack> defaultZeroRandom;
 		
 		fakeRandomForWorld(world, maxRandom);
-		defaultMaxRandom = blockState.getBlock().getDrops(world, pos, blockState, 0);
+		defaultMaxRandom = getDrops(world, pos, 0);
 		unFakeRandomForWorld(world);
 
 		fakeRandomForWorld(world, zeroRandom);
-		defaultZeroRandom = blockState.getBlock().getDrops(world, pos, blockState, 0);
+		defaultZeroRandom = getDrops(world, pos, 0);
 		unFakeRandomForWorld(world);
 		
 		if (!ThebombzenAPI.areItemStackCollectionsEqual(stackedBlockList, defaultMaxRandom) || !ThebombzenAPI.areItemStackCollectionsEqual(stackedBlockList, defaultZeroRandom)){
