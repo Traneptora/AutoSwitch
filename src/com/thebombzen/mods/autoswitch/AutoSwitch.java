@@ -44,7 +44,7 @@ import net.minecraftforge.fml.relauncher.SideOnly;
  * @author thebombzen
  */
 @SideOnly(Side.CLIENT)
-@Mod(modid = "autoswitch", name = "AutoSwitch", version = Constants.VERSION, dependencies = "required-after:thebombzenapi", guiFactory = "com.thebombzen.mods.autoswitch.configuration.ConfigGuiFactory", clientSideOnly = true, acceptedMinecraftVersions = "[1.9.4, 1.11.2]")
+@Mod(modid = "autoswitch", name = "AutoSwitch", version = Constants.VERSION, dependencies = "required-after:thebombzenapi", guiFactory = "com.thebombzen.mods.autoswitch.configuration.ConfigGuiFactory", clientSideOnly = true, acceptedMinecraftVersions = "[1.9.4, 1.12.1]")
 public class AutoSwitch extends ThebombzenAPIBaseMod {
 
 	/**
