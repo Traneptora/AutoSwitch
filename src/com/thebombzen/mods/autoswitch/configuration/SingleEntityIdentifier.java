@@ -7,7 +7,7 @@ import com.thebombzen.mods.thebombzenapi.configuration.ConfigFormatException;
 import net.minecraft.entity.EntityList;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.util.text.translation.I18n;
+import net.minecraft.util.text.translation.LanguageMap;
 
 public class SingleEntityIdentifier implements BooleanTester<EntityLivingBase> {
 	private int id;
@@ -57,7 +57,7 @@ public class SingleEntityIdentifier implements BooleanTester<EntityLivingBase> {
 				String listName =  EntityList.getEntityString(c);
 				if (listName.toLowerCase().equals(name)){
 					return true;
-				} else if (I18n.translateToLocal("entity."+listName+".name").toLowerCase().equals(name)){
+				} else if (ThebombzenAPI.<LanguageMap>invokePrivateMethod(null, LanguageMap.class, new String[]{"getInstance", "func_74808_a", "a"}, new Class<?>[]{}).translateKey("entity."+listName+".name").toLowerCase().equals(name)){
 					return true;
 				} else {
 					return false;
