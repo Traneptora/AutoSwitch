@@ -186,8 +186,8 @@ public final class Tests {
 	}
 
 	private static void fakeItemForPlayer(ItemStack itemstack) {
-		prevHeldItem = mc.player.inventory.mainInventory.get(mc.player.inventory.currentItem);
-		mc.player.inventory.mainInventory.set(mc.player.inventory.currentItem, itemstack);
+		prevHeldItem = mc.player.inventory.getStackInSlot(mc.player.inventory.currentItem);
+		mc.player.inventory.setInventorySlotContents(mc.player.inventory.currentItem, itemstack);
 		if (!Tests.isItemStackEmpty(prevHeldItem)) {
 			mc.player.getAttributeMap().removeAttributeModifiers(prevHeldItem.getAttributeModifiers(EntityEquipmentSlot.MAINHAND));
 		}
@@ -556,8 +556,8 @@ public final class Tests {
 	}
 
 	private static void unFakeItemForPlayer() {
-		ItemStack fakedStack = mc.player.inventory.mainInventory.get(mc.player.inventory.currentItem);
-		mc.player.inventory.mainInventory.set(mc.player.inventory.currentItem, prevHeldItem);
+		ItemStack fakedStack = mc.player.inventory.getStackInSlot(mc.player.inventory.currentItem);
+		mc.player.inventory.setInventorySlotContents(mc.player.inventory.currentItem, prevHeldItem);
 		if (!Tests.isItemStackEmpty(fakedStack)) {
 			mc.player.getAttributeMap().removeAttributeModifiers(
 					fakedStack.getAttributeModifiers(EntityEquipmentSlot.MAINHAND));
