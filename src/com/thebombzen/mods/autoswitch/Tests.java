@@ -342,14 +342,12 @@ public final class Tests {
 					&& !mc.player.isPotionActive(Potion.getPotionFromResourceLocation("blindness"))
 					&& !mc.player.isRiding();
 			for (Object activeToolMod : activeModifiers) {
-				if (ThebombzenAPI.invokePrivateMethod(activeToolMod,
-						activeToolModClass, "doesCriticalHit", new Class<?>[] {
-								toolCoreClass, NBTTagCompound.class,
-								NBTTagCompound.class, ItemStack.class,
-								EntityLivingBase.class, Entity.class }, tool,
-						tags, toolTags, stack, mc.player, entity))
-					;
-				criticalHit = true;
+				if (ThebombzenAPI.<Boolean>invokePrivateMethod(activeToolMod, activeToolModClass, "doesCriticalHit",
+						new Class<?>[] { toolCoreClass, NBTTagCompound.class, NBTTagCompound.class, ItemStack.class,
+								EntityLivingBase.class, Entity.class },
+						tool, tags, toolTags, stack, mc.player, entity)) {
+					criticalHit = true;
+				}
 			}
 			if (criticalHit) {
 				damage *= 1.5F; // This is not actually accurate. It just makes
