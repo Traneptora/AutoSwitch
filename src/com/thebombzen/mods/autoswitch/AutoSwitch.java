@@ -238,7 +238,7 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 
 	@Override
 	public String getLongVersionString() {
-		return "AutoSwitch, version " + Constants.VERSION + ", Minecraft " + Constants.MC_VERSION;
+		return "AutoSwitch, version " + Constants.VERSION + ", Minecraft " + Constants.SUPPORTED_MC_VERSIONS;
 	}
 
 	@Override
@@ -262,7 +262,7 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 
 	@Override
 	protected String getVersionFileURLString() {
-		return "https://thebombzen.com/" + this.getLongName() + "/release/" + this.getShortName() + "Version" + ( ThebombzenAPI.getCheckAllMinecraftVersions() ? "" : "-" + Constants.MC_VERSION ) + ".txt";
+		return "https://thebombzen.com/" + this.getLongName() + "/release/" + this.getShortName() + "Version" + ( ThebombzenAPI.getCheckAllMinecraftVersions() ? "" : "-" + MinecraftForge.MC_VERSION ) + ".txt";
 	}
 
 	@Override
