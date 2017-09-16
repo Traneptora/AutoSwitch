@@ -228,7 +228,7 @@ public class AutoSwitch extends ThebombzenAPIBaseMod {
 
 	@Override
 	public String getDownloadLocationURLString() {
-		return "http://is.gd/ThebombzensMods#AutoSwitch";
+		return "https://thebombzen.com/AutoSwitch/thread/";
 	}
 
 	@Override
