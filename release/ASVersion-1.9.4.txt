@@ -1,2 +1,1 @@
-AutoSwitch, version 5.5.1, Minecraft 1.11.2
-
+ASVersion.txt

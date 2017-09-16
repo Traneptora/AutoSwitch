@@ -1,1 +1,2 @@
-ASVersion-1.11.2.txt
+AutoSwitch, version 5.6.0, Minecraft 1.9.4-1.12.1
+
