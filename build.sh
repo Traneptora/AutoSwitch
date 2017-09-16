@@ -13,6 +13,8 @@ CURRDIR="$PWD"
 
 cd "$(dirname $0)"
 
+git submodule foreach git pull
+
 mkdir -p build
 cd build
 
@@ -41,7 +43,7 @@ if [ ! -e gradlew ] ; then
 	cd build
 fi
 
-./gradlew build
+JAVA_OPTS="-Xmx2048m" ./gradlew build
 
 cp build/libs/modid-1.0.jar $ARCHIVE
 mkdir -p META-INF
