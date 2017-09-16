@@ -1,2 +1,2 @@
-AutoSwitch, version 5.6.0, Minecraft 1.9.4-1.12.1
+AutoSwitch, version 5.6.0, Minecraft 1.12.1
 
