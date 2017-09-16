@@ -263,13 +263,13 @@ public class ASInstallerFrame extends JFrame {
 				/ 2, this.getY() + (this.getHeight() - dialog.getHeight()) / 2);
 	}
 
-	public static String getThebombzenAPILatestVersion() throws IOException {
+	public static String getThebombzenAPILatestVersion(String mcVersion) throws IOException {
 		String latestVersion = null;
 		BufferedReader br = null;
 		try {
 			URL versionURL = new URL(
 					"https://thebombzen.com/ThebombzenAPI/release/Latest-"
-							+ Constants.MC_VERSION + ".txt");
+							+ mcVersion + ".txt");
 			br = new BufferedReader(new InputStreamReader(
 					versionURL.openStream()));
 			latestVersion = br.readLine();
@@ -298,6 +298,12 @@ public class ASInstallerFrame extends JFrame {
 	}
 
 	private static void installNoGui(String directory) throws Exception {
+		for (String mcVersion : Constants.INSTALL_MC_VERSIONS) {
+			installNoGui(directory, mcVersion);
+		}
+	}
+
+	private static void installNoGui(String directory, String mcVersion) throws Exception {
 		File dir = new File(directory);
 		if (!dir.isDirectory()) {
 			System.err.println("Invalid directory: " + directory);
@@ -305,7 +311,7 @@ public class ASInstallerFrame extends JFrame {
 		}
 		File modsFolder = new File(directory, "mods");
 		modsFolder.mkdir();
-		File versionFolder = new File(modsFolder, Constants.MC_VERSION);
+		File versionFolder = new File(modsFolder, mcVersion);
 		versionFolder.mkdir();
 		File file = new File(ASInstallerFrame.class.getProtectionDomain()
 				.getCodeSource().getLocation().toURI());
@@ -351,7 +357,13 @@ public class ASInstallerFrame extends JFrame {
 	}
 
 	public static void installThebombzenAPI(String directory) throws Exception {
-		String latest = getThebombzenAPILatestVersion();
+		for (String mcVersion : Constants.INSTALL_MC_VERSIONS) {
+			installThebombzenAPI(directory, mcVersion);
+		}
+	}
+
+	public static void installThebombzenAPI(String directory, String mcVersion) throws Exception {
+		String latest = getThebombzenAPILatestVersion(mcVersion);
 		Scanner scanner = new Scanner(latest);
 		scanner.useDelimiter(String.format("%n"));
 		String fileName = scanner.next();
@@ -359,9 +371,9 @@ public class ASInstallerFrame extends JFrame {
 		scanner.close();
 
 		File modsFolder = new File(directory, "mods");
-		modsFolder.mkdir();
-		File versionFolder = new File(modsFolder, Constants.MC_VERSION);
-		versionFolder.mkdir();
+		modsFolder.mkdirs();
+		File versionFolder = new File(modsFolder, mcVersion);
+		versionFolder.mkdirs();
 
 		File thebombzenAPI = new File(versionFolder, fileName);
 
