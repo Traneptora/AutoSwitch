@@ -6,6 +6,11 @@ See [http://is.gd/ThebombzensMods#AutoSwitch](http://is.gd/ThebombzensMods#AutoS
 
 Note: If you want to contribute, feel free! Just send me a pull request and I'll review it before adding it.
 
+## Reporting Bugs ##
+You can report bugs on the bug tracker at Github.
+
+If your bug report is about incorrect behavior or a crash, remember to provide a link to a debug log. Do this by enabling debug logging in the config screen. Then, trigger the bug (preferably in creative mode, set "Use in Creative" to ON). Then send me the file .minecraft → mods → AutoSwitch → DEBUG.txt by putting it on a paste site like [https://gist.github.com/](https://gist.github.com/), [http://pastebin.com/](http://pastebin.com/), or [https://0x0.st/](https://0x0.st/). Remember to disable debug when you're done.
+
 ## Compiling ##
 
 First, you need to clone [ThebombzenAPI](https://github.com/thebombzen/ThebombzenAPI) to the same directory that you cloned AutoSwitch. i.e. you should see ThebombzenAPI/ and AutoSwitch/ in the same directory.
