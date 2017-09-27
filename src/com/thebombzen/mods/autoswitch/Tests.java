@@ -30,6 +30,7 @@ import net.minecraft.item.ItemSword;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.potion.Potion;
 import net.minecraft.util.NonNullList;
+import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.World;
@@ -437,29 +438,15 @@ public final class Tests {
 		Iterator<Enchantment> iterator = bothItemsEnchantments.iterator();
 		while (iterator.hasNext()) {
 			Enchantment enchantment = iterator.next();
-			if (Enchantment.REGISTRY.getNameForObject(enchantment).getResourceDomain().equals("minecraft")) {
+			if (enchantment == null) {
+				iterator.remove();
+				continue;
+			}
+			ResourceLocation location = Enchantment.REGISTRY.getNameForObject(enchantment);
+			if (location == null || "minecraft".equals(location.getResourceDomain())) {
 				iterator.remove();
 			}
 		}
-		
-		/*
-		List<Enchantment> standardEnchantments = new ArrayList<Enchantment>();
-		Field[] fields = Enchantments.class.getFields();
-
-		
-		for (Field field : fields){
-			if (field.getType().equals(Enchantment.class)){
-				try {
-					standardEnchantments.add((Enchantment)field.get(null));
-				} catch (IllegalAccessException e) {
-					// This should not happen.
-					throw new FieldNotFoundException(e);
-				}
-			}
-		}
-
-		bothItemsEnchantments.removeAll(standardEnchantments);
-		*/
 
 		return bothItemsEnchantments;
 	}
